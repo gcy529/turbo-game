@@ -401,7 +401,7 @@
       <div id="lbList" style="font-size:11.5px;color:#9dbdd8;text-align:left;line-height:1.9"></div>
     </div>
     <button class="go" id="startBtn"><span data-i18n="start">开始比赛</span></button>
-    <div class="tip">🚗 自动加速 · <b style="color:#ffd166">倒计时按 W/↑ 起步喷</b> · 踩路面橙色加速带瞬间提速 · 高速过弯自动漂移</div>
+    <div class="tip">🚗 自动加速 · <b style="color:#ffd166">开局瞬间按 W/↑ 起步喷</b> · 踩橙色加速带提速 · 高速过弯自动漂移</div>
   </div>
 </div>
 
@@ -476,8 +476,8 @@
   var REVERSE_MAX = -MAX_SPEED * 0.16;   // 最大倒车速度
   var REVERSE_ACCEL = -MAX_SPEED / 3.2;  // 倒车加速度
   // ── 起步喷 ──
-  var LAUNCH_PERFECT_WINDOW = 0.62;   // 剩余倒计时 ≤ 此值 = PERFECT
-  var LAUNCH_GOOD_WINDOW = 1.45;      // 剩余倒计时 ≤ 此值 = GOOD
+  var LAUNCH_PERFECT_WINDOW = 0.62;   // 剩余窗口越小越准 = PERFECT
+  var LAUNCH_GOOD_WINDOW = 1.45;      // 剩余窗口 = GOOD
   var BOOST_PERFECT = 1.55;           // PERFECT 加速倍率
   var BOOST_GOOD = 1.22;              // GOOD 加速倍率
   var BOOST_EARLY = 0.62;             // 早踩惩罚（打滑）
@@ -977,7 +977,7 @@
       curveWarned: 0,    // 已播报的段索引
       // 起步喷
       launchPressed: false,   // 本次起步是否已按键
-      launchAt: 0,            // 按下时的剩余倒计时
+      launchAt: 0,            // 按下时的剩余窗口
       launchQuality: '',      // 'perfect' | 'good' | 'early' | ''
       boostTimer: 0,          // 剩余加速时间
       boostPower: 0,          // 加速倍率
@@ -2529,7 +2529,7 @@
   var lastCountShown = -1;
 
   /* ================= 起步喷 ================= */
-  // 记录按键：只在倒计时期间有效
+  // 记录按键：只在开局 0.9 秒窗口内有效
   function pressLaunch(p) {
     if (!running || p.finished) return;
     if (p.launchPressed) return;
@@ -2755,7 +2755,7 @@
     } catch (e) {}
   }
 
-  // 倒计时提示音
+  // 起步提示音
   function playBeep(freq, dur) {
     if (!AC) return;
     try {
@@ -3075,7 +3075,7 @@
       gameTitle: '极速狂飙', gameSub: 'TURBO GAME',
       play: '开始游戏', settings: '设置', back: '返回', selectTitle: '选择你的比赛',
       cars: '赛车', maps: '地图', modes: '模式', laps: '圈数', weathers: '天气', editor: '赛道编辑器',
-      start: '开始比赛', tip: '自动加速 · 倒计时按 W/↑ 起步喷 · 踩橙色加速带提速 · 高速过弯自动漂移',
+      start: '开始比赛', tip: '自动加速 · 开局瞬间按 W/↑ 起步喷 · 踩橙色加速带提速 · 高速过弯自动漂移',
       solo: '单人计时', duo: '双人对战', soloDesc: '全屏 · 挑战自己', duoDesc: '分屏 · 同场竞技',
       lap: '圈', thisLap: '本圈', best: '最佳', dist: '距离',
       wClear: '晴朗', wRain: '雨天', wFog: '大雾', wNight: '夜间',
@@ -3085,13 +3085,12 @@
       finish: '完成！', over: '比赛结束', winner: '获胜', total: '总时间', bestLap: '最快单圈',
       driftScore: '漂移得分', again: '再来一局', share: '分享', lb: '🏆 排行榜（本机）', lbMap: '本图排行榜',
       noRec: '暂无记录', paused: '⏸ 游戏已暂停 · 关闭后继续',
-      sBgm: '背景音乐', sSfx: '音效', sManual: '手动挡', sGhost: '幽灵车', sAuto: '🤖 自动驾驶示范', sCd: '倒计时', sView: '视角',
+      sBgm: '背景音乐', sSfx: '音效', sManual: '手动挡', sGhost: '幽灵车', sAuto: '🤖 自动驾驶示范', sView: '视角',
       sBgmD: '程序化合成的赛车 BGM', sSfxD: '引擎 / 漂移 / 碰撞 / 起步喷',
       sManualD: '关闭=自动加速；开启=一直按住加速键', sGhostD: '显示最佳圈速轨迹（有重影）',
-      sAutoD: 'AI 跑完美路线，供学习参考', sCdD: '起步前等待时间，按剩余时间触发起步喷', sViewD: '远景 / 中景 / 第一视角',
+      sAutoD: 'AI 跑完美路线，供学习参考', sViewD: '远景 / 中景 / 第一视角',
       resume: '继续游戏', quit: '退出到菜单',
-      cdOff: '关', cd1: '1秒', cd3: '3秒', cd5: '5秒',
-      vFar: '远景', vMid: '中景', vFirst: '第一视角',
+           vFar: '远景', vMid: '中景', vFirst: '第一视角',
       lead: '领先', trail: '落后', tied: '并排',
       aiDriving: '🤖 AI 驾驶中', boostPad: '⚡ 加速带',
     },
@@ -3099,7 +3098,7 @@
       gameTitle: 'TURBO', gameSub: '极速狂飙 · TURBO GAME',
       play: 'PLAY', settings: 'Settings', back: 'Back', selectTitle: 'Choose Your Race',
       cars: 'CARS', maps: 'MAPS', modes: 'MODE', laps: 'LAPS', weathers: 'WEATHER', editor: 'Track Editor',
-      start: 'START RACE', tip: 'Auto-gas · Tap W/↑ at countdown for launch boost · Hit orange pads · Auto-drift in corners',
+      start: 'START RACE', tip: 'Auto-gas · Tap W/↑ right at start for launch boost · Hit orange pads · Auto-drift in corners',
       solo: 'Time Trial', duo: '2P Versus', soloDesc: 'Fullscreen · vs yourself', duoDesc: 'Split-screen race',
       lap: 'Lap', thisLap: 'Lap', best: 'Best', dist: 'Dist',
       wClear: 'Clear', wRain: 'Rain', wFog: 'Fog', wNight: 'Night',
@@ -3109,13 +3108,12 @@
       finish: 'FINISH!', over: 'RACE OVER', winner: 'wins', total: 'Total', bestLap: 'Best Lap',
       driftScore: 'Drift', again: 'RACE AGAIN', share: 'SHARE', lb: '🏆 LEADERBOARD', lbMap: 'MAP RECORDS',
       noRec: 'No records yet', paused: '⏸ PAUSED · close to resume',
-      sBgm: 'Music', sSfx: 'Sound FX', sManual: 'Manual Gas', sGhost: 'Ghost Car', sAuto: '🤖 Auto Drive', sCd: 'Countdown', sView: 'Camera',
+      sBgm: 'Music', sSfx: 'Sound FX', sManual: 'Manual Gas', sGhost: 'Ghost Car', sAuto: '🤖 Auto Drive', sView: 'Camera',
       sBgmD: 'Procedural racing BGM', sSfxD: 'Engine / drift / crash / launch',
       sManualD: 'Off = auto-gas; On = hold to accelerate', sGhostD: 'Show best-lap ghost (semi-transparent)',
-      sAutoD: 'AI drives the perfect line', sCdD: 'Pre-race wait; tap W/↑ for launch boost', sViewD: 'Far / Mid / First-person',
+      sAutoD: 'AI drives the perfect line', sViewD: 'Far / Mid / First-person',
       resume: 'RESUME', quit: 'QUIT TO MENU',
-      cdOff: 'Off', cd1: '1s', cd3: '3s', cd5: '5s',
-      vFar: 'Far', vMid: 'Mid', vFirst: '1st-Person',
+           vFar: 'Far', vMid: 'Mid', vFirst: '1st-Person',
       lead: 'Lead', trail: 'Behind', tied: 'TIED',
       aiDriving: '🤖 AI DRIVING', boostPad: '⚡ BOOST',
     }
@@ -3181,7 +3179,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false };  // 倒计时秒数  // 幽灵车默认关（有重影）
+  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false };  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 0;
   var VIEW_LIST = [
@@ -4005,7 +4003,7 @@
     if (m) {
       var side = m[0], action = m[1];
       if (action === 'launch') {
-        // 起步键：倒计时期间触发起步喷
+        // 起步键：开局窗口内触发起步喷
         pressLaunch(side === 'p1' ? P1 : P2);
         input[side].gas = true;
       } else {
