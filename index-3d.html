@@ -30,6 +30,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05070e;font-family:
 .tb:active{background:rgba(140,200,255,.4)}
 .tb-gas{background:rgba(60,220,160,.25);border-color:rgba(80,230,170,.7);color:#c8ffe8}
 @media (hover:none) and (pointer:coarse){#touch{display:block}}
+#invBadge{display:inline-block;font-size:11px;font-weight:900;letter-spacing:1.5px;padding:6px 16px;border-radius:999px;background:rgba(255,180,60,.18);border:1.5px solid rgba(255,190,80,.6);color:#ffc078;margin-bottom:14px;animation:invPulse 1.6s ease-in-out infinite}
+#invBadge.off{background:rgba(255,255,255,.06);border-color:rgba(140,200,255,.28);color:#8ba3bd;animation:none}
+@keyframes invPulse{0%,100%{opacity:1}50%{opacity:.6}}
 #fpsBox{position:fixed;right:12px;bottom:12px;z-index:13;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums}
 </style>
 </head>
@@ -47,11 +50,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05070e;font-family:
 <div id="overlay">
   <div class="panel">
     <div class="tag3d">WEBGL · BETA</div>
-    <div class="title">TURBO 3D</div>
-    <div class="sub">极 速 狂 飙</div>
+    <div class="title">逆反 3D</div>
+    <div class="sub">T U R B O &nbsp; I N V E R S E</div>
+    <div id="invBadge" style="display:none">↔ 逆反模式 开启</div>
+    <div id="invBox" style="display:none;flex-direction:column;align-items:center;margin-bottom:14px">
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="invbtn on" data-inv="1" style="padding:9px 18px;border-radius:10px;border:1.5px solid rgba(255,190,80,.6);background:rgba(255,180,60,.22);color:#ffc078;font-size:12.5px;font-weight:900;cursor:pointer">↔ 逆反模式</button>
+        <button class="invbtn" data-inv="0" style="padding:9px 18px;border-radius:10px;border:1.5px solid rgba(140,200,255,.25);background:rgba(255,255,255,.06);color:#9dbdd8;font-size:12.5px;font-weight:900;cursor:pointer">正常转向</button>
+      </div>
+      <div style="font-size:10px;color:#6f8db0;margin-top:7px">🏆 已解锁 · 跑完一局的奖励</div>
+    </div>
+    <div id="invLock" style="font-size:10.5px;color:#4e6b88;margin-bottom:14px;letter-spacing:.5px">🔒 跑完一局（2 圈）解锁隐藏设置</div>
+    <div id="invExplain" style="display:none;font-size:11.5px;line-height:1.95;color:#a9c6e2;max-width:300px;margin:0 auto 16px;text-align:left">
+      <div style="margin-bottom:9px;color:#ffc078;font-weight:800">↔ 逆反模式是什么？</div>
+      <div>按 <b style="color:#fff">←</b> 车往<b style="color:#fff">右</b>走 · 按 <b style="color:#fff">→</b> 车往<b style="color:#fff">左</b>走</div>
+      <div style="color:#6f8db0;font-size:10.5px;margin-top:5px">这个版本故意反过来 · 考验反向思维</div>
+    </div>
     <div class="keys">
-      <span><b>A</b> <b>←</b> 左转</span><span><b>D</b> <b>→</b> 右转</span>
-      <span><b>S</b> <b>↓</b> 手刹</span><span>自动加速</span>
+      <span><b>A</b>/<b>←</b> 逆反左</span><span><b>D</b>/<b>→</b> 逆反右</span>
+      <span><b>S</b>/<b>↓</b> 手刹</span><span>自动加速</span>
       <span><b>C</b> 切视角</span><span><b>R</b> 重开</span>
     </div>
     <button class="go" id="startBtn">开始比赛</button>
@@ -211,7 +228,10 @@ function spawnNpcs() {
 spawnNpcs();
 var player = { t: 0, lateral: 0.15, speed: 0, MAX_SPEED: 96, lap: 1, totalLaps: 2, lastT: 0, finished: false, finishTime: 0 };
 var running = false, paused = false, camMode = 0, raceStart = 0, lapStart = 0, shake = 0, clock = 0;
-var AUTO_GAS = true;  // 自动加速（和 2D 一致）
+var AUTO_GAS = true;    // 自动加速（和 2D 一致）
+var INVERT = true;      // 逆反模式：左右反向（默认开启，这是本版特色）
+var UNLOCKED = false;   // 是否已解锁隐藏设置（跑完一局）
+var LOCKED_INVERT = true;  // 未解锁时强制逆反
 var input = { gas: true, brake: false, left: false, right: false };
 var elSpd = document.getElementById("spd"), elLap = document.getElementById("lap"), elT1 = document.getElementById("t1");
 var elMsg = document.getElementById("msg"), overlay = document.getElementById("overlay"), elFps = document.getElementById("fpsBox");
@@ -269,6 +289,7 @@ function update(dt) {
   var steer = 0;
   if (input.left) steer -= 1;
   if (input.right) steer += 1;
+  if (INVERT) steer = -steer;   // 逆反模式：左右互换
   var steerRate = 1.35 * (0.35 + Math.abs(player.speed) / player.MAX_SPEED);
   player.lateral += steer * steerRate * dt;
   var cur = curvatureAt(player.t);
@@ -283,7 +304,9 @@ function update(dt) {
     lapStart = now;
     if (player.lap > player.totalLaps) {
       player.finished = true; player.finishTime = (now - raceStart) / 1000; running = false;
-      setMsg("完成！" + player.finishTime.toFixed(2) + "s", 6); overlay.classList.remove("hide");
+      unlockSetting();
+      setMsg("完成！" + player.finishTime.toFixed(2) + "s", 4);
+      setTimeout(showFinishPanel, 700);
     } else setMsg("第 " + (player.lap - 1) + " 圈 " + lapT.toFixed(2) + "s", 1.6);
   }
   player.lastT = tp;
@@ -319,7 +342,7 @@ function frame(ts) {
   playerCar.position.y += 0.05;
   var look = pp.pos.clone().add(pp.tan);
   playerCar.lookAt(look.x, pp.pos.y + 0.05, look.z);
-  playerCar.rotation.z = (input.left ? 0.05 : 0) + (input.right ? -0.05 : 0);
+  playerCar.rotation.z = ((input.left ? 0.05 : 0) + (input.right ? -0.05 : 0)) * (INVERT ? -1 : 1);
   var ws2 = playerCar.userData.wheels || [];
   for (var w = 0; w < ws2.length; w++) ws2[w].rotation.x += player.speed * dt * 1.6;
   var camH, camDist;
@@ -358,15 +381,91 @@ function startRace() {
 }
 function restart() { running = false; overlay.classList.remove("hide"); player.speed = 0; }
 window.__T3 = {
-  state: function () { return { speed: Math.round((Math.abs(player.speed) / player.MAX_SPEED) * 320), lateral: Number(player.lateral.toFixed(3)), t: Number(player.t.toFixed(3)), lap: player.lap, countdown: Number(countdown.toFixed(2)), running: running, camMode: camMode, autoGas: AUTO_GAS }; },
+  state: function () { return { invert: INVERT, unlocked: UNLOCKED, speed: Math.round((Math.abs(player.speed) / player.MAX_SPEED) * 320), lateral: Number(player.lateral.toFixed(3)), t: Number(player.t.toFixed(3)), lap: player.lap, countdown: Number(countdown.toFixed(2)), running: running, camMode: camMode, autoGas: AUTO_GAS }; },
   steer: function (dir, ms) {
     var key = dir > 0 ? 'right' : 'left';
     input[key] = true;
     setTimeout(function () { input[key] = false; }, ms || 800);
     return true;
   },
-  autoGas: function (v) { AUTO_GAS = !!v; return AUTO_GAS; }
+  autoGas: function (v) { AUTO_GAS = !!v; return AUTO_GAS; },
+  setInvert: function (v) { INVERT = !!v; syncInv(); return INVERT; },
+  // 测试用：模拟跑完一局
+  finishNow: function () {
+    if (running) {
+      player.finished = true; player.finishTime = 12.34; running = false;
+      unlockSetting(); showFinishPanel();
+    }
+    return { unlocked: UNLOCKED };
+  },
+  resetUnlock: function () {
+    UNLOCKED = false; INVERT = true;
+    try { localStorage.removeItem('turbo3d-unlocked'); } catch (e) {}
+    applyUnlockUi(); syncInv();
+    return true;
+  }
 };
+function unlockSetting() {
+  if (UNLOCKED) return;
+  UNLOCKED = true;
+  try { localStorage.setItem('turbo3d-unlocked', '1'); } catch (e) {}
+}
+function applyUnlockUi() {
+  var box = document.getElementById('invBox');
+  var lock = document.getElementById('invLock');
+  var badge = document.getElementById('invBadge');
+  var exp = document.getElementById('invExplain');
+  if (box) box.style.display = UNLOCKED ? 'flex' : 'none';
+  if (lock) lock.style.display = UNLOCKED ? 'none' : 'block';
+  if (badge) badge.style.display = UNLOCKED ? 'inline-block' : 'none';
+  if (exp) exp.style.display = UNLOCKED ? 'block' : 'none';
+}
+function showFinishPanel() {
+  var panel = document.querySelector('.panel');
+  if (!panel) return;
+  panel.innerHTML = '<div class="tag3d">RACE FINISHED</div>' +
+    '<div class="title" style="font-size:30px">完成！</div>' +
+    '<div class="sub" style="letter-spacing:3px">' + player.finishTime.toFixed(2) + ' 秒 · ' + player.totalLaps + ' 圈</div>' +
+    '<div style="margin:18px 0;padding:14px 18px;border-radius:14px;background:rgba(255,180,60,.12);border:1.5px solid rgba(255,190,80,.5);max-width:300px">' +
+    '<div style="font-size:14px;font-weight:900;color:#ffc078;letter-spacing:1px;margin-bottom:6px">🏆 解锁隐藏设置</div>' +
+    '<div style="font-size:11.5px;color:#cfe4f7;line-height:1.7">「逆反模式」开关已解锁<br><span style="color:#6f8db0;font-size:10.5px">下次开始前可以选择正常转向或逆反转向</span></div>' +
+    '</div>' +
+    '<button class="go" id="againBtn">再来一局</button>' +
+    '<div class="tip" style="margin-top:10px"><a href="index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>';
+  var ab = document.getElementById('againBtn');
+  if (ab) ab.addEventListener('click', function () { location.reload(); });
+  overlay.classList.remove('hide');
+}
+function syncInv() {
+  var badge = document.getElementById('invBadge');
+  if (badge) {
+    badge.textContent = INVERT ? '↔ 逆反模式 开启' : '→ 正常转向';
+    badge.className = INVERT ? '' : 'off';
+  }
+  var btns = document.querySelectorAll('.invbtn');
+  for (var i = 0; i < btns.length; i++) {
+    var on = (btns[i].getAttribute('data-inv') === '1') === INVERT;
+    btns[i].className = 'invbtn' + (on ? ' on' : '');
+    if (on) { btns[i].style.background = 'rgba(255,180,60,.22)'; btns[i].style.borderColor = 'rgba(255,190,80,.6)'; btns[i].style.color = '#ffc078'; }
+    else { btns[i].style.background = 'rgba(255,255,255,.06)'; btns[i].style.borderColor = 'rgba(140,200,255,.25)'; btns[i].style.color = '#9dbdd8'; }
+  }
+}
+(function () {
+  try { UNLOCKED = (localStorage.getItem('turbo3d-unlocked') === '1'); } catch (e) {}
+  var btns = document.querySelectorAll('.invbtn');
+  for (var i = 0; i < btns.length; i++) {
+    (function (b) {
+      b.addEventListener('click', function () {
+        INVERT = (b.getAttribute('data-inv') === '1');
+        syncInv();
+      });
+    })(btns[i]);
+  }
+  if (!UNLOCKED) INVERT = true;   // 未解锁时固定逆反（本版特色）
+  syncInv();
+  applyUnlockUi();
+})();
+
 document.getElementById("startBtn").addEventListener("click", startRace);
 window.addEventListener("resize", function () { W = window.innerWidth; H = window.innerHeight; camera.aspect = W / H; camera.updateProjectionMatrix(); renderer.setSize(W, H); });
 updateHud();
