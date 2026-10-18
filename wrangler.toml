@@ -1,0 +1,8 @@
+name = "turbo-game"
+compatibility_date = "2026-01-01"
+
+# Cloudflare Pages 静态站点配置
+# 部署：把本目录上传到 Cloudflare Pages，或 wrangler pages deploy .
+
+[site]
+  bucket = "."
