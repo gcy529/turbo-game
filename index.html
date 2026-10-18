@@ -64,6 +64,8 @@
     #launch .s{font-size:11px}
     #shortcut{bottom:calc(50% + 34px);font-size:12px;padding:4px 12px}
     #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
+    #viewBtn{right:8px;top:48px;width:32px;height:32px;font-size:14px}
+    #autoBadge{right:8px;top:88px;font-size:9.5px;padding:4px 8px}
     .tb{width:56px;height:56px;font-size:18px}
     .panel{padding:16px 14px;max-height:96vh;overflow-y:auto}
     .title{font-size:24px;letter-spacing:3px}
@@ -190,7 +192,10 @@
   .cslider input[type=range]{-webkit-appearance:none;height:4px;border-radius:99px;background:rgba(255,255,255,.16);outline:none}
   .cslider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#8ef7c8;cursor:pointer;box-shadow:0 0 10px rgba(110,247,200,.6)}
   #viewBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
-  #settingsBtn{position:fixed;right:14px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#cfe8ff;backdrop-filter:blur(8px);transition:all .15s}
+  #settingsBtn{position:fixed;right:14px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#cfe8ff;backdrop-filter:blur(8px);transition:background .15s,border-color .15s}
+  #settingsBtn .gear{display:inline-block;animation:gearSpin 14s linear infinite}
+  #settingsBtn:hover .gear{animation-duration:1.6s}
+  @keyframes gearSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   #settingsBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
   #settingsPanel{position:fixed;inset:0;background:rgba(4,7,14,.86);z-index:30;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px);padding:20px}
   #settingsPanel.on{display:flex}
@@ -227,8 +232,9 @@
   <span class="meta">圈 <b id="lap2">1</b>/3<br>本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
 </div>
 
-<div id="viewBtn" title="切换视角" style="position:fixed;right:56px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:#cfe8ff;backdrop-filter:blur(8px)">🎥</div>
-<div id="settingsBtn" title="设置">⚙</div>
+<div id="autoBadge" style="position:fixed;right:14px;top:108px;z-index:14;display:none;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:rgba(10,18,34,.78);border:1px solid rgba(140,200,255,.35);backdrop-filter:blur(8px);font-size:10.5px;font-weight:800;letter-spacing:1px;color:#8ef7c8;pointer-events:none;white-space:nowrap">🤖 AI 驾驶中</div>
+<div id="viewBtn" title="切换视角" style="position:fixed;right:14px;top:60px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:#cfe8ff;backdrop-filter:blur(8px);transition:background .15s,border-color .15s">🎥</div>
+<div id="settingsBtn" title="设置"><span class="gear">⚙</span></div>
 <div id="settingsPanel">
   <div class="setbox">
     <div class="settitle">设置</div>
@@ -3671,11 +3677,9 @@
 
     if (shk > 0.02) ctx.restore();
 
-    // 自动驾驶提示
-    if (CFG.auto) {
-      elMsg.textContent = '🤖 自动驾驶示范中';
-      elMsg.style.opacity = '0.85';
-    }
+    // 自动驾驶徽章（右上角）
+    var ab2 = document.getElementById('autoBadge');
+    if (ab2) ab2.style.display = CFG.auto ? 'flex' : 'none';
 
     // 起步喷提示
     var lp = P1 && P1.boostShown > 0 ? P1 : (GAME_MODE !== 'solo' && P2 && P2.boostShown > 0 ? P2 : null);
