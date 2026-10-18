@@ -79,6 +79,17 @@
   .homeBtn:hover{transform:translateY(-2px);border-color:rgba(140,200,255,.6)}
   .homeBtn.primary{background:linear-gradient(180deg,#8ef7c8,#38d99a);color:#06121e;border-color:transparent;box-shadow:0 10px 34px rgba(60,220,160,.4);font-size:17px}
   .homeBtn.primary:hover{box-shadow:0 14px 44px rgba(60,220,160,.55)}
+  .setupTabs{display:flex;gap:7px;margin-bottom:16px;justify-content:center}
+  .stab{flex:1;max-width:140px;padding:9px 6px;border-radius:11px;background:rgba(255,255,255,.05);border:1.5px solid rgba(140,200,255,.18);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .15s}
+  .stab span{font-size:17px;line-height:1}
+  .stab em{font-size:10.5px;font-weight:800;letter-spacing:1px;color:#8ba3bd;font-style:normal}
+  .stab:hover{background:rgba(255,255,255,.1);border-color:rgba(140,200,255,.4)}
+  .stab.on{background:rgba(60,220,160,.16);border-color:rgba(60,220,160,.7)}
+  .stab.on em{color:#8ef7c8}
+  body[data-theme='light'] .stab{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.22)}
+  body[data-theme='light'] .stab em{color:#5a7695}
+  body[data-theme='light'] .stab.on{background:rgba(42,157,143,.16);border-color:rgba(42,157,143,.7)}
+  body[data-theme='light'] .stab.on em{color:#14685c}
   .homeRow{display:flex;gap:11px;margin-top:22px}
   .homeMini{padding:9px 20px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.28);color:#cfe8ff;font-size:12.5px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .15s}
   .homeMini:hover{background:rgba(140,200,255,.16)}
@@ -320,7 +331,7 @@
       <div class="toggle" id="tgGhost"></div>
     </div>
     <div class="setrow">
-      <div class="setlabel">🤖 自动驾驶示范<small>AI 跑完美路线，供学习参考</small></div>
+      <div class="setlabel">🧠 智能驾驶<small>AI 跑完美路线，供学习参考</small></div>
       <div class="toggle" id="tgAuto"></div>
     </div>
     <div class="setclose">
@@ -353,10 +364,16 @@
 </div>
 <div id="overlay">
   <div class="panel">
-    <div class="title" data-i18n="gameTitle">极速狂飙</div>
+    <!-- Tab 导航 -->
+    <div class="setupTabs">
+      <button class="stab on" data-tab="car"><span>🚗</span><em data-i18n="cars">赛车</em></button>
+      <button class="stab" data-tab="track"><span>🗺️</span><em data-i18n="maps">地图</em></button>
+      <button class="stab" data-tab="race"><span>🏁</span><em>比赛</em></button>
+    </div>
+    <div class="title" data-i18n="gameTitle" style="display:none">极速狂飙</div>
     <div class="sub">双 人 对 战 · 3 圈 决 胜</div>
     <div class="cols" id="keysArea"></div>
-    <div id="customPanel" style="display:none;margin-bottom:16px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(140,200,255,.2);max-width:560px">
+    <div id="customPanel" class="tabPane" data-pane="track" style="display:none;margin-bottom:16px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(140,200,255,.2);max-width:560px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div data-i18n="editor" style="font-size:12px;font-weight:850;letter-spacing:2px;color:#8ef7c8">赛道编辑器</div>
         <div style="font-size:10.5px;color:#6f8db0"><span id="planCount">0</span>/${MAX_PLAN} 段</div>
@@ -378,7 +395,7 @@
         <button class="setbtn" id="btnRandom" style="flex:1;background:rgba(140,200,255,.16);color:#cfe8ff;border:1px solid rgba(140,200,255,.35)">🎲 随机</button>
       </div>
     </div>
-    <div style="margin-bottom:16px">
+    <div class="tabPane" data-pane="car" style="margin-bottom:16px">
       <div data-i18n="cars" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">选择赛车</div>
       <div id="carList" style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;max-width:520px"></div>
     </div>
@@ -391,7 +408,7 @@
       <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin:14px 0 9px;text-align:left">天气</div>
       <div class="laps" id="weatherList"></div>
     </div>
-    <div>
+    <div class="tabPane" data-pane="track" style="display:none">
       <div data-i18n="maps" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">地图</div>
       <div class="maps" id="mapList"></div>
     </div>
@@ -488,7 +505,7 @@
   var DRIFT_MIN_SPEED = MAX_SPEED * 0.42;   // 达到此速度才能漂移
   var DRIFT_STEER_GAIN = 1.55;              // 漂移时转向增益
   var DRIFT_GRIP = 0.86;                    // 抓地力（越小越滑）
-  var DRIFT_SPEED_LOSS = 0.985;             // 漂移速度衰减
+  var DRIFT_SPEED_LOSS = 0.9965;            // 漂移速度衰减（调轻，几乎不掉速）
   var COUNTER_STEER_BOOST = 2.1;            // 反打方向盘的修正力
   var TOTAL_LAPS = 2;
   var CUSTOM_LAPS = 2;   // 玩家可选圈数
@@ -581,6 +598,7 @@
       tunnel: null,     // { start, len, index } 隧道
       bridge: null,     // { start, len, index } 桥梁
       jump: null,       // { start, len, index, kind } 跳台
+      rail: null,       // { side } 弯道护栏
       color: (Math.floor(n / RUMBLE_LEN) % 2) ? COLORS.DARK : COLORS.LIGHT
     });
   }
@@ -915,17 +933,35 @@
       if (n % 3 === 0) seg.sprites.push({ type: 'bush', offset: side * rnd(1.6, 2.4), w: rnd(260, 420), h: rnd(180, 300), tint: pick(TH.tree) });
       // 广告牌（每隔一段）
       if (n % 67 === 0) seg.sprites.push({ type: 'billboard', offset: side * rnd(2.2, 3.0), w: rnd(700, 900), h: rnd(500, 660), tint: pick(['#e63946', '#2a7fd4', '#f4a261', '#2a9d8f', '#e76f51']) });
-      // 观众：只在弯道处聚集（|curve| > 1.5 的段）
-      if (Math.abs(seg.curve) > 1.5 && n % 2 === 0) {
-        var crowdN = 2 + Math.floor(Math.abs(seg.curve));
-        for (var spI = 0; spI < crowdN; spI++) {
-          seg.sprites.push({
-            type: 'crowd',
-            offset: side * (1.42 + spI * 0.22),
-            w: rnd(130, 200), h: rnd(240, 350),
-            tint: pick(['#e63946','#2a7fd4','#f4a261','#2a9d8f','#e9c46a','#8ecae6','#ffb4a2']),
-            standing: true
-          });
+      // ── 弯道：护栏 + 两侧观众 ──
+      if (Math.abs(seg.curve) > 1.5) {
+        // 弯道内侧（弯心侧）加护栏
+        seg.rail = { side: seg.curve > 0 ? 1 : -1 };
+        // 观众：弯道外侧（离心方向）人更多
+        if (n % 2 === 0) {
+          var outerSide = seg.curve > 0 ? -1 : 1;   // 外侧 = 弯心反方向
+          var crowdN = 3 + Math.floor(Math.abs(seg.curve) * 1.2);
+          for (var spI = 0; spI < crowdN; spI++) {
+            seg.sprites.push({
+              type: 'crowd',
+              offset: outerSide * (1.55 + spI * 0.24),
+              w: rnd(130, 200), h: rnd(240, 350),
+              tint: pick(['#e63946','#2a7fd4','#f4a261','#2a9d8f','#e9c46a','#8ecae6','#ffb4a2']),
+              standing: true
+            });
+          }
+          // 内侧也来几个人（少数）
+          if (n % 6 === 0) {
+            for (var spJ = 0; spJ < 2; spJ++) {
+              seg.sprites.push({
+                type: 'crowd',
+                offset: -outerSide * (1.5 + spJ * 0.22),
+                w: rnd(120, 180), h: rnd(220, 320),
+                tint: pick(['#e63946','#2a7fd4','#f4a261','#2a9d8f']),
+                standing: true
+              });
+            }
+          }
         }
       }
       // 加油站（每张图 1-2 个）
@@ -1065,8 +1101,17 @@
     ctx.fillStyle = TH.farMountain;
     ctx.beginPath();
     ctx.moveTo(-200 + mx, horizon + 4);
+    // 远山：基础更小（0.08~0.15），跑得越远越大（模拟接近）
+    var progress = 0;
+    try {
+      var pSeg = segments[0];
+      if (typeof P1 !== 'undefined' && P1 && trackLength > 0) {
+        progress = Math.min(1, (P1.totalDistance / trackLength) % 1);
+      }
+    } catch (e) {}
+    var mountainScale = 0.52 + progress * 0.62;   // 0.52 → 1.14
     var peaks = [[-0.1, 0.16], [0.06, 0.26], [0.22, 0.13], [0.36, 0.22], [0.5, 0.1], [0.64, 0.24], [0.78, 0.15], [0.92, 0.21], [1.06, 0.12]];
-    for (var i = 0; i < peaks.length; i++) ctx.lineTo(vw * peaks[i][0] + mx, horizon - vh * peaks[i][1]);
+    for (var i = 0; i < peaks.length; i++) ctx.lineTo(vw * peaks[i][0] + mx, horizon - vh * peaks[i][1] * mountainScale);
     ctx.lineTo(vw + 200 + mx, horizon + 4);
     ctx.closePath(); ctx.fill();
 
@@ -1075,7 +1120,7 @@
     ctx.beginPath();
     ctx.moveTo(-200 + mx2, horizon + 6);
     var hills = [[-0.05, 0.07], [0.15, 0.1], [0.34, 0.06], [0.55, 0.11], [0.74, 0.07], [0.95, 0.1], [1.1, 0.06]];
-    for (var j = 0; j < hills.length; j++) ctx.lineTo(vw * hills[j][0] + mx2, horizon - vh * hills[j][1]);
+    for (var j = 0; j < hills.length; j++) ctx.lineTo(vw * hills[j][0] + mx2, horizon - vh * hills[j][1] * (0.62 + progress * 0.45));
     ctx.lineTo(vw + 200 + mx2, horizon + 6);
     ctx.closePath(); ctx.fill();
   }
@@ -1290,6 +1335,43 @@
       }
     }
 
+    // ── 弯道护栏 ──
+    if (seg.rail) {
+      var railSide = seg.rail.side;
+      var rx1 = railSide > 0 ? p1.x + p1.w * 1.02 : p1.x - p1.w * 1.02;
+      var rx2 = railSide > 0 ? p2.x + p2.w * 1.02 : p2.x - p2.w * 1.02;
+      var railH = (p1.y - p2.y) * 3.2;
+      var railHW1 = Math.max(2, p1.w * 0.045);
+      var railHW2 = Math.max(2, p2.w * 0.045);
+      // 立柱
+      ctx.fillStyle = 'rgba(200,210,220,0.8)';
+      ctx.beginPath();
+      ctx.moveTo(rx1 - railHW1 / 2, p1.y);
+      ctx.lineTo(rx1 - railHW1 / 2, p1.y - railH);
+      ctx.lineTo(rx1 + railHW1 / 2, p1.y - railH);
+      ctx.lineTo(rx1 + railHW1 / 2, p1.y);
+      ctx.closePath(); ctx.fill();
+      // 横梁（拉到下一段）
+      ctx.strokeStyle = 'rgba(220,230,240,0.85)';
+      ctx.lineWidth = Math.max(1.5, (railHW1 + railHW2) / 2);
+      ctx.beginPath();
+      ctx.moveTo(rx1, p1.y - railH);
+      ctx.lineTo(rx2, p2.y - railH * 1.1);
+      ctx.stroke();
+      // 中层横梁
+      ctx.strokeStyle = 'rgba(190,200,215,0.6)';
+      ctx.lineWidth = Math.max(1, (railHW1 + railHW2) / 3);
+      ctx.beginPath();
+      ctx.moveTo(rx1, p1.y - railH * 0.55);
+      ctx.lineTo(rx2, p2.y - railH * 0.6);
+      ctx.stroke();
+      // 反光条（红白）
+      if (seg.index % 2 === 0) {
+        ctx.fillStyle = 'rgba(255,70,80,0.75)';
+        ctx.fillRect(rx1 - railHW1 / 2, p1.y - railH * 0.95, railHW1, Math.max(1, railH * 0.18));
+      }
+    }
+
     // ── 加速带视觉 ──
     if (seg.boostPad) {
       var bp = seg.boostPad;
@@ -1399,20 +1481,64 @@
     if (destX + destW < -V.w || destX > V.w * 2) return;
 
     if (sprite.type === 'tree') {
-      ctx.fillStyle = '#3a2b1e';
-      ctx.fillRect(destX + destW * 0.42, destY + destH * 0.62, destW * 0.16, destH * 0.38);
-      ctx.fillStyle = sprite.tint;
-      ctx.beginPath();
-      ctx.moveTo(destX + destW * 0.5, destY);
-      ctx.lineTo(destX + destW, destY + destH * 0.72);
-      ctx.lineTo(destX, destY + destH * 0.72);
-      ctx.closePath(); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.06)';
-      ctx.beginPath();
-      ctx.moveTo(destX + destW * 0.5, destY);
-      ctx.lineTo(destX + destW * 0.5, destY + destH * 0.72);
-      ctx.lineTo(destX, destY + destH * 0.72);
-      ctx.closePath(); ctx.fill();
+      if (sprite.fallen) {
+        // ── 倒下的树：横躺 + 连根拔起 ──
+        var fp = sprite.fallProgress || 0;
+        var angle = (sprite.fallDir || 1) * (Math.PI / 2) * fp;   // 0→90°
+        var pivotX = destX + destW * 0.5;
+        var pivotY = destY + destH * 0.95;                         // 以树根为轴
+        ctx.save();
+        ctx.translate(pivotX, pivotY);
+        ctx.rotate(angle);
+        ctx.translate(-pivotX, -pivotY);
+        // 树干
+        ctx.fillStyle = '#3a2b1e';
+        ctx.fillRect(destX + destW * 0.42, destY + destH * 0.62, destW * 0.16, destH * 0.38);
+        // 树冠
+        ctx.fillStyle = sprite.tint;
+        ctx.beginPath();
+        ctx.moveTo(destX + destW * 0.5, destY);
+        ctx.lineTo(destX + destW, destY + destH * 0.72);
+        ctx.lineTo(destX, destY + destH * 0.72);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+        // 根部泥土
+        if (fp > 0.3) {
+          ctx.fillStyle = 'rgba(90,70,50,' + (0.6 * fp) + ')';
+          ctx.beginPath();
+          ctx.ellipse(pivotX, pivotY, destW * 0.35 * fp, destH * 0.06 * fp, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // 落叶
+        if (fp > 0.5) {
+          ctx.fillStyle = sprite.tint;
+          ctx.globalAlpha = 0.7;
+          for (var lf = 0; lf < 4; lf++) {
+            var lx = pivotX + (lf - 1.5) * destW * 0.3;
+            var ly = pivotY - destH * 0.05 - (lf % 2) * destH * 0.04;
+            ctx.beginPath();
+            ctx.ellipse(lx, ly, destW * 0.05, destH * 0.02, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+      } else {
+        // ── 站立的树 ──
+        ctx.fillStyle = '#3a2b1e';
+        ctx.fillRect(destX + destW * 0.42, destY + destH * 0.62, destW * 0.16, destH * 0.38);
+        ctx.fillStyle = sprite.tint;
+        ctx.beginPath();
+        ctx.moveTo(destX + destW * 0.5, destY);
+        ctx.lineTo(destX + destW, destY + destH * 0.72);
+        ctx.lineTo(destX, destY + destH * 0.72);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.06)';
+        ctx.beginPath();
+        ctx.moveTo(destX + destW * 0.5, destY);
+        ctx.lineTo(destX + destW * 0.5, destY + destH * 0.72);
+        ctx.lineTo(destX, destY + destH * 0.72);
+        ctx.closePath(); ctx.fill();
+      }
     } else if (sprite.type === 'sign') {
       ctx.fillStyle = '#6b7280';
       ctx.fillRect(destX + destW * 0.46, destY + destH * 0.45, destW * 0.08, destH * 0.55);
@@ -1835,8 +1961,9 @@
       seg.clip = maxy;
 
       var vp = viewParams();
-      project(seg.p1, (p.playerX * ROAD_W) - x, playerY + vp.camH, p.position - (seg.looped ? trackLength : 0), CAM_DEPTH, V.w, V.h, ROAD_W);
-      project(seg.p2, (p.playerX * ROAD_W) - x - dx, playerY + vp.camH, p.position - (seg.looped ? trackLength : 0), CAM_DEPTH, V.w, V.h, ROAD_W);
+      var vpDepth = CAM_DEPTH * (vp.fov || 1);
+      project(seg.p1, (p.playerX * ROAD_W) - x, playerY + vp.camH, p.position - (seg.looped ? trackLength : 0), vpDepth, V.w, V.h, ROAD_W);
+      project(seg.p2, (p.playerX * ROAD_W) - x - dx, playerY + vp.camH, p.position - (seg.looped ? trackLength : 0), vpDepth, V.w, V.h, ROAD_W);
 
       x += dx;
       dx += seg.curve;
@@ -2237,6 +2364,28 @@
       }
     }
 
+    // ── 撞树检测 ──
+    if (Math.abs(p.playerX) > 0.95) {
+      var treeSeg = findSegment(p.position + PLAYER_Z);
+      if (treeSeg && treeSeg.sprites) {
+        for (var tsi = 0; tsi < treeSeg.sprites.length; tsi++) {
+          var tsp = treeSeg.sprites[tsi];
+          if (tsp.type === 'tree' && !tsp.fallen && Math.abs(tsp.offset - p.playerX) < 0.55) {
+            tsp.fallen = 1;              // 倒下
+            tsp.fallDir = (tsp.offset > p.playerX ? 1 : -1);
+            tsp.fallProgress = 0;
+            p.speed *= 0.55;             // 撞树明显减速
+            p.shake = Math.max(p.shake, 0.85);
+            p.dustTimer = 0.8; p.dustIntensity = 0.7;
+            playCrash();
+            playDustSound();
+            flashTip('撞树！');
+            p.driftScore = Math.max(0, p.driftScore - 20);
+          }
+        }
+      }
+    }
+
     // ── 撞行人检测 ──
     if (Math.abs(p.playerX) > 1.02) {
       var pedSeg = findSegment(p.position + PLAYER_Z);
@@ -2629,6 +2778,7 @@
       for (var spi2 = 0; spi2 < sg2.sprites.length; spi2++) {
         var spr = sg2.sprites[spi2];
         if (spr.knocked > 0) spr.knocked -= dt * 1.2;
+        if (spr.fallen && spr.fallProgress < 1) spr.fallProgress = Math.min(1, (spr.fallProgress || 0) + dt * 2.2);
         if (spr.bloodTimer > 0) spr.bloodTimer -= dt;
       }
     }
@@ -2671,6 +2821,17 @@
       filter.frequency.value = 900;
       osc.type = 'sawtooth';
       osc.frequency.value = 55;
+      // 加一个低八度叠加，声音更厚
+      try {
+        var sub = AC.createOscillator();
+        var subGain = AC.createGain();
+        sub.type = 'sine';
+        sub.frequency.value = 27;
+        subGain.gain.value = 0.35;
+        sub.connect(subGain); subGain.connect(filter);
+        sub.start();
+        osc._sub = sub;
+      } catch (e2) {}
       gain.gain.value = 0;
       var panner = null;
       if (AC.createStereoPanner) {
@@ -2770,56 +2931,149 @@
     } catch (e) {}
   }
 
-  /* ================= 背景音乐（程序化合成）================= */
-  // 简单循环：低音 + 和弦琶音，营造赛车氛围
-  var BGM_SCALE = [0, 3, 5, 7, 10];   // 小调五声
-  var BGM_ROOT = 55;                   // A1
-  var bgmStep = 0, bgmNextTime = 0, bgmPlaying = false;
+  /* ================= 背景音乐（升级版：和声进行 + 鼓 + 贝斯）================= */
+  // A 小调 · 经典赛车和弦进行：Am - F - C - G
+  var BGM_CHORDS = [
+    [57, 60, 64],    // Am
+    [53, 57, 60],    // F
+    [48, 52, 55],    // C
+    [55, 59, 62]     // G
+  ];
+  var BGM_BASS = [45, 41, 36, 43];   // A1 F1 C1 G1
+  var BGM_SCALE = [0, 2, 3, 5, 7, 8, 10];   // 自然小调
+  var bgmStep = 0, bgmNextTime = 0, bgmPlaying = false, bgmBar = 0;
 
   function startBgm() {
     if (!AC || bgmPlaying) return;
     bgmPlaying = true;
-    bgmNextTime = AC.currentTime + 0.1;
+    bgmNextTime = AC.currentTime + 0.15;
     bgmStep = 0;
+    bgmBar = 0;
     scheduleBgm();
   }
 
   function scheduleBgm() {
     if (!AC || !bgmPlaying) return;
-    var lookahead = 0.5;
+    var lookahead = 0.6;
     while (bgmNextTime < AC.currentTime + lookahead) {
       var t = bgmNextTime;
-      var step = bgmStep % 16;
-      // 低音：每拍
+      var step = bgmStep % 16;             // 16 步一小节
+      var bar = Math.floor(bgmStep / 16) % 4;
+      var chord = BGM_CHORDS[bar];
+      var bass = BGM_BASS[bar];
+
+      // ── 鼓组 ──
+      if (step === 0 || step === 8) playKick(t);                    // 底鼓（1、3 拍）
+      if (step === 4 || step === 12) playSnare(t);                  // 军鼓（2、4 拍）
+      if (step % 4 === 2) playHat(t, 0.018);                        // 踩镲（反拍）
+      if (step % 2 === 0) playHat(t, 0.008);                        // 八分踩镲
+
+      // ── 贝斯（每拍一下，八度跳）──
       if (step % 4 === 0) {
-        playBgmNote(BGM_ROOT * (step === 0 ? 1 : 1.5), t, 0.34, 'sawtooth', 0.055);
+        var bassFreq = mtof(bass + (step === 8 ? 12 : 0));
+        playBgmNote(bassFreq, t, 0.32, 'sawtooth', 0.075, 380);
       }
-      // 琶音：每半拍
-      var note = BGM_SCALE[step % BGM_SCALE.length];
-      var octave = step < 8 ? 4 : 8;
-      playBgmNote(BGM_ROOT * octave * Math.pow(2, note / 12), t, 0.16, 'triangle', 0.028);
-      // 高音点缀
-      if (step % 8 === 6) {
-        playBgmNote(BGM_ROOT * 12 * Math.pow(2, BGM_SCALE[(step + 2) % 5] / 12), t, 0.1, 'sine', 0.018);
+
+      // ── 和弦垫（每小节开头）──
+      if (step === 0) {
+        for (var ci2 = 0; ci2 < chord.length; ci2++) {
+          playBgmNote(mtof(chord[ci2] + 12), t, 1.6, 'triangle', 0.028, 1200);
+        }
       }
-      bgmNextTime += 0.125;   // 每步 125ms ≈ 120bpm 的十六分音符
+
+      // ── 主旋律琶音（八分音符）──
+      if (step % 2 === 0) {
+        var arpIdx = [0, 1, 2, 1, 0, 2, 1, 2][(step / 2) % 8];
+        var note = chord[arpIdx] + 24;
+        if (step === 14) note = chord[2] + 26;    // 小变化
+        playBgmNote(mtof(note), t, 0.16, 'square', 0.022, 2600);
+      }
+
+      // ── 高音点缀（每 2 小节）──
+      if (bgmStep % 32 === 24) {
+        playBgmNote(mtof(chord[2] + 36), t, 0.28, 'sine', 0.02, 4000);
+      }
+
+      bgmNextTime += 0.115;   // ~130 BPM 的十六分
       bgmStep++;
     }
-    bgmTimer = setTimeout(scheduleBgm, 120);
+    bgmTimer = setTimeout(scheduleBgm, 140);
   }
 
-  function playBgmNote(freq, when, dur, type, vol) {
+  // MIDI 音高 → 频率
+  function mtof(midi) {
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  // 增强版音符：带滤波器 + 柔和起音
+  function playBgmNote(freq, when, dur, type, vol, cutoff) {
     if (!AC) return;
     try {
       var osc = AC.createOscillator();
       var g = AC.createGain();
+      var flt = AC.createBiquadFilter();
+      flt.type = 'lowpass';
+      flt.frequency.setValueAtTime(cutoff || 2000, when);
+      flt.Q.value = 0.7;
       osc.type = type;
       osc.frequency.value = freq;
+      // 柔和起音（避免爆音）
       g.gain.setValueAtTime(0, when);
-      g.gain.linearRampToValueAtTime(vol, when + 0.012);
+      g.gain.linearRampToValueAtTime(vol, when + 0.018);
       g.gain.exponentialRampToValueAtTime(0.0008, when + dur);
-      osc.connect(g); g.connect(masterGain);
-      osc.start(when); osc.stop(when + dur + 0.03);
+      osc.connect(flt); flt.connect(g); g.connect(masterGain);
+      osc.start(when); osc.stop(when + dur + 0.04);
+    } catch (e) {}
+  }
+
+  // ── 鼓组合成 ──
+  function playKick(when) {
+    if (!AC) return;
+    try {
+      var o = AC.createOscillator();
+      var g = AC.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(150, when);
+      o.frequency.exponentialRampToValueAtTime(42, when + 0.09);
+      g.gain.setValueAtTime(0.2, when);
+      g.gain.exponentialRampToValueAtTime(0.001, when + 0.16);
+      o.connect(g); g.connect(masterGain);
+      o.start(when); o.stop(when + 0.18);
+    } catch (e) {}
+  }
+  function playSnare(when) {
+    if (!AC) return;
+    try {
+      var len = AC.sampleRate * 0.12;
+      var buf = AC.createBuffer(1, len, AC.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      var src = AC.createBufferSource(); src.buffer = buf;
+      var g = AC.createGain(); g.gain.value = 0.11;
+      var bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.8;
+      src.connect(bp); bp.connect(g); g.connect(masterGain);
+      src.start(when);
+      // 加一点音高感
+      var o = AC.createOscillator(); var og = AC.createGain();
+      o.type = 'triangle'; o.frequency.setValueAtTime(220, when);
+      og.gain.setValueAtTime(0.05, when);
+      og.gain.exponentialRampToValueAtTime(0.001, when + 0.08);
+      o.connect(og); og.connect(masterGain);
+      o.start(when); o.stop(when + 0.1);
+    } catch (e) {}
+  }
+  function playHat(when, vol) {
+    if (!AC) return;
+    try {
+      var len = AC.sampleRate * 0.04;
+      var buf = AC.createBuffer(1, len, AC.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 5);
+      var src = AC.createBufferSource(); src.buffer = buf;
+      var g = AC.createGain(); g.gain.value = vol;
+      var hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
+      src.connect(hp); hp.connect(g); g.connect(masterGain);
+      src.start(when);
     } catch (e) {}
   }
 
@@ -3085,14 +3339,14 @@
       finish: '完成！', over: '比赛结束', winner: '获胜', total: '总时间', bestLap: '最快单圈',
       driftScore: '漂移得分', again: '再来一局', share: '分享', lb: '🏆 排行榜（本机）', lbMap: '本图排行榜',
       noRec: '暂无记录', paused: '⏸ 游戏已暂停 · 关闭后继续',
-      sBgm: '背景音乐', sSfx: '音效', sManual: '手动挡', sGhost: '幽灵车', sAuto: '🤖 自动驾驶示范', sView: '视角',
+      sBgm: '背景音乐', sSfx: '音效', sManual: '手动挡', sGhost: '幽灵车', sAuto: '🧠 智能驾驶', sView: '视角',
       sBgmD: '程序化合成的赛车 BGM', sSfxD: '引擎 / 漂移 / 碰撞 / 起步喷',
       sManualD: '关闭=自动加速；开启=一直按住加速键', sGhostD: '显示最佳圈速轨迹（有重影）',
       sAutoD: 'AI 跑完美路线，供学习参考', sViewD: '远景 / 中景 / 第一视角',
       resume: '继续游戏', quit: '退出到菜单',
            vFar: '远景', vMid: '中景', vFirst: '第一视角',
       lead: '领先', trail: '落后', tied: '并排',
-      aiDriving: '🤖 AI 驾驶中', boostPad: '⚡ 加速带',
+      aiDriving: '🧠 智驾中', boostPad: '⚡ 加速带',
     },
     en: {
       gameTitle: 'TURBO', gameSub: '极速狂飙 · TURBO GAME',
@@ -3108,14 +3362,14 @@
       finish: 'FINISH!', over: 'RACE OVER', winner: 'wins', total: 'Total', bestLap: 'Best Lap',
       driftScore: 'Drift', again: 'RACE AGAIN', share: 'SHARE', lb: '🏆 LEADERBOARD', lbMap: 'MAP RECORDS',
       noRec: 'No records yet', paused: '⏸ PAUSED · close to resume',
-      sBgm: 'Music', sSfx: 'Sound FX', sManual: 'Manual Gas', sGhost: 'Ghost Car', sAuto: '🤖 Auto Drive', sView: 'Camera',
+      sBgm: 'Music', sSfx: 'Sound FX', sManual: 'Manual Gas', sGhost: 'Ghost Car', sAuto: '🧠 Autopilot', sView: 'Camera',
       sBgmD: 'Procedural racing BGM', sSfxD: 'Engine / drift / crash / launch',
       sManualD: 'Off = auto-gas; On = hold to accelerate', sGhostD: 'Show best-lap ghost (semi-transparent)',
       sAutoD: 'AI drives the perfect line', sViewD: 'Far / Mid / First-person',
       resume: 'RESUME', quit: 'QUIT TO MENU',
            vFar: 'Far', vMid: 'Mid', vFirst: '1st-Person',
       lead: 'Lead', trail: 'Behind', tied: 'TIED',
-      aiDriving: '🤖 AI DRIVING', boostPad: '⚡ BOOST',
+      aiDriving: '🧠 AUTOPILOT', boostPad: '⚡ BOOST',
     }
   };
   function t(key) {
@@ -3157,6 +3411,36 @@
     if (hb) hb.classList.remove('hide');
     updateHomeBest();
   }
+  var SETUP_TAB = 'car';
+  function switchTab(name) {
+    SETUP_TAB = name;
+    var btns = document.querySelectorAll ? document.querySelectorAll('.stab') : [];
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].className = 'stab' + (btns[i].getAttribute('data-tab') === name ? ' on' : '');
+    }
+    var panes = document.querySelectorAll ? document.querySelectorAll('.tabPane') : [];
+    for (var j = 0; j < panes.length; j++) {
+      var pn = panes[j].getAttribute('data-pane');
+      var show = (pn === name);
+      // customPanel 特殊：只有选自定义地图时才显示
+      if (pn === 'track' && panes[j].id === 'customPanel') {
+        show = (name === 'track' && selectedMap === 'custom');
+      }
+      panes[j].style.display = show ? '' : 'none';
+    }
+    // 有 tab 时隐藏大标题省空间
+    var tt = document.querySelector ? document.querySelector('.panel .title') : null;
+    if (tt) tt.style.display = 'none';
+  }
+  function bindTabs() {
+    var btns = document.querySelectorAll ? document.querySelectorAll('.stab') : [];
+    for (var i = 0; i < btns.length; i++) {
+      (function (b) {
+        b.onclick = function () { switchTab(b.getAttribute('data-tab')); };
+      })(btns[i]);
+    }
+  }
+
   function goSetup() {
     var hb = document.getElementById('home');
     var ov = document.getElementById('overlay');
@@ -3190,12 +3474,14 @@
   // 各视角的相机高度和车位置
   function viewParams() {
     if (CAM_VIEW === 2) {
-      // 第一视角：相机贴地、车几乎不可见
-      return { camH: 420, carScale: 0.0, carY: 0, drawCar: false };
+      // 第一视角：相机贴地（420）、看不到自己车，视野窄
+      return { camH: 380, carScale: 0, carY: 0, drawCar: false, fov: 1.28 };
     } else if (CAM_VIEW === 1) {
-      return { camH: 760, carScale: 0.72, carY: 0, drawCar: true };
+      // 中景：相机抬高（1150）、车变小（55%）、视野略宽
+      return { camH: 1150, carScale: 0.55, carY: 0, drawCar: true, fov: 1.08 };
     }
-    return { camH: 1000, carScale: 1.0, carY: 0, drawCar: true };
+    // 远景：相机更高（1500）、车最大、视野开阔
+    return { camH: 1500, carScale: 1.0, carY: 0, drawCar: true, fov: 1.0 };
   }
 
   /* ================= 赛车数据 ================= */
@@ -4198,6 +4484,8 @@
     if (thb) thb.addEventListener('click', toggleTheme);
     var rb = document.getElementById('restartBtn');
     if (rb) rb.addEventListener('click', restartRace);
+    bindTabs();
+    switchTab('car');
     applyTheme();
     applyLang();
     showHome();
