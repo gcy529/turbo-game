@@ -54,8 +54,8 @@
   body[data-theme='light'] #home{background:radial-gradient(circle at 50% 35%,rgba(180,205,235,.94),rgba(228,238,250,.99))}
   body[data-theme='light'] .homeBtn{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   body[data-theme='light'] .homeBtn.primary{color:#06121e}
-  body[data-theme='light'] .bmbtn,body[data-theme='light'] .bsbtn,body[data-theme='light'] .vmbtn{background:rgba(40,80,140,.12);color:#14304f;border-color:rgba(40,80,140,.35)}
-  body[data-theme='light'] .bmbtn.on,body[data-theme='light'] .bsbtn.on,body[data-theme='light'] .vmbtn.on{background:rgba(42,157,143,.25);color:#0f5a4e;border-color:rgba(42,157,143,.7)}
+  body[data-theme='light'] .bsbtn,body[data-theme='light'] .vmbtn{background:rgba(40,80,140,.12);color:#14304f;border-color:rgba(40,80,140,.35)}
+  body[data-theme='light'] .bsbtn.on,body[data-theme='light'] .vmbtn.on{background:rgba(42,157,143,.25);color:#0f5a4e;border-color:rgba(42,157,143,.7)}
   body[data-theme='light'] .homeMini{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   html,body{width:100%;height:100%;overflow:hidden;background:#05070e}
   body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent;color:#eaf2ff}
@@ -3998,30 +3998,6 @@
     }
   }
 
-  function setBrakeMode(mode) {
-    CFG.brakeMode = mode;
-    applyBrakeBtnVisual();
-    updateBrakeBtn(mode);
-    flashTip(mode === 'drift' ? '右侧改为漂移手刹' : '右侧是刹车');
-    try { localStorage.setItem('turbo-racer-brake', mode); } catch (e) {}
-  }
-  function applyBrakeBtnVisual() {
-    var el = document.getElementById('a1b');
-    if (!el) return;
-    var isDrift = (CFG.brakeMode === 'drift');
-    el.textContent = isDrift ? '💨' : '🅿️';
-    el.className = 'tb' + (isDrift ? ' tb-drift' : ' tb-brake');
-    el.title = isDrift ? '漂移手刹' : '刹车 / 倒退';
-  }
-
-  function updateBrakeBtn(mode) {
-    var btns = document.querySelectorAll ? document.querySelectorAll('.bmbtn') : [];
-    for (var i = 0; i < btns.length; i++) {
-      var bm = btns[i].getAttribute('data-bm');
-      if (bm === mode) { btns[i].classList.add('on'); btns[i].style.background = ''; btns[i].style.borderColor = ''; btns[i].style.color = ''; }
-      else { btns[i].classList.remove('on'); btns[i].style.background = ''; btns[i].style.borderColor = ''; btns[i].style.color = ''; }
-    }
-  }
   function updateVmBtn() {
     var btns = document.querySelectorAll ? document.querySelectorAll('.vmbtn') : [];
     for (var i = 0; i < btns.length; i++) {
