@@ -64,7 +64,8 @@
     #launch .s{font-size:11px}
     #shortcut{bottom:calc(50% + 34px);font-size:12px;padding:4px 12px}
     #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
-    #viewBtn{right:8px;top:48px;width:32px;height:32px;font-size:14px}
+    #viewBar{right:8px;top:46px;gap:4px}
+    .vbtn{width:29px;height:29px;font-size:11.5px;border-radius:8px}
     #autoBadge{right:8px;top:88px;font-size:9.5px;padding:4px 8px}
     .tb{width:56px;height:56px;font-size:18px}
     .panel{padding:16px 14px;max-height:96vh;overflow-y:auto}
@@ -193,6 +194,9 @@
   .cslider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#8ef7c8;cursor:pointer;box-shadow:0 0 10px rgba(110,247,200,.6)}
   #viewBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
   #settingsBtn{position:fixed;right:14px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#cfe8ff;backdrop-filter:blur(8px);transition:background .15s,border-color .15s}
+  .vbtn{width:34px;height:34px;border-radius:9px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#8ba3bd;backdrop-filter:blur(8px);transition:all .15s;user-select:none}
+  .vbtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
+  .vbtn.sel{background:rgba(60,220,160,.25);border-color:rgba(60,220,160,.75);color:#8ef7c8;box-shadow:0 0 14px rgba(60,220,160,.35)}
   #settingsBtn .gear{display:inline-block;animation:gearSpin 14s linear infinite}
   #settingsBtn:hover .gear{animation-duration:1.6s}
   @keyframes gearSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -233,7 +237,7 @@
 </div>
 
 <div id="autoBadge" style="position:fixed;right:14px;top:108px;z-index:14;display:none;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:rgba(10,18,34,.78);border:1px solid rgba(140,200,255,.35);backdrop-filter:blur(8px);font-size:10.5px;font-weight:800;letter-spacing:1px;color:#8ef7c8;pointer-events:none;white-space:nowrap">🤖 AI 驾驶中</div>
-<div id="viewBtn" title="切换视角" style="position:fixed;right:14px;top:60px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:#cfe8ff;backdrop-filter:blur(8px);transition:background .15s,border-color .15s">🎥</div>
+<div id="viewBar" style="position:fixed;right:14px;top:60px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="远景">1</div><div class="vbtn" data-v="1" title="中景">2</div><div class="vbtn" data-v="2" title="第一视角">3</div></div>
 <div id="settingsBtn" title="设置"><span class="gear">⚙</span></div>
 <div id="settingsPanel">
   <div class="setbox">
@@ -251,20 +255,12 @@
       <div class="toggle" id="tgManual"></div>
     </div>
     <div class="setrow">
-      <div class="setlabel">幽灵车<small>显示你最佳圈速的半透明轨迹</small></div>
-      <div class="toggle on" id="tgGhost"></div>
+      <div class="setlabel">幽灵车<small>显示你最佳圈速的半透明轨迹（有重影）</small></div>
+      <div class="toggle" id="tgGhost"></div>
     </div>
     <div class="setrow">
       <div class="setlabel">🤖 自动驾驶示范<small>AI 跑完美路线，供学习参考</small></div>
       <div class="toggle" id="tgAuto"></div>
-    </div>
-    <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
-      <div class="setlabel">视角<small>远景 / 中景 / 第一视角</small></div>
-      <div style="display:flex;gap:7px">
-        <button class="viewbtn" data-v="0" style="flex:1;padding:9px 4px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:11.5px;font-weight:800;cursor:pointer">🎥 远景</button>
-        <button class="viewbtn" data-v="1" style="flex:1;padding:9px 4px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:11.5px;font-weight:800;cursor:pointer">📹 中景</button>
-        <button class="viewbtn" data-v="2" style="flex:1;padding:9px 4px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:11.5px;font-weight:800;cursor:pointer">👁️ 第一视角</button>
-      </div>
     </div>
     <div class="setclose">
       <button class="setbtn primary" id="setResume">继续游戏</button>
@@ -2985,7 +2981,7 @@
   var finishedCount = 0;
 
   /* ================= 设置 ================= */
-  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: true };
+  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false };  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 0;
   var VIEW_LIST = [
@@ -3204,30 +3200,22 @@
   var elSetPanel = document.getElementById('settingsPanel');
   var elSetBtn = document.getElementById('settingsBtn');
 
-  function cycleView() {
-    CAM_VIEW = (CAM_VIEW + 1) % 3;
-    var v = VIEW_LIST[CAM_VIEW];
-    flashTip('视角：' + v.name);
-    var btn = document.getElementById('viewBtn');
-    if (btn) btn.textContent = v.icon;
+  function setView(v) {
+    CAM_VIEW = v;
+    flashTip(VIEW_LIST[CAM_VIEW].name + '视角');
+    updateViewBtns();
     try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
   }
 
   function updateViewBtns() {
-    var btns = document.querySelectorAll ? document.querySelectorAll('.viewbtn') : [];
+    var btns = document.querySelectorAll ? document.querySelectorAll('.vbtn') : [];
     for (var i = 0; i < btns.length; i++) {
       var v = Number(btns[i].getAttribute('data-v'));
-      if (v === CAM_VIEW) {
-        btns[i].style.background = 'rgba(60,220,160,.22)';
-        btns[i].style.borderColor = 'rgba(60,220,160,.7)';
-        btns[i].style.color = '#8ef7c8';
-      } else {
-        btns[i].style.background = 'rgba(255,255,255,.06)';
-        btns[i].style.borderColor = 'rgba(140,200,255,.22)';
-        btns[i].style.color = '#cfe4f7';
-      }
+      btns[i].className = 'vbtn' + (v === CAM_VIEW ? ' sel' : '');
     }
   }
+
+
 
   function openSettings() {
     elSetPanel.classList.add('on');
@@ -3403,19 +3391,7 @@
     var tghost = document.getElementById('tgGhost');
     if (tghost) tghost.onclick = function () { CFG.ghost = !CFG.ghost; syncToggles(); };
     // 视角按钮
-    var vbtns = document.querySelectorAll ? document.querySelectorAll('.viewbtn') : [];
-    for (var vi = 0; vi < vbtns.length; vi++) {
-      (function (b) {
-        b.onclick = function () {
-          CAM_VIEW = Number(b.getAttribute('data-v'));
-          try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
-          var vbtn2 = document.getElementById('viewBtn');
-          if (vbtn2) vbtn2.textContent = VIEW_LIST[CAM_VIEW].icon;
-          updateViewBtns();
-        };
-      })(vbtns[vi]);
-    }
-    updateViewBtns();
+
     if (sr) sr.onclick = closeSettings;
     if (sq) sq.onclick = quitToMenu;
   }
@@ -3932,21 +3908,21 @@
     bindSettingsUi();
     bindCustomUi();
     if (elSetBtn) elSetBtn.addEventListener('click', openSettings);
-    var vbtn = document.getElementById('viewBtn');
-    if (vbtn) vbtn.addEventListener('click', cycleView);
+    // 视角按钮 1/2/3
+    var vbtns2 = document.querySelectorAll ? document.querySelectorAll('.vbtn') : [];
+    for (var vbi = 0; vbi < vbtns2.length; vbi++) {
+      (function (b) { b.addEventListener('click', function () { setView(Number(b.getAttribute('data-v'))); }); })(vbtns2[vbi]);
+    }
     // 恢复上次视角
     try {
       var savedView = parseInt(localStorage.getItem('turbo-racer-view') || '0', 10);
-      if (savedView >= 0 && savedView <= 2) { CAM_VIEW = savedView; }
-      if (vbtn) vbtn.textContent = VIEW_LIST[CAM_VIEW].icon;
+      if (savedView >= 0 && savedView <= 2) CAM_VIEW = savedView;
     } catch (e) {}
+    updateViewBtns();
     render();
     requestAnimationFrame(frame);
   }
 
-  window.__T5__ = { plan: function(){return TRACK_PLAN;}, name: function(){return TRACK_NAME;}, addPlan: addPlan, clearPlan: function(){TRACK_PLAN=[];}, segs: function(){return segments;}, pads: function(){return segments.filter(function(s){return s.boostPad;}).length;}, p1: function(){return P1;}, build: buildTrack, cfg: function(){return CFG;}, traffic: function(){return traffic;} };
-  window.__T7__ = { segs: function(){return segments;}, build: buildTrack, mode: function(){return GAME_MODE;}, laps: function(){return selectedLaps;}, total: function(){return TOTAL_LAPS;} };
-  window.__TM__ = { build: buildTrack, segs: function(){return segments;}, tl: function(){return trackLength;}, p1: function(){return P1;}, cfg: function(){return CFG;}, setLaps: function(n){selectedLaps=n;TOTAL_LAPS=n;}, mode: function(m){GAME_MODE=m;applyModeUi();} };
   boot();
 
   // ── PWA：注册 Service Worker（离线可用）──
