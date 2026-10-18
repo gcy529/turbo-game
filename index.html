@@ -45,6 +45,61 @@
   .tb{position:fixed;width:68px;height:68px;border-radius:50%;background:rgba(140,200,255,.16);border:2px solid rgba(140,200,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#cfe8ff;pointer-events:auto;backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none}
   .tb:active{background:rgba(140,200,255,.34)}
   @media (hover:none) and (pointer:coarse){#touch{display:block}}
+  /* ── 竖屏模式（默认）── */
+  @media (orientation:portrait){
+    /* 双人模式改为上下分屏（本来就是上下）*/
+    .p1box{top:8px;left:8px}
+    .p2box{top:calc(50% + 8px);left:8px}
+    .pbox{padding:5px 10px;gap:6px}
+    .spd{font-size:26px}
+    .u{font-size:9px}
+    .meta{font-size:10px}
+    #pace{top:4px;padding:4px 12px}
+    #pace .ico{font-size:16px}
+    #pace .txt{font-size:11.5px;letter-spacing:1px}
+    #drift{right:8px;top:calc(50% - 34px)}
+    #drift .val{font-size:20px}
+    #launch{top:calc(50% - 70px)}
+    #launch .q{font-size:32px;letter-spacing:3px}
+    #launch .s{font-size:11px}
+    #shortcut{bottom:calc(50% + 34px);font-size:12px;padding:4px 12px}
+    #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
+    .tb{width:58px;height:58px;font-size:18px}
+    #a1l{left:10px;bottom:calc(50% + 10px)}
+    #a1r{left:76px;bottom:calc(50% + 10px)}
+    #a1g{left:43px;bottom:calc(50% + 76px)}
+    #a2l{right:76px;bottom:10px}
+    #a2r{right:10px;bottom:10px}
+    #a2g{right:43px;bottom:76px}
+    .panel{padding:16px 14px;max-height:96vh;overflow-y:auto}
+    .title{font-size:24px;letter-spacing:3px}
+    .sub{font-size:9px;letter-spacing:2px;margin-bottom:14px}
+    .cols{gap:14px;margin-bottom:12px}
+    .key{font-size:11px;margin-bottom:5px}
+    .maps{grid-template-columns:repeat(2,1fr);gap:7px;max-width:100%}
+    .mapcard{padding:9px 10px}
+    .mapcard .mn{font-size:11.5px}
+    .mapcard .md{font-size:8.5px}
+    .modes{flex-direction:row;gap:7px}
+    .modecard{padding:7px 10px;min-width:0;flex:1}
+    .modecard .mn2{font-size:11px}
+    .modecard .md2{font-size:8.5px}
+    .laps{flex-direction:row;gap:7px}
+    .lapcard{padding:6px 10px;font-size:11px;min-width:0;flex:1}
+    .carcard{padding:8px 4px}
+    .carcard .ci{font-size:18px}
+    .carcard .cn{font-size:9.5px}
+    .carcard .cstats{font-size:7.5px}
+    .go{padding:11px 28px;font-size:13px}
+    .tip{font-size:9px;margin-top:10px}
+    #carList{grid-template-columns:repeat(4,1fr);gap:6px;max-width:100%}
+    .setbox{padding:18px 16px;min-width:0;max-width:96vw}
+    .settitle{font-size:17px;margin-bottom:14px}
+    .setrow{padding:8px 0;gap:14px}
+    .setlabel{font-size:12px}
+    .setlabel small{font-size:9px}
+    #lbPanel{max-width:100%}
+  }
   @media (max-width:820px){
     .pbox{padding:5px 10px;gap:7px}
     .spd{font-size:24px}
@@ -112,6 +167,17 @@
   .modecard .mn2{font-size:13px;font-weight:850;color:#fff;letter-spacing:1px;margin-bottom:2px}
   .modecard .md2{font-size:10px;color:#7fa0bd;letter-spacing:.5px}
   .modecard.sel .mn2{color:#ffc078}
+  .carcard{padding:11px 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(140,200,255,.18);cursor:pointer;text-align:center;transition:all .15s}
+  .carcard:hover{background:rgba(255,255,255,.1);border-color:rgba(140,200,255,.4);transform:translateY(-2px)}
+  .carcard.sel{background:rgba(255,180,60,.14);border-color:rgba(255,190,80,.7);box-shadow:0 0 20px rgba(255,180,60,.22)}
+  .carcard .ci{font-size:22px;line-height:1.2;margin-bottom:3px}
+  .carcard .cn{font-size:11px;font-weight:850;color:#fff;letter-spacing:.5px;margin-bottom:4px}
+  .carcard.sel .cn{color:#ffc078}
+  .carcard .cstats{display:flex;flex-direction:column;gap:2px;font-size:8.5px;color:#7fa0bd}
+  .carcard .cstat{display:flex;align-items:center;gap:3px;justify-content:center}
+  .carcard .dots{display:flex;gap:1.5px}
+  .carcard .dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.16)}
+  .carcard .dot.on{background:#ffc078}
   /* 设置 */
   .planbtn{padding:9px 4px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:11.5px;font-weight:800;cursor:pointer;transition:all .14s;letter-spacing:.5px}
   .planbtn:hover{background:rgba(140,200,255,.2);border-color:rgba(140,200,255,.5);transform:translateY(-1px)}
@@ -157,13 +223,13 @@
 <div class="pbox p1box">
   <span class="tag t1">P1</span>
   <span class="spd" id="spd1">0</span><span class="u">KM/H</span>
-  <span class="meta">圈 <b id="lap1">1</b>/3<br>本圈 <b id="t1">0.00</b></span>
+  <span class="meta">圈 <b id="lap1">1</b>/3<br>本圈 <b id="t1">0.00</b><br><span id="gap1" style="color:#8ef7c8"></span></span>
 </div>
 
 <div class="pbox p2box">
   <span class="tag t2">P2</span>
   <span class="spd" id="spd2">0</span><span class="u">KM/H</span>
-  <span class="meta">圈 <b id="lap2">1</b>/3<br>本圈 <b id="t2">0.00</b></span>
+  <span class="meta">圈 <b id="lap2">1</b>/3<br>本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
 </div>
 
 <div id="settingsBtn" title="设置">⚙</div>
@@ -220,6 +286,10 @@
         <button class="setbtn" id="btnClear" style="flex:1;background:rgba(255,107,107,.14);color:#ff9aa8;border:1px solid rgba(255,107,107,.35)">清空</button>
         <button class="setbtn" id="btnRandom" style="flex:1;background:rgba(140,200,255,.16);color:#cfe8ff;border:1px solid rgba(140,200,255,.35)">🎲 随机</button>
       </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">选择赛车</div>
+      <div id="carList" style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;max-width:520px"></div>
     </div>
     <div style="display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
     <div>
@@ -741,10 +811,17 @@
       if (n % 3 === 0) seg.sprites.push({ type: 'bush', offset: side * rnd(1.6, 2.4), w: rnd(260, 420), h: rnd(180, 300), tint: pick(TH.tree) });
       // 广告牌（每隔一段）
       if (n % 67 === 0) seg.sprites.push({ type: 'billboard', offset: side * rnd(2.2, 3.0), w: rnd(700, 900), h: rnd(500, 660), tint: pick(['#e63946', '#2a7fd4', '#f4a261', '#2a9d8f', '#e76f51']) });
-      // 观众（路边人群，每 11 段一小群）
-      if (n % 11 === 0 && n > 30) {
-        for (var spI = 0; spI < 3; spI++) {
-          seg.sprites.push({ type: 'crowd', offset: side * (1.45 + spI * 0.28), w: rnd(140, 220), h: rnd(260, 380), tint: pick(['#e63946','#2a7fd4','#f4a261','#2a9d8f','#e9c46a','#8ecae6','#ffb4a2']) });
+      // 观众：只在弯道处聚集（|curve| > 1.5 的段）
+      if (Math.abs(seg.curve) > 1.5 && n % 2 === 0) {
+        var crowdN = 2 + Math.floor(Math.abs(seg.curve));
+        for (var spI = 0; spI < crowdN; spI++) {
+          seg.sprites.push({
+            type: 'crowd',
+            offset: side * (1.42 + spI * 0.22),
+            w: rnd(130, 200), h: rnd(240, 350),
+            tint: pick(['#e63946','#2a7fd4','#f4a261','#2a9d8f','#e9c46a','#8ecae6','#ffb4a2']),
+            standing: true
+          });
         }
       }
       // 加油站（每张图 1-2 个）
@@ -804,7 +881,8 @@
       onPad: false, padBoost: 0, padGlow: 0, padShake: 0,
       airTime: 0, airH: 0, airMax: 380, airTotal: 1.35, jumpSpin: 0, inTunnel: false, onBridge: false,
       dustTimer: 0, dustIntensity: 0,
-      launchVel: 0, launchSide: 0, tumble: 0   // 撞飞
+      launchVel: 0, launchSide: 0, tumble: 0,   // 撞飞
+      hitPedestrians: 0   // 撞到行人数
     };
   }
 
@@ -1264,28 +1342,86 @@
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.fillRect(bbX + bbW * 0.1, bbY + bbH * 0.37, bbW * 0.3, bbH * 0.05);
     } else if (sprite.type === 'crowd') {
-      // 观众：小人（头 + 身体）
       var cX = destX + destW / 2, cY = destY + destH;
       var cH = destH, cW = destW;
-      // 身体
-      ctx.fillStyle = sprite.tint;
-      roundRect(cX - cW * 0.28, cY - cH * 0.62, cW * 0.56, cH * 0.62, cW * 0.12);
-      ctx.fill();
-      // 头
-      ctx.fillStyle = '#e8c9a8';
-      ctx.beginPath();
-      ctx.arc(cX, cY - cH * 0.74, cW * 0.2, 0, Math.PI * 2);
-      ctx.fill();
-      // 挥手（随机）
-      if (sprite.waving === undefined) sprite.waving = Math.random() > 0.6;
-      if (sprite.waving) {
-        var waveY = cY - cH * (0.9 + Math.sin(clock * 4 + cX) * 0.06);
-        ctx.strokeStyle = '#e8c9a8';
-        ctx.lineWidth = Math.max(1.5, cW * 0.1);
+
+      // ── 倒地状态 ──
+      if (!sprite.standing) {
+        var knockP = 1 - Math.max(0, sprite.knocked || 0);   // 0→1 倒地进度
+        // 番茄汁（地面血迹）
+        if (sprite.bloodTimer > 0) {
+          var bloodA = Math.min(1, sprite.bloodTimer / 1.5);
+          ctx.fillStyle = 'rgba(170,20,30,' + (bloodA * 0.75) + ')';
+          ctx.beginPath();
+          ctx.ellipse(cX, cY - cH * 0.04, cW * 0.85, cH * 0.14, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // 飞溅小点
+          ctx.fillStyle = 'rgba(190,30,40,' + (bloodA * 0.55) + ')';
+          for (var bsp = 0; bsp < 5; bsp++) {
+            var bx = cX + (bsp - 2) * cW * 0.42;
+            var by = cY - cH * 0.05 + (bsp % 2) * cH * 0.05;
+            ctx.beginPath();
+            ctx.arc(bx, by, cW * (0.06 + (bsp % 3) * 0.03), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        // 倒地身体（横躺）
+        var lieY = cY - cH * 0.12;
+        ctx.save();
+        ctx.translate(cX, lieY);
+        ctx.rotate((sprite.knockDir || 1) * (Math.PI / 2) * knockP * 0.95);
+        // 身体
+        ctx.fillStyle = sprite.tint;
+        roundRect(-cW * 0.42, -cH * 0.16, cW * 0.84, cH * 0.32, cW * 0.12);
+        ctx.fill();
+        // 头
+        ctx.fillStyle = '#e8c9a8';
         ctx.beginPath();
-        ctx.moveTo(cX + cW * 0.26, cY - cH * 0.55);
-        ctx.lineTo(cX + cW * 0.46, waveY);
+        ctx.arc(-cW * 0.52, 0, cW * 0.17, 0, Math.PI * 2);
+        ctx.fill();
+        // 腿
+        ctx.strokeStyle = '#3a4050';
+        ctx.lineWidth = Math.max(1.5, cW * 0.09);
+        ctx.beginPath();
+        ctx.moveTo(cW * 0.38, -cH * 0.06);
+        ctx.lineTo(cW * 0.62, -cH * 0.2);
+        ctx.moveTo(cW * 0.38, cH * 0.06);
+        ctx.lineTo(cW * 0.6, cH * 0.22);
         ctx.stroke();
+        ctx.restore();
+        // 血滴飞溅（刚被撞时）
+        if (sprite.bloodTimer > 0.8) {
+          ctx.fillStyle = 'rgba(200,25,35,' + ((sprite.bloodTimer - 0.8) * 0.9) + ')';
+          for (var dsp = 0; dsp < 6; dsp++) {
+            var ddx = cX + Math.cos(dsp * 1.1) * cW * 0.9;
+            var ddy = lieY - Math.abs(Math.sin(dsp * 1.1)) * cH * 0.5;
+            ctx.beginPath();
+            ctx.arc(ddx, ddy, cW * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      } else {
+        // ── 站立状态 ──
+        // 身体
+        ctx.fillStyle = sprite.tint;
+        roundRect(cX - cW * 0.28, cY - cH * 0.62, cW * 0.56, cH * 0.62, cW * 0.12);
+        ctx.fill();
+        // 头
+        ctx.fillStyle = '#e8c9a8';
+        ctx.beginPath();
+        ctx.arc(cX, cY - cH * 0.74, cW * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        // 挥手
+        if (sprite.waving === undefined) sprite.waving = Math.random() > 0.6;
+        if (sprite.waving) {
+          var waveY = cY - cH * (0.9 + Math.sin(clock * 4 + cX) * 0.06);
+          ctx.strokeStyle = '#e8c9a8';
+          ctx.lineWidth = Math.max(1.5, cW * 0.1);
+          ctx.beginPath();
+          ctx.moveTo(cX + cW * 0.26, cY - cH * 0.55);
+          ctx.lineTo(cX + cW * 0.46, waveY);
+          ctx.stroke();
+        }
       }
     } else if (sprite.type === 'gasstation') {
       // 加油站：顶棚 + 支柱 + 油泵 + 招牌
@@ -1853,7 +1989,7 @@
     }
 
     // ── 转向：漂移时更灵敏，且有反打修正 ──
-    var baseSteer = dt * 2.4 * speedPercent;
+    var baseSteer = dt * 2.4 * speedPercent * carSteer();
     var steerAmount = baseSteer * (1 + p.drift * (DRIFT_STEER_GAIN - 1));
 
     // 反打方向（漂移中反向输入 = 修正车身）
@@ -1866,7 +2002,7 @@
     if (inp.right) p.playerX += steerAmount;
 
     // ── 离心力：漂移时大幅降低（因为你在滑）──
-    var centri = 1 - p.drift * DRIFT_GRIP;
+    var centri = 1 - p.drift * DRIFT_GRIP * carGrip();
     p.playerX -= baseSteer * speedPercent * playerSeg.curve * CENTRIFUGAL * centri;
 
     // ── 侧滑视觉量 ──
@@ -1891,7 +2027,7 @@
       // 手动挡：必须按住加速键；自动挡：默认一直加速
       var accelMul = 1;
       if (p.boostTimer > 0) accelMul = p.boostPower;
-      p.speed += ACCEL * dt * accelMul;
+      p.speed += carAccel() * dt * accelMul;
     } else {
       p.speed += DECEL * dt;
     }
@@ -1902,7 +2038,7 @@
     }
     if (p.boostShown > 0) p.boostShown -= dt;
     if (p.drift > 0.2) p.speed *= Math.pow(DRIFT_SPEED_LOSS, dt * 60);
-    p.speed = clamp(p.speed, 0, MAX_SPEED);
+    p.speed = clamp(p.speed, 0, carMaxSpeed());
 
     // ── 位置推进（支持倒退）──
     p.position = (p.position + p.speed * dt) % trackLength;
@@ -1921,6 +2057,28 @@
         p.tumble = 0;
         p.launchVel = 0;
         p.launchSide = 0;
+      }
+    }
+
+    // ── 撞行人检测 ──
+    if (Math.abs(p.playerX) > 1.02) {
+      var pedSeg = findSegment(p.position + PLAYER_Z);
+      if (pedSeg && pedSeg.sprites) {
+        for (var psi = 0; psi < pedSeg.sprites.length; psi++) {
+          var sp = pedSeg.sprites[psi];
+          if (sp.type === 'crowd' && sp.standing && Math.abs(sp.offset - p.playerX) < 0.5) {
+            // 撞到行人：倒地 + 番茄汁
+            sp.standing = false;
+            sp.knocked = 1.0;       // 倒地动画计时
+            sp.knockDir = (sp.offset > p.playerX ? 1 : -1);
+            sp.bloodTimer = 1.5;    // 番茄汁持续
+            p.hitPedestrians++;
+            p.speed *= 0.86;        // 轻微减速
+            p.shake = Math.max(p.shake, 0.5);
+            playSplatSound();
+            flashTip('撞到行人！');
+          }
+        }
       }
     }
 
@@ -1989,7 +2147,7 @@
     p.onPad = onPad;
     if (onPad) {
       // 强提速：瞬间 +25% 速度，并进入 1.2s 加速状态
-      p.speed = Math.min(MAX_SPEED * 1.32, p.speed + MAX_SPEED * 2.4 * dt);
+      p.speed = Math.min(carMaxSpeed() * 1.32, p.speed + carMaxSpeed() * 2.4 * dt * carBoost());
       p.padBoost = 1.2;
       p.padGlow = Math.min(1, (p.padGlow || 0) + dt * 14);
       p.padShake = 0.6;                 // 屏幕震动
@@ -2061,8 +2219,9 @@
         var impactSpeed = Math.abs(p.speed - car.speed);
         var isOncoming = car.oncoming === true;
 
-        // ── 对向车撞击：玩家被撞飞（合理，因为相对速度极高）──
-        if (isOncoming) {
+        // ── 对向车撞击：只有玩家逆行（走左侧车道）才被撞飞 ──
+        var playerOnWrongSide = p.playerX < -0.05;   // 玩家在左侧 = 逆行
+        if (isOncoming && playerOnWrongSide && CAR.id !== 'tank') {
           p.launchVel = Math.min(MAX_SPEED * 0.95, impactSpeed * 1.1);
           p.launchSide = (p.playerX >= car.offset ? 1 : -1) * (0.8 + Math.random() * 0.7);
           p.tumble = 1.5;
@@ -2074,12 +2233,25 @@
           p.dustTimer = 1.6; p.dustIntensity = 1.0;
           p.padShake = 1; p.shake = 1;
           playCrash(); playDustSound();
-          flashTip('对向撞击！');
+          flashTip('逆行撞击！');
           // 对向车也被撞飞
           car.wreck = 1.8;
           car.wreckVel = impactSpeed * 0.9;
           car.wreckSide = (car.offset >= p.playerX ? 1 : -1) * 1.6;
           car.speed *= 0.1;
+        } else if (isOncoming) {
+          // 玩家在正确车道撞到对向车，或重卡逆行 → NPC 被撞飞
+          car.wreck = 1.8;
+          car.wreckVel = impactSpeed * 1.4 + MAX_SPEED * 0.35;
+          car.wreckSide = (car.offset >= p.playerX ? 1 : -1) * (1.3 + Math.random() * 0.8);
+          car.wreckSpin = (Math.random() > 0.5 ? 1 : -1) * 4;
+          car.speed *= 0.04;
+          p.speed *= 0.55;
+          p.shake = 0.9;
+          p.padShake = Math.max(p.padShake || 0, 0.6);
+          playCrash();
+          flashTip('撞飞逆行 NPC！');
+          p.driftScore += 200;
         } else {
           // ── 同向车：玩家把 NPC 撞飞，自己只减速 ──
           var mySpeedPct = p.speed / MAX_SPEED;
@@ -2268,6 +2440,17 @@
       } else {
         c.z = (c.z + c.speed * dt) % trackLength;
         if (c.z < 0) c.z += trackLength;
+      }
+    }
+
+    // 行人倒地/番茄汁计时
+    for (var segI = 0; segI < segments.length; segI++) {
+      var sg2 = segments[segI];
+      if (!sg2.sprites) continue;
+      for (var spi2 = 0; spi2 < sg2.sprites.length; spi2++) {
+        var spr = sg2.sprites[spi2];
+        if (spr.knocked > 0) spr.knocked -= dt * 1.2;
+        if (spr.bloodTimer > 0) spr.bloodTimer -= dt;
       }
     }
 
@@ -2485,6 +2668,27 @@
     } catch (e) {}
   }
 
+  // 番茄汁音效（噗嗤）
+  function playSplatSound() {
+    if (!AC || !CFG.sfx) return;
+    try {
+      var len = AC.sampleRate * 0.25;
+      var buf = AC.createBuffer(1, len, AC.sampleRate);
+      var data = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      var src = AC.createBufferSource();
+      src.buffer = buf;
+      var g = AC.createGain();
+      g.gain.value = 0.22;
+      var bp = AC.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 700;
+      bp.Q.value = 1.2;
+      src.connect(bp); bp.connect(g); g.connect(masterGain);
+      src.start();
+    } catch (e) {}
+  }
+
   // 落地扬尘音效（沙沙声）
   function playDustSound() {
     if (!AC || !CFG.sfx) return;
@@ -2634,6 +2838,35 @@
     var now = performance.now();
     elT1.textContent = fmt(Math.max(0, (now - P1.lapStart) / 1000));
     elT2.textContent = fmt(Math.max(0, (now - P2.lapStart) / 1000));
+
+    // ── 双人距离/时间差 ──
+    var elGap1 = document.getElementById('gap1');
+    var elGap2 = document.getElementById('gap2');
+    if (GAME_MODE === 'duo' && P1 && P2) {
+      var dDiff = P1.totalDistance - P2.totalDistance;   // 正数 = P1 领先
+      var distM = Math.abs(dDiff) / 10;                   // 换算成米
+      if (Math.abs(dDiff) < 100) {
+        // 太接近，显示"并驾齐驱"
+        if (elGap1) elGap1.textContent = '并排';
+        if (elGap2) elGap2.textContent = '并排';
+      } else {
+        var leader = dDiff > 0 ? 'P1' : 'P2';
+        // 时间差 = 距离差 / 平均速度
+        var avgSpd = Math.max(1, (P1.speed + P2.speed) / 2);
+        var secDiff = Math.abs(dDiff) / avgSpd;
+        if (elGap1) {
+          if (dDiff > 0) elGap1.textContent = '领先 ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
+          else elGap1.textContent = '落后 ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
+        }
+        if (elGap2) {
+          if (dDiff > 0) elGap2.textContent = '落后 ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
+          else elGap2.textContent = '领先 ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
+        }
+      }
+    } else {
+      if (elGap1) elGap1.textContent = '';
+      if (elGap2) elGap2.textContent = '';
+    }
   }
 
   /* ================= 分享成绩 ================= */
@@ -2656,6 +2889,51 @@
 
   /* ================= 设置 ================= */
   var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: true };
+
+  /* ================= 赛车数据 ================= */
+  var CARS = [
+    {
+      id: 'street', name: '街头小子', icon: '🚗', desc: '均衡入门 · 好开',
+      speed: 0.90, accel: 1.00, steer: 1.00, grip: 1.00, boost: 1.00,
+      color: '#e63946',
+      stats: { 速度: 3, 加速: 3, 操控: 3, 抓地: 3 }
+    },
+    {
+      id: 'beast', name: '赛道猛兽', icon: '🏎️', desc: '极速最高 · 转向偏重',
+      speed: 1.18, accel: 1.10, steer: 0.82, grip: 1.08, boost: 1.05,
+      color: '#ff8c00',
+      stats: { 速度: 5, 加速: 4, 操控: 2, 抓地: 4 }
+    },
+    {
+      id: 'drift', name: '漂移之王', icon: '🚙', desc: '转向极灵 · 高速不稳',
+      speed: 0.96, accel: 0.95, steer: 1.32, grip: 0.78, boost: 1.15,
+      color: '#2a9d8f',
+      stats: { 速度: 3, 加速: 2, 操控: 5, 抓地: 1 }
+    },
+    {
+      id: 'tank', name: '重装坦克', icon: '🛻', desc: '极稳 · 撞不飞 · 慢',
+      speed: 0.82, accel: 0.85, steer: 0.88, grip: 1.35, boost: 0.92,
+      color: '#5a6a7a',
+      stats: { 速度: 2, 加速: 1, 操控: 3, 抓地: 5 }
+    }
+  ];
+  var selectedCar = 'street';
+  var CAR = CARS[0];
+
+  function getCar(id) {
+    for (var i = 0; i < CARS.length; i++) if (CARS[i].id === id) return CARS[i];
+    return CARS[0];
+  }
+  function applyCar(id) {
+    selectedCar = id;
+    CAR = getCar(id);
+  }
+  // 车辆修正后的物理参数
+  function carMaxSpeed() { return MAX_SPEED * CAR.speed; }
+  function carAccel() { return ACCEL * CAR.accel; }
+  function carSteer() { return CAR.steer; }
+  function carGrip() { return CAR.grip; }
+  function carBoost() { return CAR.boost; }
   var WEATHER = 'clear';   // clear | rain | fog | night
   var WEATHER_LIST = [
     { id: 'clear', name: '晴朗', desc: '标准视野' },
@@ -2683,6 +2961,30 @@
         '<b style="color:#ffd166">' + formatTime(e.time) + '</b></div>';
     });
     list.innerHTML = html;
+  }
+
+  function renderCarList() {
+    var el = document.getElementById('carList');
+    if (!el) return;
+    el.innerHTML = '';
+    CARS.forEach(function (c) {
+      var d = document.createElement('div');
+      d.className = 'carcard' + (c.id === selectedCar ? ' sel' : '');
+      var statsHtml = '';
+      var keys = Object.keys(c.stats);
+      keys.forEach(function (k) {
+        var v = c.stats[k];
+        var dots = '';
+        for (var i = 0; i < 5; i++) dots += '<span class="dot' + (i < v ? ' on' : '') + '"></span>';
+        statsHtml += '<div class="cstat">' + k + '<span class="dots">' + dots + '</span></div>';
+      });
+      d.innerHTML = '<div class="ci">' + c.icon + '</div><div class="cn">' + c.name + '</div><div class="cstats">' + statsHtml + '</div>';
+      d.addEventListener('click', function () {
+        applyCar(c.id);
+        renderCarList();
+      });
+      el.appendChild(d);
+    });
   }
 
   function renderWeatherList() {
@@ -2985,6 +3287,7 @@
     renderModeList();
     renderMapList();
     renderLapList();
+    renderCarList();
     renderWeatherList();
     renderLeaderboard();
     applyModeUi();
@@ -3388,6 +3691,7 @@
     initDriftNoise();
     startBgm();
     TOTAL_LAPS = selectedLaps;
+    applyCar(selectedCar);
     CUSTOM_ACTIVE = selectedMap === 'custom';
     if (CUSTOM_ACTIVE) {
       // 自定义赛道用黄昏主题
