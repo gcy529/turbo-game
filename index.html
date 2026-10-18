@@ -435,7 +435,7 @@
       <button class="homeMini" id="soundBtn" title="开启声音">🔇 开启声音</button>
       <button class="homeMini" id="langBtn">中/EN</button>
       <button class="homeMini" id="themeBtn">☀️</button>
-      <a class="homeMini" href="index-3d.html" style="text-decoration:none;background:linear-gradient(180deg,#ffc078,#ff9a30);color:#231000;border-color:transparent;font-weight:900">🎮 逆反3D · 敬请期待</a>
+      <a class="homeMini" href="index-3d.html" style="text-decoration:none;background:linear-gradient(180deg,#ffc078,#ff9a30);color:#231000;border-color:transparent;font-weight:900">🎮 3D 版 (Beta)</a>
     </div>
   </div>
 </div>
@@ -453,7 +453,7 @@
     <!-- ① 选车 -->
     <div class="tabPane" data-pane="car">
       <div id="carList" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;max-width:440px;margin:0 auto"></div>
-      <button class="wizRandom" id="wizRandom">🎲 随机选车选图</button>
+      <button class="wizRandom" id="wizRandom">🎲 随机选车选图 · 直接开跑</button>
     </div>
 
     <!-- ② 选赛道 -->
@@ -2501,11 +2501,6 @@
         // 后退（倒车）
         p.speed = Math.max(REVERSE_MAX, p.speed + REVERSE_ACCEL * dt);
       }
-    } else if (inp.brake && CFG.brakeMode === 'drift' && p.speed > carMaxSpeed() * 0.35) {
-      p.speed *= Math.pow(0.94, dt * 60);
-      p.drift = Math.min(1, (p.drift || 0) + dt * 3.2);
-      p.driftDir = (inp.left ? -1 : (inp.right ? 1 : (p.driftDir || 1)));
-      p.padShake = Math.max(p.padShake || 0, 0.25);
     } else if (CFG.manualGas ? inp.gas : (AUTO_GAS || inp.gas)) {
       // 手动挡：必须按住加速键；自动挡：默认一直加速
       var accelMul = 1;
@@ -3683,7 +3678,9 @@
     TOTAL_LAPS = selectedLaps;
     renderLapList();
     updateSummary();
-    flashTip('随机配置完成！');
+    flashTip('🎲 随机配置 → 直接开跑！');
+    // 直接开始游戏
+    setTimeout(function () { startRace(); }, 260);
   }
 
   function bindSwipe() {
@@ -4094,6 +4091,33 @@
     if (sb) sb.addEventListener('click', startRace);
     var setb = document.getElementById('settingsBtn');
     if (setb) setb.addEventListener('click', openSettings);
+    // ── 重新绑定向导控件（innerHTML 重建后事件会丢失）──
+    var prev = document.getElementById('wizPrev');
+    if (prev) prev.addEventListener('click', function () { gotoStep(WIZ_STEP - 1); });
+    var next = document.getElementById('wizNext');
+    if (next) next.addEventListener('click', function () { gotoStep(WIZ_STEP + 1); });
+    var rnd = document.getElementById('wizRandom');
+    if (rnd) rnd.addEventListener('click', randomAll);
+    var dots = document.querySelectorAll ? document.querySelectorAll('.stepDot') : [];
+    for (var di = 0; di < dots.length; di++) {
+      (function (d) {
+        d.addEventListener('click', function () { gotoStep(Number(d.getAttribute('data-step'))); });
+      })(dots[di]);
+    }
+    var hs2 = document.getElementById('homeSolo');
+    if (hs2) hs2.addEventListener('click', function () { startMode('solo'); });
+    var hd2 = document.getElementById('homeDuo');
+    if (hd2) hd2.addEventListener('click', function () { startMode('duo'); });
+    var sndb2 = document.getElementById('soundBtn');
+    if (sndb2) sndb2.addEventListener('click', toggleSound);
+    updateSoundBtn();
+    var thb2 = document.getElementById('themeBtn');
+    if (thb2) thb2.addEventListener('click', toggleTheme);
+    var lb2 = document.getElementById('langBtn');
+    if (lb2) lb2.addEventListener('click', toggleLang);
+    gotoStep(0);
+    renderCarList(); renderMapList(); renderLapList(); renderWeatherList(); renderModeList();
+    updateSummary();
     bindSettingsUi();
   }
 
@@ -4854,6 +4878,38 @@
   }
 
   boot();
+
+  // ── 调试钩子（供自动化测试/自检读取闭包内状态）──
+  window.__T = {
+    view: function () { try { return { CAM_VIEW: CAM_VIEW, params: viewParams() }; } catch (e) { return { err: String(e) }; } },
+    setView: function (v) { try { setView(v); return true; } catch (e) { return String(e); } },
+    state: function () {
+      try {
+        return {
+          speed: P1 ? Math.round((P1.speed / MAX_SPEED) * 320) : 0,
+          lap: P1 ? P1.lap : 0,
+          playerX: P1 ? Number(P1.playerX.toFixed(3)) : 0,
+          countdown: Number(countdown.toFixed(2)),
+          running: running,
+          paused: paused,
+          mode: GAME_MODE,
+          car: CAR ? CAR.id : null,
+          color: CAR ? CAR.color : null,
+          map: selectedMap, weather: WEATHER, laps: TOTAL_LAPS,
+          cfx: { sfx: CFG.sfx, bgm: CFG.bgm, brakeMode: CFG.brakeMode, brakeSide: CFG.brakeSide },
+          fps: document.getElementById('fpsBox') ? document.getElementById('fpsBox').textContent : ''
+        };
+      } catch (e) { return { err: String(e) }; }
+    },
+    steer: function (dir, ms) {
+      try {
+        var key = dir > 0 ? 'right' : 'left';
+        input.p1[key] = true;
+        setTimeout(function () { input.p1[key] = false; }, ms || 800);
+        return true;
+      } catch (e) { return String(e); }
+    }
+  };
 
   // ── PWA：注册 Service Worker（离线可用）──
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
