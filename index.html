@@ -17,7 +17,7 @@
   body[data-theme='light']{background:#e8eef6;color:#1a2434}
   body[data-theme='light'] .panel{background:rgba(255,255,255,.92);border-color:rgba(40,80,140,.25);box-shadow:0 24px 90px rgba(60,90,140,.25)}
   body[data-theme='light'] .title{background:linear-gradient(180deg,#1a2434,#2f7fd0 70%,#1a5fa8);-webkit-background-clip:text;background-clip:text}
-  body[data-theme='light'] .sub{color:#5a7695}
+  body[data-theme='light'] .sub{color:#44607e}
   body[data-theme='light'] .pbox{background:rgba(255,255,255,.82);border-color:rgba(40,80,140,.25)}
   body[data-theme='light'] .spd{color:#12233a}
   body[data-theme='light'] .meta{color:#4a6484}
@@ -48,10 +48,14 @@
   body[data-theme='light'] #planList{background:rgba(40,80,140,.06)}
   body[data-theme='light'] #overlay{background:radial-gradient(circle at 50% 40%,rgba(180,205,235,.92),rgba(225,235,248,.97))}
   body[data-theme='light'] .res{color:#3a5570}
-  body[data-theme='light'] #homeBest{color:#5a7695}
+  body[data-theme='light'] #homeBest{color:#44607e}
+  body[data-theme='light'] .tip{color:#3a5570}
+  body[data-theme='light'] .secLabel{color:#3a5570}
   body[data-theme='light'] #home{background:radial-gradient(circle at 50% 35%,rgba(180,205,235,.94),rgba(228,238,250,.99))}
   body[data-theme='light'] .homeBtn{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   body[data-theme='light'] .homeBtn.primary{color:#06121e}
+  body[data-theme='light'] .bmbtn,body[data-theme='light'] .bsbtn,body[data-theme='light'] .vmbtn{background:rgba(40,80,140,.12);color:#14304f;border-color:rgba(40,80,140,.35)}
+  body[data-theme='light'] .bmbtn.on,body[data-theme='light'] .bsbtn.on,body[data-theme='light'] .vmbtn.on{background:rgba(42,157,143,.25);color:#0f5a4e;border-color:rgba(42,157,143,.7)}
   body[data-theme='light'] .homeMini{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   html,body{width:100%;height:100%;overflow:hidden;background:#05070e}
   body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent;color:#eaf2ff}
@@ -126,10 +130,13 @@
   .wizBtn:hover{transform:translateY(-2px)}
   .wizBtn:active{transform:translateY(0) scale(.97)}
   .wizBtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
-  .wizRandom{margin-top:12px;padding:9px 20px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(140,200,255,.25);color:#8ba3bd;font-size:11.5px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .15s}
+  .wizRandom{margin:12px auto 0;display:block;width:100%;max-width:260px;padding:11px;font-size:12.5px;font-weight:850;letter-spacing:1px;border-radius:11px;cursor:pointer;background:rgba(255,255,255,.09);color:#cfe8ff;border:1.5px solid rgba(140,200,255,.4);transition:all .15s}
+  .wizRandom:hover{background:rgba(140,200,255,.18)}
+  body[data-theme='light'] .wizRandom{background:rgba(40,80,140,.20);color:#08213d;border-color:rgba(40,80,140,.55)}
+  body[data-theme='light'] .wizRandom:hover{background:rgba(40,80,140,.22)}
+  .wizRandomX{margin-top:12px;padding:9px 20px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(140,200,255,.25);color:#8ba3bd;font-size:11.5px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .15s}
   .wizRandom:hover{background:rgba(140,200,255,.14);color:#cfe8ff}
   body[data-theme='light'] .wizBtn.ghost{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
-  body[data-theme='light'] .wizRandom{background:rgba(40,80,140,.06);border-color:rgba(40,80,140,.2);color:#5a7695}
   .go{font-size:15px;font-weight:800;letter-spacing:2px;color:#06121e;background:linear-gradient(180deg,#8ef7c8,#38d99a);padding:13px 44px;border-radius:13px;display:inline-block;box-shadow:0 10px 30px rgba(60,220,160,.35);cursor:pointer;border:0}
   .tip{margin-top:14px;font-size:11px;color:#4e6b88;letter-spacing:1px}
   .res{font-size:15px;color:#cfe4f7;margin-bottom:20px;line-height:1.9}
@@ -137,6 +144,8 @@
   #touch{position:fixed;inset:0;z-index:11;pointer-events:none;display:none}
   .tb{width:96px;height:96px;border-radius:50%;background:rgba(140,200,255,.22);border:3px solid rgba(140,200,255,.55);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#e8f4ff;pointer-events:auto;backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0;box-shadow:0 6px 22px rgba(0,0,0,.45);margin:0 3px}
   .tb:active{background:rgba(140,200,255,.38)}
+  .tb-gas{background:rgba(60,220,160,.25);border-color:rgba(80,230,170,.7);color:#c8ffe8}
+  .tb-gas:active{background:rgba(60,220,160,.5)}
   .tb-brake{background:rgba(255,90,110,.22);border-color:rgba(255,110,130,.6);color:#ffc8d0}
   .tb-brake:active{background:rgba(255,90,110,.45)}
   .tb-drift{background:rgba(255,190,80,.22);border-color:rgba(255,200,90,.65);color:#ffe0a0}
@@ -171,7 +180,7 @@
     .sub{font-size:9px;letter-spacing:2px;margin-bottom:14px}
     .cols{gap:14px;margin-bottom:12px}
     .key{font-size:11px;margin-bottom:5px}
-    .maps{grid-template-columns:repeat(2,1fr);gap:7px;max-width:100%}
+    .maps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-width:340px;margin:0 auto;width:100%}
     .mapcard{padding:9px 10px}
     .mapcard .mn{font-size:11.5px}
     .mapcard .md{font-size:8.5px}
@@ -245,12 +254,12 @@
   #launch.good .q{color:#8ef7c8;text-shadow:0 0 28px rgba(110,247,200,.9)}
   #launch.early .q{color:#ff6b6b;text-shadow:0 0 24px rgba(255,107,107,.8)}
   /* 地图选择 */
-  .maps{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:22px;max-width:440px}
-  .mapcard{padding:13px 15px;border-radius:13px;background:rgba(255,255,255,.05);border:1.5px solid rgba(140,200,255,.18);cursor:pointer;text-align:left;transition:all .16s}
+  .maps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:0 auto 16px;max-width:400px;width:100%}
+  .mapcard{padding:12px 14px;border-radius:13px;text-align:center;background:rgba(255,255,255,.05);border:1.5px solid rgba(140,200,255,.18);cursor:pointer;text-align:left;transition:all .16s}
   .mapcard:hover{background:rgba(255,255,255,.1);border-color:rgba(140,200,255,.4);transform:translateY(-2px)}
   .mapcard.sel{background:rgba(60,220,160,.14);border-color:rgba(60,220,160,.65);box-shadow:0 0 20px rgba(60,220,160,.2)}
-  .mapcard .mn{font-size:14px;font-weight:850;color:#fff;margin-bottom:3px;letter-spacing:1px}
-  .mapcard .md{font-size:10.5px;color:#7fa0bd;letter-spacing:.5px}
+  .mapcard .mn{font-size:13.5px;font-weight:850;color:#fff;margin-bottom:3px;letter-spacing:.5px;text-align:center}
+  .mapcard .md{font-size:10px;color:#7fa0bd;letter-spacing:.5px;text-align:center}
   .mapcard.sel .mn{color:#8ef7c8}
   .laps{display:flex;flex-direction:column;gap:8px}
   .lapcard{padding:9px 18px;border-radius:10px;background:rgba(255,255,255,.05);border:1.5px solid rgba(140,200,255,.18);cursor:pointer;font-size:13px;font-weight:800;color:#a9c6e2;letter-spacing:1px;transition:all .15s;text-align:center;min-width:86px}
@@ -369,7 +378,12 @@
       <div class="toggle" id="tgAuto"></div>
     </div>
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
-      <div class="setlabel">右侧按键<small>刹车 或 漂移手刹</small></div>
+      <div class="setlabel">手刹位置<small>刹车/漂移键放哪边</small></div>
+      <div style="display:flex;gap:7px;margin-bottom:9px">
+        <button class="bsbtn" data-bs="left" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">⬅ 左边</button>
+        <button class="bsbtn" data-bs="right" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">➡ 右边</button>
+      </div>
+      <div class="setlabel">按键功能<small>刹车 或 漂移手刹</small></div>
       <div style="display:flex;gap:7px">
         <button class="bmbtn" data-bm="brake" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">⛔ 刹车</button>
         <button class="bmbtn" data-bm="drift" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">💨 漂移</button>
@@ -438,7 +452,7 @@
     <!-- ① 选车 -->
     <div class="tabPane" data-pane="car">
       <div id="carList" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;max-width:440px;margin:0 auto"></div>
-      <button class="wizRandom" id="wizRandom" style="margin:12px auto 0;display:block;width:100%;max-width:260px;padding:10px;font-size:12px;background:rgba(255,255,255,.08);color:#cfe8ff;border:1px solid rgba(140,200,255,.35);border-radius:10px;cursor:pointer;font-weight:800">🎲 随机选车选图</button>
+      <button class="wizRandom" id="wizRandom">🎲 随机选车选图</button>
     </div>
 
     <!-- ② 选赛道 -->
@@ -478,11 +492,15 @@
 </div>
 <div id="touch">
   <!-- 单人：中下方三键 -->
-  <div id="soloPad" style="position:fixed;inset:auto 0 18px 0;height:96px;pointer-events:none">
-    <div class="tb" id="a1l" style="position:absolute;left:14px;bottom:0">◀</div>
-    <div class="tb" id="a1r" style="position:absolute;left:126px;bottom:0">▶</div>
-    <div class="tb" id="a1g" style="position:absolute;left:50%;bottom:0;transform:translateX(-50%)">▲</div>
-    <div class="tb tb-brake" id="a1b" style="position:absolute;right:14px;bottom:0">⛔</div>
+  <div id="soloPad" style="position:fixed;inset:auto 0 0 0;height:190px;pointer-events:none">
+    <!-- 左转：屏幕左边 -->
+    <div class="tb" id="a1l" style="position:absolute;left:16px;bottom:22px">◀</div>
+    <!-- 右转：屏幕右边 -->
+    <div class="tb" id="a1r" style="position:absolute;right:16px;bottom:22px">▶</div>
+    <!-- 起步/加速：中下 -->
+    <div class="tb tb-gas" id="a1g" style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%)">▲</div>
+    <!-- 手刹：左转上方偏内（留出空位，方便拇指上移） -->
+    <div class="tb tb-brake" id="a1b" style="position:absolute;right:16px;bottom:118px">⛔</div>
   </div>
   <!-- 双人：上下各一组，都在中下方 -->
   <div id="duoPad" style="position:fixed;inset:0;pointer-events:none">
@@ -3706,7 +3724,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false, brakeMode: 'brake' };  // 幽灵车默认关（有重影）
+  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right' };  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 0;
   var VIEW_LIST = [
@@ -3720,8 +3738,8 @@
     if (CAM_VIEW === 2) {
       return { camH: 360, carScale: 0, carY: 0, drawCar: false, fov: 1.30 };
     } else if (CAM_VIEW === 1) {
-      // 2 贴地：低机位 + 大车 + 标准视野
-      return { camH: 0, carScale: 1.25, carY: 0, drawCar: true, fov: 1.0, lowCam: true, camDist: 620 };
+      // 2 贴地视角：低机位（280，不是 0）+ 大车 + 正常透视
+      return { camH: 280, carScale: 1.30, carY: 0, drawCar: true, fov: 0.92 };
     }
     // 1 俯瞰：高机位 + 小车 + 广角
     return { camH: 1350, carScale: 0.58, carY: 0, drawCar: true, fov: 1.15 };
@@ -3935,6 +3953,27 @@
     try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
   }
 
+  function setBrakeSide(side) {
+    CFG.brakeSide = side;
+    var el = document.getElementById('a1b');
+    if (el) {
+      el.style.left = ''; el.style.right = '';
+      if (side === 'left') { el.style.left = '104px'; el.style.right = ''; }
+      else { el.style.right = '16px'; el.style.left = ''; }
+    }
+    updateBsBtn();
+    flashTip(side === 'left' ? '手刹在左边' : '手刹在右边');
+    try { localStorage.setItem('turbo-racer-bside', side); } catch (e) {}
+  }
+  function updateBsBtn() {
+    var btns = document.querySelectorAll ? document.querySelectorAll('.bsbtn') : [];
+    for (var i = 0; i < btns.length; i++) {
+      var bs = btns[i].getAttribute('data-bs');
+      if (bs === CFG.brakeSide) { btns[i].classList.add('on'); btns[i].style.background = ''; btns[i].style.borderColor = ''; btns[i].style.color = ''; }
+      else { btns[i].classList.remove('on'); btns[i].style.background = ''; btns[i].style.borderColor = ''; btns[i].style.color = ''; }
+    }
+  }
+
   function setBrakeMode(mode) {
     CFG.brakeMode = mode;
     applyBrakeBtnVisual();
@@ -3955,16 +3994,16 @@
     var btns = document.querySelectorAll ? document.querySelectorAll('.bmbtn') : [];
     for (var i = 0; i < btns.length; i++) {
       var bm = btns[i].getAttribute('data-bm');
-      if (bm === mode) { btns[i].style.background = 'rgba(60,220,160,.22)'; btns[i].style.borderColor = 'rgba(60,220,160,.7)'; btns[i].style.color = '#8ef7c8'; }
-      else { btns[i].style.background = 'rgba(255,255,255,.06)'; btns[i].style.borderColor = 'rgba(140,200,255,.22)'; btns[i].style.color = '#cfe4f7'; }
+      if (bm === mode) { btns[i].classList.add('on'); btns[i].style.background = ''; btns[i].style.borderColor = ''; btns[i].style.color = ''; }
+      else { btns[i].classList.remove('on'); btns[i].style.background = ''; btns[i].style.borderColor = ''; btns[i].style.color = ''; }
     }
   }
   function updateVmBtn() {
     var btns = document.querySelectorAll ? document.querySelectorAll('.vmbtn') : [];
     for (var i = 0; i < btns.length; i++) {
       var v = Number(btns[i].getAttribute('data-v'));
-      if (v === CAM_VIEW) { btns[i].style.background = 'rgba(60,220,160,.22)'; btns[i].style.borderColor = 'rgba(60,220,160,.7)'; btns[i].style.color = '#8ef7c8'; }
-      else { btns[i].style.background = 'rgba(255,255,255,.06)'; btns[i].style.borderColor = 'rgba(140,200,255,.22)'; btns[i].style.color = '#cfe4f7'; }
+      if (v === CAM_VIEW) { btns[i].classList.add('on'); btns[i].style.background = ''; btns[i].style.borderColor = ''; btns[i].style.color = ''; }
+      else { btns[i].classList.remove('on'); btns[i].style.background = ''; btns[i].style.borderColor = ''; btns[i].style.color = ''; }
     }
   }
 
@@ -4184,6 +4223,16 @@
     if (tghost) tghost.onclick = function () { CFG.ghost = !CFG.ghost; syncToggles(); };
     // 视角按钮
 
+    // 手刹左右选择
+    var bss = document.querySelectorAll ? document.querySelectorAll('.bsbtn') : [];
+    for (var bsi = 0; bsi < bss.length; bsi++) {
+      (function (b) { b.onclick = function () { setBrakeSide(b.getAttribute('data-bs')); }; })(bss[bsi]);
+    }
+    try {
+      var savedBs = localStorage.getItem('turbo-racer-bside');
+      if (savedBs === 'left' || savedBs === 'right') CFG.brakeSide = savedBs;
+    } catch (e) {}
+    setBrakeSide(CFG.brakeSide);
     if (sr) sr.onclick = closeSettings;
     if (sq) sq.onclick = quitToMenu;
   }
