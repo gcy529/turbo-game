@@ -8,9 +8,49 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="mobile-web-app-capable" content="yes" />
 <link rel="manifest" href="manifest.json" />
-<title>Turbo</title>
+<title>极速狂飙 Turbo Game</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
+  /* ── 日间主题 ── */
+  body[data-theme='light']{background:#e8eef6;color:#1a2434}
+  body[data-theme='light'] .panel{background:rgba(255,255,255,.92);border-color:rgba(40,80,140,.25);box-shadow:0 24px 90px rgba(60,90,140,.25)}
+  body[data-theme='light'] .title{background:linear-gradient(180deg,#1a2434,#2f7fd0 70%,#1a5fa8);-webkit-background-clip:text;background-clip:text}
+  body[data-theme='light'] .sub{color:#5a7695}
+  body[data-theme='light'] .pbox{background:rgba(255,255,255,.82);border-color:rgba(40,80,140,.25)}
+  body[data-theme='light'] .spd{color:#12233a}
+  body[data-theme='light'] .meta{color:#4a6484}
+  body[data-theme='light'] .meta b{color:#12233a}
+  body[data-theme='light'] #msg{color:#12233a;text-shadow:0 0 40px rgba(47,127,208,.5)}
+  body[data-theme='light'] #settingsBtn,body[data-theme='light'] .vbtn,body[data-theme='light'] #viewBtn{background:rgba(255,255,255,.85);border-color:rgba(40,80,140,.3);color:#2a4562}
+  body[data-theme='light'] #autoBadge{background:rgba(255,255,255,.88);border-color:rgba(42,157,143,.5);color:#1a7f6f}
+  body[data-theme='light'] #pace{background:rgba(255,255,255,.88);border-color:rgba(200,150,40,.4)}
+  body[data-theme='light'] #pace .txt{color:#1a2434}
+  body[data-theme='light'] #drift .val{color:#12233a;text-shadow:none}
+  body[data-theme='light'] #shortcut{color:#fff}
+  body[data-theme='light'] #launch .s{color:#3a5570}
+  body[data-theme='light'] .mapcard,.body[data-theme='light'] .modecard,.body[data-theme='light'] .lapcard,.body[data-theme='light'] .carcard,.body[data-theme='light'] .planbtn,.body[data-theme='light'] .cdbtn,.body[data-theme='light'] .viewbtn{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.22);color:#2a4562}
+  body[data-theme='light'] .mapcard .mn,body[data-theme='light'] .modecard .mn2,body[data-theme='light'] .carcard .cn{color:#12233a}
+  body[data-theme='light'] .mapcard .md,body[data-theme='light'] .modecard .md2,body[data-theme='light'] .carcard .cstats{color:#5a7695}
+  body[data-theme='light'] .mapcard.sel,body[data-theme='light'] .modecard.sel,body[data-theme='light'] .lapcard.sel,body[data-theme='light'] .carcard.sel{background:rgba(42,157,143,.16);border-color:rgba(42,157,143,.7)}
+  body[data-theme='light'] .mapcard.sel .mn,body[data-theme='light'] .lapcard.sel,body[data-theme='light'] .carcard.sel .cn{color:#14685c}
+  body[data-theme='light'] .setbox{background:rgba(255,255,255,.97);border-color:rgba(40,80,140,.25)}
+  body[data-theme='light'] .settitle,body[data-theme='light'] .setlabel{color:#12233a}
+  body[data-theme='light'] .setlabel small{color:#5a7695}
+  body[data-theme='light'] #settingsPanel{background:rgba(220,230,242,.9)}
+  body[data-theme='light'] #lbPanel{background:rgba(40,80,140,.06);border-color:rgba(200,150,40,.35)}
+  body[data-theme='light'] #trackLabel{color:rgba(40,80,140,.5)}
+  body[data-theme='light'] .keys{color:#3a5570}
+  body[data-theme='light'] .keys b{background:rgba(40,80,140,.1);border-color:rgba(40,80,140,.25);color:#12233a}
+  body[data-theme='light'] .tip{color:#5a7695}
+  body[data-theme='light'] #customPanel{background:rgba(40,80,140,.05);border-color:rgba(40,80,140,.18)}
+  body[data-theme='light'] #planList{background:rgba(40,80,140,.06)}
+  body[data-theme='light'] #overlay{background:radial-gradient(circle at 50% 40%,rgba(180,205,235,.92),rgba(225,235,248,.97))}
+  body[data-theme='light'] .res{color:#3a5570}
+  body[data-theme='light'] #homeBest{color:#5a7695}
+  body[data-theme='light'] #home{background:radial-gradient(circle at 50% 35%,rgba(180,205,235,.94),rgba(228,238,250,.99))}
+  body[data-theme='light'] .homeBtn{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
+  body[data-theme='light'] .homeBtn.primary{color:#06121e}
+  body[data-theme='light'] .homeMini{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   html,body{width:100%;height:100%;overflow:hidden;background:#05070e}
   body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent;color:#eaf2ff}
   #game{display:block;width:100vw;height:100vh}
@@ -26,6 +66,20 @@
   .meta{font-size:11px;color:#9dbdd8;font-variant-numeric:tabular-nums;line-height:1.5}
   .meta b{color:#fff;font-weight:750}
   #msg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:64px;font-weight:900;letter-spacing:6px;color:#fff;text-shadow:0 0 40px rgba(120,200,255,.9);opacity:0;transition:opacity .25s;pointer-events:none;z-index:12;white-space:nowrap}
+  #home{position:fixed;inset:0;z-index:25;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,rgba(20,40,80,.92),rgba(4,6,14,.98));transition:opacity .4s;padding:20px}
+  #home.hide{opacity:0;pointer-events:none}
+  .homeInner{text-align:center;display:flex;flex-direction:column;align-items:center}
+  .homeLogo{font-size:64px;margin-bottom:6px;filter:drop-shadow(0 8px 24px rgba(90,180,255,.5));animation:logoFloat 3s ease-in-out infinite}
+  @keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  #home .title{font-size:52px;letter-spacing:8px;margin-bottom:6px}
+  #home .sub{margin-bottom:0}
+  .homeBtn{min-width:280px;padding:15px 34px;margin-top:13px;border-radius:14px;font-size:16px;font-weight:850;letter-spacing:3px;cursor:pointer;border:1.5px solid rgba(140,200,255,.35);background:rgba(255,255,255,.06);color:#dff0ff;transition:all .16s}
+  .homeBtn:hover{transform:translateY(-2px);border-color:rgba(140,200,255,.6)}
+  .homeBtn.primary{background:linear-gradient(180deg,#8ef7c8,#38d99a);color:#06121e;border-color:transparent;box-shadow:0 10px 34px rgba(60,220,160,.4);font-size:17px}
+  .homeBtn.primary:hover{box-shadow:0 14px 44px rgba(60,220,160,.55)}
+  .homeRow{display:flex;gap:11px;margin-top:22px}
+  .homeMini{padding:9px 20px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.28);color:#cfe8ff;font-size:12.5px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .15s}
+  .homeMini:hover{background:rgba(140,200,255,.16)}
   #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.9),rgba(4,6,14,.97));z-index:20;transition:opacity .35s;padding:20px}
   #overlay.hide{opacity:0;pointer-events:none}
   .panel{text-align:center;padding:28px 40px;border-radius:22px;background:rgba(10,18,34,.8);border:1px solid rgba(120,190,255,.22);box-shadow:0 24px 90px rgba(0,0,0,.7);backdrop-filter:blur(16px);max-width:94vw}
@@ -286,14 +340,28 @@
 <div id="shortcut">⚡ 加速带</div>
 <div id="launch"><div class="q" id="launchQ"></div><div class="s" id="launchS"></div></div>
 
+<div id="home">
+  <div class="homeInner">
+    <div class="homeLogo">🏁</div>
+    <div class="title" id="homeTitle" data-i18n="gameTitle">极速狂飙</div>
+    <div class="sub" id="homeSub" data-i18n="gameSub">TURBO GAME</div>
+    <div id="homeBest" style="font-size:11px;letter-spacing:1px;margin:-8px 0 26px;color:#7fa0bd"></div>
+    <button class="homeBtn primary" id="toSetup"><span data-i18n="play">开始游戏</span></button>
+    <button class="homeBtn" id="toSettingsHome"><span data-i18n="settings">设置</span></button>
+    <div class="homeRow">
+      <button class="homeMini" id="langBtn">中/EN</button>
+      <button class="homeMini" id="themeBtn">☀️</button>
+    </div>
+  </div>
+</div>
 <div id="overlay">
   <div class="panel">
-    <div class="title">TURBO</div>
+    <div class="title" data-i18n="gameTitle">极速狂飙</div>
     <div class="sub">双 人 对 战 · 3 圈 决 胜</div>
     <div class="cols" id="keysArea"></div>
     <div id="customPanel" style="display:none;margin-bottom:16px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(140,200,255,.2);max-width:560px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:850;letter-spacing:2px;color:#8ef7c8">赛道编辑器</div>
+        <div data-i18n="editor" style="font-size:12px;font-weight:850;letter-spacing:2px;color:#8ef7c8">赛道编辑器</div>
         <div style="font-size:10.5px;color:#6f8db0"><span id="planCount">0</span>/${MAX_PLAN} 段</div>
       </div>
       <input id="trackName" type="text" maxlength="16" placeholder="给赛道起个名字…" value="我的赛道"
@@ -314,20 +382,20 @@
       </div>
     </div>
     <div style="margin-bottom:16px">
-      <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">选择赛车</div>
+      <div data-i18n="cars" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">选择赛车</div>
       <div id="carList" style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;max-width:520px"></div>
     </div>
     <div style="display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
     <div>
-      <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">模式</div>
+      <div data-i18n="modes" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">模式</div>
       <div class="modes" id="modeList"></div>
-      <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin:14px 0 9px;text-align:left">圈数</div>
+      <div data-i18n="laps" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin:14px 0 9px;text-align:left">圈数</div>
       <div class="laps" id="lapList"></div>
       <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin:14px 0 9px;text-align:left">天气</div>
       <div class="laps" id="weatherList"></div>
     </div>
     <div>
-      <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">地图</div>
+      <div data-i18n="maps" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">地图</div>
       <div class="maps" id="mapList"></div>
     </div>
     </div>
@@ -335,7 +403,7 @@
       <div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:8px;text-align:left">🏆 排行榜（本机）</div>
       <div id="lbList" style="font-size:11.5px;color:#9dbdd8;text-align:left;line-height:1.9"></div>
     </div>
-    <button class="go" id="startBtn">开始比赛</button>
+    <button class="go" id="startBtn"><span data-i18n="start">开始比赛</span></button>
     <div class="tip">🚗 自动加速 · <b style="color:#ffd166">倒计时按 W/↑ 起步喷</b> · 踩路面橙色加速带瞬间提速 · 高速过弯自动漂移</div>
   </div>
 </div>
@@ -399,7 +467,7 @@
   var CAM_DEPTH = 1 / Math.tan((FOV / 2) * Math.PI / 180);
   var DRAW_DIST = 200;
   var PLAYER_Z = CAM_HEIGHT * CAM_DEPTH;
-  var FOG_DENSITY = 5;
+  var FOG_DENSITY = 5;   // 运行时按天气调整
   var ROAD_W = 2000;
   var MAX_SPEED = SEG_LEN * 60;
   var ACCEL = MAX_SPEED / 4.2;
@@ -1766,7 +1834,7 @@
     for (n = 0; n < DRAW_DIST; n++) {
       seg = segments[(baseSegment.index + n) % segments.length];
       seg.looped = seg.index < baseSegment.index;
-      seg.fog = fogFactor(n / DRAW_DIST, FOG_DENSITY);
+      seg.fog = fogFactor(n / DRAW_DIST, WEATHER === 'fog' ? 13 : (WEATHER === 'night' ? 8 : FOG_DENSITY));
       seg.clip = maxy;
 
       var vp = viewParams();
@@ -2105,7 +2173,10 @@
     if (inp.right) p.playerX += steerAmount;
 
     // ── 离心力：漂移时大幅降低（因为你在滑）──
-    var centri = 1 - p.drift * DRIFT_GRIP * carGrip();
+    var gripFactor = 1;
+    if (WEATHER === 'rain') gripFactor = 0.72;      // 雨天打滑
+    else if (WEATHER === 'fog') gripFactor = 0.92;  // 雾天略滑
+    var centri = 1 - p.drift * DRIFT_GRIP * carGrip() * gripFactor;
     p.playerX -= baseSteer * speedPercent * playerSeg.curve * CENTRIFUGAL * centri;
 
     // ── 侧滑视觉量 ──
@@ -2950,20 +3021,20 @@
       var distM = Math.abs(dDiff) / 10;                   // 换算成米
       if (Math.abs(dDiff) < 100) {
         // 太接近，显示"并驾齐驱"
-        if (elGap1) elGap1.textContent = '并排';
-        if (elGap2) elGap2.textContent = '并排';
+        if (elGap1) elGap1.textContent = t('tied');
+        if (elGap2) elGap2.textContent = t('tied');
       } else {
         var leader = dDiff > 0 ? 'P1' : 'P2';
         // 时间差 = 距离差 / 平均速度
         var avgSpd = Math.max(1, (P1.speed + P2.speed) / 2);
         var secDiff = Math.abs(dDiff) / avgSpd;
         if (elGap1) {
-          if (dDiff > 0) elGap1.textContent = '领先 ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
-          else elGap1.textContent = '落后 ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
+          if (dDiff > 0) elGap1.textContent = t('lead') + ' ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
+          else elGap1.textContent = t('trail') + ' ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
         }
         if (elGap2) {
-          if (dDiff > 0) elGap2.textContent = '落后 ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
-          else elGap2.textContent = '领先 ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
+          if (dDiff > 0) elGap2.textContent = t('trail') + ' ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
+          else elGap2.textContent = t('lead') + ' ' + distM.toFixed(0) + 'm (' + secDiff.toFixed(1) + 's)';
         }
       }
     } else {
@@ -2991,13 +3062,127 @@
   var finishedCount = 0;
 
   /* ================= 设置 ================= */
+  /* ================= 多语言 & 主题 ================= */
+  var LANG = 'zh';     // zh | en
+  var THEME = 'dark';  // dark | light
+  var STR = {
+    zh: {
+      gameTitle: '极速狂飙', gameSub: 'TURBO GAME',
+      play: '开始游戏', settings: '设置', back: '返回', selectTitle: '选择你的比赛',
+      cars: '赛车', maps: '地图', modes: '模式', laps: '圈数', weathers: '天气', editor: '赛道编辑器',
+      start: '开始比赛', tip: '自动加速 · 倒计时按 W/↑ 起步喷 · 踩橙色加速带提速 · 高速过弯自动漂移',
+      solo: '单人计时', duo: '双人对战', soloDesc: '全屏 · 挑战自己', duoDesc: '分屏 · 同场竞技',
+      lap: '圈', thisLap: '本圈', best: '最佳', dist: '距离',
+      wClear: '晴朗', wRain: '雨天', wFog: '大雾', wNight: '夜间',
+      cStreet: '街头小子', cBeast: '赛道猛兽', cDrift: '漂移之王', cTank: '重装坦克',
+      mDusk: '黄昏海岸', mNight: '午夜都市', mSnow: '雪原山口', mDesert: '荒漠公路', mCustom: '自定义赛道',
+      stSpeed: '速度', stAccel: '加速', stSteer: '操控', stGrip: '抓地',
+      finish: '完成！', over: '比赛结束', winner: '获胜', total: '总时间', bestLap: '最快单圈',
+      driftScore: '漂移得分', again: '再来一局', share: '分享', lb: '🏆 排行榜（本机）', lbMap: '本图排行榜',
+      noRec: '暂无记录', paused: '⏸ 游戏已暂停 · 关闭后继续',
+      sBgm: '背景音乐', sSfx: '音效', sManual: '手动挡', sGhost: '幽灵车', sAuto: '🤖 自动驾驶示范', sCd: '倒计时', sView: '视角',
+      sBgmD: '程序化合成的赛车 BGM', sSfxD: '引擎 / 漂移 / 碰撞 / 起步喷',
+      sManualD: '关闭=自动加速；开启=一直按住加速键', sGhostD: '显示最佳圈速轨迹（有重影）',
+      sAutoD: 'AI 跑完美路线，供学习参考', sCdD: '起步前等待时间，按剩余时间触发起步喷', sViewD: '远景 / 中景 / 第一视角',
+      resume: '继续游戏', quit: '退出到菜单',
+      cdOff: '关', cd1: '1秒', cd3: '3秒', cd5: '5秒',
+      vFar: '远景', vMid: '中景', vFirst: '第一视角',
+      lead: '领先', trail: '落后', tied: '并排',
+      aiDriving: '🤖 AI 驾驶中', boostPad: '⚡ 加速带',
+    },
+    en: {
+      gameTitle: 'TURBO', gameSub: '极速狂飙 · TURBO GAME',
+      play: 'PLAY', settings: 'Settings', back: 'Back', selectTitle: 'Choose Your Race',
+      cars: 'CARS', maps: 'MAPS', modes: 'MODE', laps: 'LAPS', weathers: 'WEATHER', editor: 'Track Editor',
+      start: 'START RACE', tip: 'Auto-gas · Tap W/↑ at countdown for launch boost · Hit orange pads · Auto-drift in corners',
+      solo: 'Time Trial', duo: '2P Versus', soloDesc: 'Fullscreen · vs yourself', duoDesc: 'Split-screen race',
+      lap: 'Lap', thisLap: 'Lap', best: 'Best', dist: 'Dist',
+      wClear: 'Clear', wRain: 'Rain', wFog: 'Fog', wNight: 'Night',
+      cStreet: 'Street Kid', cBeast: 'Track Beast', cDrift: 'Drift King', cTank: 'Tank',
+      mDusk: 'Dusk Coast', mNight: 'Midnight City', mSnow: 'Snow Pass', mDesert: 'Desert Run', mCustom: 'Custom Track',
+      stSpeed: 'SPD', stAccel: 'ACC', stSteer: 'STE', stGrip: 'GRP',
+      finish: 'FINISH!', over: 'RACE OVER', winner: 'wins', total: 'Total', bestLap: 'Best Lap',
+      driftScore: 'Drift', again: 'RACE AGAIN', share: 'SHARE', lb: '🏆 LEADERBOARD', lbMap: 'MAP RECORDS',
+      noRec: 'No records yet', paused: '⏸ PAUSED · close to resume',
+      sBgm: 'Music', sSfx: 'Sound FX', sManual: 'Manual Gas', sGhost: 'Ghost Car', sAuto: '🤖 Auto Drive', sCd: 'Countdown', sView: 'Camera',
+      sBgmD: 'Procedural racing BGM', sSfxD: 'Engine / drift / crash / launch',
+      sManualD: 'Off = auto-gas; On = hold to accelerate', sGhostD: 'Show best-lap ghost (semi-transparent)',
+      sAutoD: 'AI drives the perfect line', sCdD: 'Pre-race wait; tap W/↑ for launch boost', sViewD: 'Far / Mid / First-person',
+      resume: 'RESUME', quit: 'QUIT TO MENU',
+      cdOff: 'Off', cd1: '1s', cd3: '3s', cd5: '5s',
+      vFar: 'Far', vMid: 'Mid', vFirst: '1st-Person',
+      lead: 'Lead', trail: 'Behind', tied: 'TIED',
+      aiDriving: '🤖 AI DRIVING', boostPad: '⚡ BOOST',
+    }
+  };
+  function t(key) {
+    var pack = STR[LANG] || STR.zh;
+    return pack[key] || STR.zh[key] || key;
+  }
+  function applyLang() {
+    var nodes = document.querySelectorAll ? document.querySelectorAll('[data-i18n]') : [];
+    for (var i = 0; i < nodes.length; i++) {
+      var k = nodes[i].getAttribute('data-i18n');
+      nodes[i].textContent = t(k);
+    }
+    // 标题区
+    var el1 = document.getElementById('homeTitle'); if (el1) el1.textContent = t('gameTitle');
+    var el2 = document.getElementById('homeSub'); if (el2) el2.textContent = t('gameSub');
+    renderCarList(); renderMapList(); renderLapList(); renderWeatherList(); renderModeList();
+    renderLeaderboard();
+    try { localStorage.setItem('turbo-racer-lang', LANG); } catch (e) {}
+  }
+  function toggleLang() {
+    LANG = LANG === 'zh' ? 'en' : 'zh';
+    applyLang();
+    flashTip(LANG === 'zh' ? '中文' : 'English');
+  }
+  function applyTheme() {
+    document.body.setAttribute('data-theme', THEME);
+    var btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = THEME === 'dark' ? '☀️' : '🌙';
+    try { localStorage.setItem('turbo-racer-theme', THEME); } catch (e) {}
+  }
+  function toggleTheme() {
+    THEME = THEME === 'dark' ? 'light' : 'dark';
+    applyTheme();
+  }
+  function showHome() {
+    var hb = document.getElementById('home');
+    var ov = document.getElementById('overlay');
+    if (ov) ov.classList.add('hide');
+    if (hb) hb.classList.remove('hide');
+    updateHomeBest();
+  }
+  function goSetup() {
+    var hb = document.getElementById('home');
+    var ov = document.getElementById('overlay');
+    if (hb) hb.classList.add('hide');
+    if (ov) ov.classList.remove('hide');
+  }
+  function updateHomeBest() {
+    var el = document.getElementById('homeBest');
+    if (!el) return;
+    var all = loadLeaderboard();
+    if (!all.length) { el.textContent = ''; return; }
+    var best = all.reduce(function (a, b) { return (!a || b.time < a.time) ? b : a; }, null);
+    el.textContent = '🏆 ' + (LANG === 'zh' ? '个人最佳' : 'PERSONAL BEST') + ' · ' + (best.mapName || best.map) + ' · ' + formatTime(best.time);
+  }
+  // 启动时恢复语言/主题
+  try {
+    var _sl = localStorage.getItem('turbo-racer-lang');
+    if (_sl === 'en' || _sl === 'zh') LANG = _sl;
+    var _st = localStorage.getItem('turbo-racer-theme');
+    if (_st === 'light' || _st === 'dark') THEME = _st;
+  } catch (e) {}
+
   var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false, countdown: 3 };  // 倒计时秒数  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 0;
   var VIEW_LIST = [
-    { id: 0, name: '远景', icon: '🎥', desc: '车在下方，视野开阔' },
-    { id: 1, name: '中景', icon: '📹', desc: '车在中下，平衡' },
-    { id: 2, name: '第一视角', icon: '👁️', desc: '驾驶舱视角' }
+    { id: 0, name: '远景', nameKey: 'vFar', icon: '🎥', desc: '车在下方，视野开阔' },
+    { id: 1, name: '中景', nameKey: 'vMid', icon: '📹', desc: '车在中下，平衡' },
+    { id: 2, name: '第一视角', nameKey: 'vFirst', icon: '👁️', desc: '驾驶舱视角' }
   ];
   // 各视角的相机高度和车位置
   function viewParams() {
@@ -3013,25 +3198,25 @@
   /* ================= 赛车数据 ================= */
   var CARS = [
     {
-      id: 'street', name: '街头小子', icon: '🚗', desc: '均衡入门 · 好开',
+      id: 'street', name: '街头小子', nameKey: 'cStreet', icon: '🚗', desc: '均衡入门 · 好开',
       speed: 0.90, accel: 1.00, steer: 1.00, grip: 1.00, boost: 1.00,
       color: '#e63946',
       stats: { 速度: 3, 加速: 3, 操控: 3, 抓地: 3 }
     },
     {
-      id: 'beast', name: '赛道猛兽', icon: '🏎️', desc: '极速最高 · 转向偏重',
+      id: 'beast', name: '赛道猛兽', nameKey: 'cBeast', icon: '🏎️', desc: '极速最高 · 转向偏重',
       speed: 1.18, accel: 1.10, steer: 0.82, grip: 1.08, boost: 1.05,
       color: '#ff8c00',
       stats: { 速度: 5, 加速: 4, 操控: 2, 抓地: 4 }
     },
     {
-      id: 'drift', name: '漂移之王', icon: '🚙', desc: '转向极灵 · 高速不稳',
+      id: 'drift', name: '漂移之王', nameKey: 'cDrift', icon: '🚙', desc: '转向极灵 · 高速不稳',
       speed: 0.96, accel: 0.95, steer: 1.32, grip: 0.78, boost: 1.15,
       color: '#2a9d8f',
       stats: { 速度: 3, 加速: 2, 操控: 5, 抓地: 1 }
     },
     {
-      id: 'tank', name: '重装坦克', icon: '🛻', desc: '极稳 · 撞不飞 · 慢',
+      id: 'tank', name: '重装坦克', nameKey: 'cTank', icon: '🛻', desc: '极稳 · 撞不飞 · 慢',
       speed: 0.82, accel: 0.85, steer: 0.88, grip: 1.35, boost: 0.92,
       color: '#5a6a7a',
       stats: { 速度: 2, 加速: 1, 操控: 3, 抓地: 5 }
@@ -3056,10 +3241,10 @@
   function carBoost() { return CAR.boost; }
   var WEATHER = 'clear';   // clear | rain | fog | night
   var WEATHER_LIST = [
-    { id: 'clear', name: '晴朗', desc: '标准视野' },
-    { id: 'rain', name: '雨天', desc: '湿滑 · 视线差' },
-    { id: 'fog', name: '大雾', desc: '能见度极低' },
-    { id: 'night', name: '夜间', desc: '只有车灯' }
+    { id: 'clear', name: '晴朗', nameKey: 'wClear', desc: '标准视野' },
+    { id: 'rain', name: '雨天', nameKey: 'wRain', desc: '湿滑 · 视线差' },
+    { id: 'fog', name: '大雾', nameKey: 'wFog', desc: '能见度极低' },
+    { id: 'night', name: '夜间', nameKey: 'wNight', desc: '只有车灯' }
   ];
   function renderLeaderboard() {
     var panel = document.getElementById('lbPanel');
@@ -3096,9 +3281,10 @@
         var v = c.stats[k];
         var dots = '';
         for (var i = 0; i < 5; i++) dots += '<span class="dot' + (i < v ? ' on' : '') + '"></span>';
-        statsHtml += '<div class="cstat">' + k + '<span class="dots">' + dots + '</span></div>';
+        var kMap = { 速度: 'stSpeed', 加速: 'stAccel', 操控: 'stSteer', 抓地: 'stGrip' };
+        statsHtml += '<div class="cstat">' + (kMap[k] ? t(kMap[k]) : k) + '<span class="dots">' + dots + '</span></div>';
       });
-      d.innerHTML = '<div class="ci">' + c.icon + '</div><div class="cn">' + c.name + '</div><div class="cstats">' + statsHtml + '</div>';
+      d.innerHTML = '<div class="ci">' + c.icon + '</div><div class="cn">' + (c.nameKey ? t(c.nameKey) : c.name) + '</div><div class="cstats">' + statsHtml + '</div>';
       d.addEventListener('click', function () {
         applyCar(c.id);
         renderCarList();
@@ -3114,7 +3300,7 @@
     WEATHER_LIST.forEach(function (w) {
       var d = document.createElement('div');
       d.className = 'lapcard' + (w.id === WEATHER ? ' sel' : '');
-      d.textContent = w.name;
+      d.textContent = w.nameKey ? t(w.nameKey) : w.name;
       d.style.minWidth = '60px';
       d.style.fontSize = '11.5px';
       d.addEventListener('click', function () {
@@ -3462,7 +3648,6 @@
     } catch (e) {}
     closeSettings();
     if (elTrackLabel) elTrackLabel.style.display = 'none';
-    overlay.classList.remove('hide');
     // 恢复开始面板内容
     var panel = overlay.querySelector('.panel');
     if (panel) panel.innerHTML = START_PANEL_HTML;
@@ -3476,17 +3661,18 @@
     applyModeUi();
     bindSettingsUi();
     bindCustomUi();
+    showHome();
     var cp2 = document.getElementById('customPanel');
     if (cp2) cp2.style.display = selectedMap === 'custom' ? 'block' : 'none';
   }
 
   /* ================= 地图选择 ================= */
   var MAP_LIST = [
-    { id: 'dusk', name: '黄昏海岸', desc: '落日 · 暖调 · 中等' },
-    { id: 'night', name: '午夜都市', desc: '霓虹 · 冷调 · 高速' },
-    { id: 'snow', name: '雪原山口', desc: '雪地 · 打滑 · 高难' },
-    { id: 'desert', name: '荒漠公路', desc: '沙丘 · 长直道 · 极速' },
-    { id: 'custom', name: '⚙ 自定义赛道', desc: '自己规划 · 可命名' }
+    { id: 'dusk', name: '黄昏海岸', nameKey: 'mDusk', desc: '落日 · 暖调 · 中等' },
+    { id: 'night', name: '午夜都市', nameKey: 'mNight', desc: '霓虹 · 冷调 · 高速' },
+    { id: 'snow', name: '雪原山口', nameKey: 'mSnow', desc: '雪地 · 打滑 · 高难' },
+    { id: 'desert', name: '荒漠公路', nameKey: 'mDesert', desc: '沙丘 · 长直道 · 极速' },
+    { id: 'custom', name: '⚙ 自定义赛道', nameKey: 'mCustom', desc: '自己规划 · 可命名' }
   ];
   var selectedMap = 'dusk';
   // 自定义赛道参数
@@ -3500,8 +3686,8 @@
   var selectedLaps = 2;
   var GAME_MODE = 'solo';   // 'solo' | 'duo'（默认单人）
   var MODE_LIST = [
-    { id: 'solo', name: '单人计时', desc: '全屏 · 挑战自己' },
-    { id: 'duo', name: '双人对战', desc: '分屏 · 同场竞技' }
+    { id: 'solo', name: '单人计时', nameKey: 'solo', desc: '全屏 · 挑战自己' },
+    { id: 'duo', name: '双人对战', nameKey: 'duo', desc: '分屏 · 同场竞技' }
   ];
 
   function renderModeList() {
@@ -3511,7 +3697,7 @@
     MODE_LIST.forEach(function (m) {
       var d = document.createElement('div');
       d.className = 'modecard' + (m.id === GAME_MODE ? ' sel' : '');
-      d.innerHTML = '<div class="mn2">' + m.name + '</div><div class="md2">' + m.desc + '</div>';
+      d.innerHTML = '<div class="mn2">' + (m.nameKey ? t(m.nameKey) : m.name) + '</div><div class="md2">' + m.desc + '</div>';
       d.addEventListener('click', function () {
         GAME_MODE = m.id;
         applyModeUi();
@@ -3562,7 +3748,7 @@
     LAP_OPTIONS.forEach(function (n) {
       var d = document.createElement('div');
       d.className = 'lapcard' + (n === selectedLaps ? ' sel' : '');
-      d.textContent = n + ' 圈';
+      d.textContent = n + ' ' + t('lap');
       d.addEventListener('click', function () {
         selectedLaps = n;
         TOTAL_LAPS = n;
@@ -3579,7 +3765,7 @@
     MAP_LIST.forEach(function (m) {
       var d = document.createElement('div');
       d.className = 'mapcard' + (m.id === selectedMap ? ' sel' : '');
-      var dispName = (m.id === 'custom' && TRACK_NAME) ? '⚙ ' + TRACK_NAME : m.name;
+      var dispName = (m.id === 'custom' && TRACK_NAME) ? '⚙ ' + TRACK_NAME : (m.nameKey ? t(m.nameKey) : m.name);
       var dispDesc = (m.id === 'custom' && TRACK_PLAN.length > 0) ? TRACK_PLAN.length + ' 段规划' : m.desc;
       d.innerHTML = '<div class="mn">' + dispName + '</div><div class="md">' + dispDesc + '</div>';
       d.addEventListener('click', function () {
@@ -3635,7 +3821,7 @@
     }
     // 加速带提示
     var onPad = (P1 && P1.onPad) || (GAME_MODE !== 'solo' && P2 && P2.onPad);
-    if (onPad) elShortcut.classList.add('on');
+    if (onPad) { elShortcut.textContent = t('boostPad'); elShortcut.classList.add('on'); }
     else elShortcut.classList.remove('on');
 
     // ── 落地扬尘致盲（2 秒）──
@@ -3709,7 +3895,7 @@
 
     // 自动驾驶徽章（右上角）
     var ab2 = document.getElementById('autoBadge');
-    if (ab2) ab2.style.display = CFG.auto ? 'flex' : 'none';
+    if (ab2) { ab2.style.display = CFG.auto ? 'flex' : 'none'; if (CFG.auto) ab2.textContent = t('aiDriving'); }
 
     // 起步喷提示
     var lp = P1 && P1.boostShown > 0 ? P1 : (GAME_MODE !== 'solo' && P2 && P2.boostShown > 0 ? P2 : null);
@@ -3942,6 +4128,18 @@
     update(dt);
     // 每帧为两个视角分别分配车流
     assignCars(P1);
+    // 首页按钮 + 语言 + 主题
+    var tb1 = document.getElementById('toSetup');
+    if (tb1) tb1.addEventListener('click', goSetup);
+    var tb2 = document.getElementById('toSettingsHome');
+    if (tb2) tb2.addEventListener('click', function () { goSetup(); setTimeout(openSettings, 60); });
+    var lb2 = document.getElementById('langBtn');
+    if (lb2) lb2.addEventListener('click', toggleLang);
+    var thb = document.getElementById('themeBtn');
+    if (thb) thb.addEventListener('click', toggleTheme);
+    applyTheme();
+    applyLang();
+    showHome();
     render();
     requestAnimationFrame(frame);
   }
