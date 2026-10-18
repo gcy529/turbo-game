@@ -42,7 +42,7 @@
   .res{font-size:15px;color:#cfe4f7;margin-bottom:20px;line-height:1.9}
   .res b{color:#7ef0c0;font-size:19px}
   #touch{position:fixed;inset:0;z-index:11;pointer-events:none;display:none}
-  .tb{width:62px;height:62px;border-radius:50%;background:rgba(140,200,255,.18);border:2px solid rgba(140,200,255,.45);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#cfe8ff;pointer-events:auto;backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0}
+  .tb{width:82px;height:82px;border-radius:50%;background:rgba(140,200,255,.2);border:2.5px solid rgba(140,200,255,.5);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#e8f4ff;pointer-events:auto;backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0;box-shadow:0 4px 14px rgba(0,0,0,.35)}
   .tb:active{background:rgba(140,200,255,.34)}
   @media (hover:none) and (pointer:coarse){#touch{display:block}}
   /* ── 竖屏模式（默认）── */
@@ -67,7 +67,7 @@
     #viewBar{right:8px;top:46px;gap:4px}
     .vbtn{width:29px;height:29px;font-size:11.5px;border-radius:8px}
     #autoBadge{right:8px;top:88px;font-size:9.5px;padding:4px 8px}
-    .tb{width:56px;height:56px;font-size:18px}
+    .tb{width:74px;height:74px;font-size:26px}
     .panel{padding:16px 14px;max-height:96vh;overflow-y:auto}
     .title{font-size:24px;letter-spacing:3px}
     .sub{font-size:9px;letter-spacing:2px;margin-bottom:14px}
@@ -242,6 +242,7 @@
 <div id="settingsPanel">
   <div class="setbox">
     <div class="settitle">设置</div>
+    <div id="pausedHint" style="display:none;text-align:center;font-size:11px;font-weight:800;letter-spacing:2px;color:#ffd166;margin:-14px 0 16px">⏸ 游戏已暂停 · 关闭后继续</div>
     <div class="setrow">
       <div class="setlabel">背景音乐<small>程序化合成的赛车 BGM</small></div>
       <div class="toggle on" id="tgBgm"></div>
@@ -261,6 +262,15 @@
     <div class="setrow">
       <div class="setlabel">🤖 自动驾驶示范<small>AI 跑完美路线，供学习参考</small></div>
       <div class="toggle" id="tgAuto"></div>
+    </div>
+    <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div class="setlabel">倒计时<small>起步前等待时间，按剩余时间按 W/↑ 触发起步喷</small></div>
+      <div style="display:flex;gap:7px">
+        <button class="cdbtn" data-c="0" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">关</button>
+        <button class="cdbtn" data-c="1" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">1秒</button>
+        <button class="cdbtn" data-c="3" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">3秒</button>
+        <button class="cdbtn" data-c="5" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">5秒</button>
+      </div>
     </div>
     <div class="setclose">
       <button class="setbtn primary" id="setResume">继续游戏</button>
@@ -332,19 +342,19 @@
 
 <div id="touch">
   <!-- 单人：中下方三键 -->
-  <div id="soloPad" style="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:none;gap:10px;align-items:center;pointer-events:auto">
+  <div id="soloPad" style="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:none;gap:14px;align-items:center;pointer-events:auto">
     <div class="tb" id="a1l">◀</div>
     <div class="tb" id="a1g">▲</div>
     <div class="tb" id="a1r">▶</div>
   </div>
   <!-- 双人：上下各一组，都在中下方 -->
   <div id="duoPad" style="position:fixed;inset:0;pointer-events:none;display:none">
-    <div style="position:absolute;left:50%;bottom:calc(50% + 12px);transform:translateX(-50%);display:flex;gap:9px;pointer-events:auto">
+    <div style="position:absolute;left:50%;bottom:calc(50% + 12px);transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto">
       <div class="tb" id="a1l">◀</div>
       <div class="tb" id="a1g">▲</div>
       <div class="tb" id="a1r">▶</div>
     </div>
-    <div style="position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:9px;pointer-events:auto">
+    <div style="position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto">
       <div class="tb" id="a2l">◀</div>
       <div class="tb" id="a2g">▲</div>
       <div class="tb" id="a2r">▶</div>
@@ -2981,7 +2991,7 @@
   var finishedCount = 0;
 
   /* ================= 设置 ================= */
-  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false };  // 幽灵车默认关（有重影）
+  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false, countdown: 3 };  // 倒计时秒数  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 0;
   var VIEW_LIST = [
@@ -3207,6 +3217,28 @@
     try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
   }
 
+  function setCd(sec) {
+    CFG.countdown = sec;
+    updateCdBtns();
+    flashTip(sec === 0 ? '倒计时已关' : '倒计时 ' + sec + ' 秒');
+    try { localStorage.setItem('turbo-racer-cd', String(sec)); } catch (e) {}
+  }
+  function updateCdBtns() {
+    var btns = document.querySelectorAll ? document.querySelectorAll('.cdbtn') : [];
+    for (var i = 0; i < btns.length; i++) {
+      var c = Number(btns[i].getAttribute('data-c'));
+      if (c === CFG.countdown) {
+        btns[i].style.background = 'rgba(60,220,160,.22)';
+        btns[i].style.borderColor = 'rgba(60,220,160,.7)';
+        btns[i].style.color = '#8ef7c8';
+      } else {
+        btns[i].style.background = 'rgba(255,255,255,.06)';
+        btns[i].style.borderColor = 'rgba(140,200,255,.22)';
+        btns[i].style.color = '#cfe4f7';
+      }
+    }
+  }
+
   function updateViewBtns() {
     var btns = document.querySelectorAll ? document.querySelectorAll('.vbtn') : [];
     for (var i = 0; i < btns.length; i++) {
@@ -3217,12 +3249,34 @@
 
 
 
+  var pausedBySettings = false;   // 区分：是不是设置面板导致的暂停
+
   function openSettings() {
     elSetPanel.classList.add('on');
+    var ph = document.getElementById('pausedHint');
+    if (ph) ph.style.display = (running && !pausedBySettings) ? 'none' : (running || countdown > 0 ? 'block' : 'none');
+    if (ph && running) ph.style.display = 'block';
     syncToggles();
+    updateCdBtns();
+    // 游戏进行中打开设置 → 自动暂停
+    if (running && !paused) {
+      paused = true;
+      pausedBySettings = true;
+      try {
+        if (engineNodes.p1) engineNodes.p1.gain.gain.setTargetAtTime(0, AC.currentTime, 0.08);
+        if (engineNodes.p2) engineNodes.p2.gain.gain.setTargetAtTime(0, AC.currentTime, 0.08);
+        if (driftNoise) driftNoise.gain.gain.setTargetAtTime(0, AC.currentTime, 0.08);
+      } catch (e) {}
+    }
   }
   function closeSettings() {
     elSetPanel.classList.remove('on');
+    // 只有设置面板导致的暂停才恢复
+    if (pausedBySettings) {
+      paused = false;
+      pausedBySettings = false;
+      lastTs = 0;   // 防止暂停期间的大 dt 跳帧
+    }
   }
   function syncToggles() {
     var tb = document.getElementById('tgBgm');
@@ -3387,7 +3441,7 @@
     if (ts) ts.onclick = function () { CFG.sfx = !CFG.sfx; syncToggles(); applyAudioSettings(); };
     if (ta) ta.onclick = function () { CFG.auto = !CFG.auto; syncToggles(); };
     var tmm = document.getElementById('tgManual');
-    if (tmm) tmm.onclick = function () { CFG.manualGas = !CFG.manualGas; syncToggles(); };
+    if (tmm) tmm.onclick = function () { CFG.manualGas = !CFG.manualGas; syncToggles(); flashTip(CFG.manualGas ? '手动挡：按住加速键才走' : '自动挡：自动加速'); };
     var tghost = document.getElementById('tgGhost');
     if (tghost) tghost.onclick = function () { CFG.ghost = !CFG.ghost; syncToggles(); };
     // 视角按钮
@@ -3838,10 +3892,22 @@
     if (GAME_MODE === 'solo') { input.p2.left = false; input.p2.right = false; input.p2.brake = false; }
     running = true;
     paused = false;
-    countdown = 3.2;
+    if (CFG.countdown <= 0) {
+      // 无倒计时：直接 GO
+      countdown = 0;
+      setMsg('GO!', 0.8);
+      playBeep(1320, 0.22);
+      raceStart = performance.now();
+      P1.lapStart = raceStart;
+      if (P2) P2.lapStart = raceStart;
+      evaluateLaunch(P1);
+      if (GAME_MODE !== 'solo') evaluateLaunch(P2);
+    } else {
+      countdown = CFG.countdown + 0.2;
+      setMsg(String(CFG.countdown), 0.9);
+    }
     overlay.classList.add('hide');
     finishedCount = 0;
-    setMsg('3', 0.9);
     if (elTrackLabel) {
       var tname = selectedMap === 'custom' ? (TRACK_NAME || '我的赛道') :
         (MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || '';
@@ -3881,6 +3947,11 @@
   }
 
   function boot() {
+    // 恢复倒计时设置
+    try {
+      var savedCd = parseInt(localStorage.getItem('turbo-racer-cd') || '3', 10);
+      if ([0,1,3,5].indexOf(savedCd) >= 0) CFG.countdown = savedCd;
+    } catch (e) {}
     var _p = overlay.querySelector('.panel');
     if (_p) START_PANEL_HTML = _p.innerHTML;
     resize();
