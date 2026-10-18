@@ -109,7 +109,7 @@
   .homeMini:hover{background:rgba(140,200,255,.16)}
   #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.9),rgba(4,6,14,.97));z-index:20;transition:opacity .35s;padding:20px}
   #overlay.hide{opacity:0;pointer-events:none}
-  .panel{text-align:center;padding:28px 40px;border-radius:22px;background:rgba(10,18,34,.8);border:1px solid rgba(120,190,255,.22);box-shadow:0 24px 90px rgba(0,0,0,.7);backdrop-filter:blur(16px);max-width:94vw}
+  .panel{text-align:center;padding:24px 30px;width:100%;box-sizing:border-box;border-radius:22px;background:rgba(10,18,34,.8);border:1px solid rgba(120,190,255,.22);box-shadow:0 24px 90px rgba(0,0,0,.7);backdrop-filter:blur(16px);max-width:94vw}
   .title{font-size:34px;font-weight:900;letter-spacing:4px;background:linear-gradient(180deg,#fff,#67c6ff 70%,#2f7fd0);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
   .sub{font-size:11px;letter-spacing:4px;color:#5f86ad;margin-bottom:20px;font-weight:700}
   .cols{display:flex;gap:34px;justify-content:center;margin-bottom:22px}
@@ -118,7 +118,8 @@
   .n1{color:#ff7d8f}.n2{color:#6cc4ff}
   .key{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#a9c6e2;margin-bottom:7px}
   .key b{color:#fff;font-weight:800;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:2px 8px;font-size:11.5px;min-width:26px;text-align:center}
-  .wizNav{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:6px}
+  .wizNav{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .secLabel{font-size:10.5px;font-weight:800;letter-spacing:2px;color:#5f86ad;margin-bottom:8px;text-align:left}
   .wizBtn{min-width:120px;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:850;letter-spacing:1.5px;cursor:pointer;border:0;transition:all .15s}
   .wizBtn.primary{background:linear-gradient(180deg,#8ef7c8,#38d99a);color:#06121e;box-shadow:0 8px 26px rgba(60,220,160,.35)}
   .wizBtn.ghost{background:rgba(255,255,255,.07);color:#cfe8ff;border:1.5px solid rgba(140,200,255,.3)}
@@ -180,7 +181,8 @@
     .modecard .md2{font-size:8.5px}
     .laps{flex-direction:row;gap:7px}
     .lapcard{padding:6px 10px;font-size:11px;min-width:0;flex:1}
-    .carcard{padding:8px 4px}
+    #carList{grid-template-columns:repeat(2,minmax(0,1fr)) !important;max-width:300px !important}
+    .carcard{padding:9px 6px}
     .carcard .ci{font-size:18px}
     .carcard .cn{font-size:9.5px}
     .carcard .cstats{font-size:7.5px}
@@ -424,8 +426,7 @@
 </div>
 <div id="overlay">
   <div class="panel">
-    <!-- 步骤指示 -->
-    <div id="wizTitle" style="text-align:center;margin-bottom:14px;min-height:44px"></div>
+    <div id="wizTitle" style="text-align:center;margin-bottom:10px;min-height:38px"></div>
     <div class="stepBar">
       <div class="stepDot on" data-step="0"><i>1</i><em>选车</em></div>
       <div class="stepLine"></div>
@@ -433,45 +434,48 @@
       <div class="stepLine"></div>
       <div class="stepDot" data-step="2"><i>3</i><em>出发</em></div>
     </div>
-    <div class="title" data-i18n="gameTitle" style="display:none">极速狂飙</div>
-    <div class="sub">双 人 对 战 · 3 圈 决 胜</div>
-    <div class="cols" id="keysArea"></div>
-    <div class="tabPane" data-pane="car" style="margin-bottom:16px">
-      <div data-i18n="cars" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">选择赛车</div>
-      <div id="carList" style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;max-width:520px"></div>
-      <button class="wizRandom" id="wizRandom" style="margin-top:12px;width:100%;max-width:300px;padding:11px;font-size:12.5px;background:rgba(255,255,255,.08);color:#cfe8ff;border:1px solid rgba(140,200,255,.35);border-radius:10px;cursor:pointer;font-weight:800">🎲 随机选车选图</button>
-    </div>
-    <div style="display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
-    <div class="tabPane" data-pane="race" style="display:none">
 
-      <div data-i18n="modes" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">模式</div>
-      <div class="modes" id="modeList"></div>
-      <div data-i18n="laps" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin:14px 0 9px;text-align:left">圈数</div>
-      <div class="laps" id="lapList"></div>
-      <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin:14px 0 9px;text-align:left">天气</div>
-      <div class="laps" id="weatherList"></div>
+    <!-- ① 选车 -->
+    <div class="tabPane" data-pane="car">
+      <div id="carList" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;max-width:440px;margin:0 auto"></div>
+      <button class="wizRandom" id="wizRandom" style="margin:12px auto 0;display:block;width:100%;max-width:260px;padding:10px;font-size:12px;background:rgba(255,255,255,.08);color:#cfe8ff;border:1px solid rgba(140,200,255,.35);border-radius:10px;cursor:pointer;font-weight:800">🎲 随机选车选图</button>
     </div>
-    </div>
+
+    <!-- ② 选赛道 -->
     <div class="tabPane" data-pane="track" style="display:none">
-      <div data-i18n="maps" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">地图</div>
       <div class="maps" id="mapList"></div>
     </div>
+
+    <!-- ③ 出发 -->
+    <div class="tabPane" data-pane="race" style="display:none">
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;width:100%">
+        <div style="min-width:120px">
+          <div class="secLabel">模式</div>
+          <div class="modes" id="modeList"></div>
+        </div>
+        <div style="min-width:150px">
+          <div class="secLabel">圈数</div>
+          <div class="laps" id="lapList"></div>
+          <div class="secLabel" style="margin-top:12px">天气</div>
+          <div class="laps" id="weatherList"></div>
+        </div>
+      </div>
     </div>
-    <div id="lbPanel" style="display:none;margin-bottom:14px;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(140,200,255,.18);max-width:440px">
-      <div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:8px;text-align:left">🏆 排行榜（本机）</div>
-      <div id="lbList" style="font-size:11.5px;color:#9dbdd8;text-align:left;line-height:1.9"></div>
+
+    <div id="lbPanel" style="display:none;margin:12px auto 0;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(140,200,255,.18);width:100%;max-width:400px">
+      <div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px;text-align:left">🏆 排行榜（本机）</div>
+      <div id="lbList" style="font-size:11.5px;color:#9dbdd8;text-align:left;line-height:1.85"></div>
     </div>
-    <!-- 分页导航 -->
-    <div id="wizSummary" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:11px;font-weight:750;color:#9dbdd8;margin-bottom:14px;letter-spacing:.5px"></div>
+
+    <div id="wizSummary" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-size:11px;font-weight:750;color:#9dbdd8;margin:12px 0;letter-spacing:.5px"></div>
     <div class="wizNav">
       <button class="wizBtn ghost" id="wizPrev">← 上一步</button>
       <button class="wizBtn primary" id="wizNext">下一步 →</button>
       <button class="go" id="startBtn" style="display:none"><span data-i18n="start">开始比赛</span></button>
     </div>
-    <div class="tip">🚗 自动加速 · <b style="color:#ffd166">倒计时按 W/↑ 起步喷</b> · 踩橙色加速带提速 · 高速过弯自动漂移</div>
+    <div class="tip">自动加速 · 倒计时按 W/↑ 起步喷 · 踩橙色加速带提速 · 高速过弯自动漂移</div>
   </div>
 </div>
-
 <div id="touch">
   <!-- 单人：中下方三键 -->
   <div id="soloPad" style="position:fixed;inset:auto 0 18px 0;height:96px;pointer-events:none">
@@ -3570,6 +3574,7 @@
   var WIZ_MAP = ['car', 'track', 'race'];   // 三步 → 面板
 
   function gotoStep(n) {
+    applyBrakeBtnVisual();
     lastStep = WIZ_STEP;
     WIZ_STEP = Math.max(0, Math.min(2, n));
     var pane = WIZ_MAP[WIZ_STEP];
@@ -3601,7 +3606,7 @@
     if (prev) prev.disabled = (WIZ_STEP === 0);
     if (next) next.style.display = (WIZ_STEP < 2) ? '' : 'none';
     if (start) start.style.display = (WIZ_STEP === 2) ? '' : 'none';
-    if (rnd) rnd.style.display = (WIZ_STEP === 2) ? '' : 'none';
+    if (rnd) rnd.style.display = (WIZ_STEP === 0) ? 'block' : 'none';   // 随机按钮只在第1步
     // 标题隐藏（首页已有大标题）
     var tt = document.querySelector ? document.querySelector('.panel .title') : null;
     if (tt) tt.style.display = 'none';
@@ -3931,12 +3936,20 @@
 
   function setBrakeMode(mode) {
     CFG.brakeMode = mode;
-    var el = document.getElementById('a1b');
-    if (el) { el.textContent = mode === 'drift' ? '💨' : '⛔'; el.className = 'tb ' + (mode === 'drift' ? 'tb-drift' : 'tb-brake'); }
+    applyBrakeBtnVisual();
     updateBrakeBtn(mode);
     flashTip(mode === 'drift' ? '右侧改为漂移手刹' : '右侧是刹车');
     try { localStorage.setItem('turbo-racer-brake', mode); } catch (e) {}
   }
+  function applyBrakeBtnVisual() {
+    var el = document.getElementById('a1b');
+    if (!el) return;
+    var isDrift = (CFG.brakeMode === 'drift');
+    el.textContent = isDrift ? '💨' : '⛔';
+    el.className = 'tb' + (isDrift ? ' tb-drift' : ' tb-brake');
+    el.title = isDrift ? '漂移手刹' : '刹车 / 倒退';
+  }
+
   function updateBrakeBtn(mode) {
     var btns = document.querySelectorAll ? document.querySelectorAll('.bmbtn') : [];
     for (var i = 0; i < btns.length; i++) {
@@ -4252,6 +4265,7 @@
     if (soloPad) soloPad.style.display = (isTouch && GAME_MODE === 'solo') ? 'flex' : 'none';
     if (duoPad) duoPad.style.display = (isTouch && GAME_MODE === 'duo') ? 'block' : 'none';
     renderKeys();
+    applyBrakeBtnVisual();
   }
 
   function renderKeys() {
