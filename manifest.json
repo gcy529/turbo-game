@@ -1,10 +1,10 @@
 {
   "name": "极速狂飙 Turbo Racer",
   "short_name": "极速狂飙",
-  "description": "伪3D赛车游戏 · 单人/双人 · 4张地图 · 加速带 · 漂移 · 起步喷",
+  "description": "极速狂飙 · 伪3D赛车游戏 · 单人/双人 · 4车 · 4地图 · 加速带 · 漂移 · 起步喷 · PWA",
   "start_url": "./index.html",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "portrait",
   "background_color": "#05070e",
   "theme_color": "#0b1230",
   "icons": [
