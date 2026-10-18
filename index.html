@@ -109,6 +109,9 @@
   body[data-theme='light'] .stab.on{background:rgba(42,157,143,.16);border-color:rgba(42,157,143,.7)}
   body[data-theme='light'] .stab.on em{color:#14685c}
   .homeRow{display:flex;gap:11px;margin-top:22px}
+  #soundBtn{animation:sndBlink 1.1s ease-in-out infinite;border-color:rgba(255,190,80,.7) !important;background:rgba(255,180,60,.2) !important;color:#ffd9a0 !important;font-weight:900}
+  #soundBtn.on{animation:none;background:rgba(255,255,255,.06) !important;border-color:rgba(140,200,255,.28) !important;color:#8ba3bd !important}
+  @keyframes sndBlink{0%,100%{opacity:1;box-shadow:0 0 0 rgba(255,180,60,0)}50%{opacity:.62;box-shadow:0 0 14px rgba(255,180,60,.6)}}
   .homeMini{padding:9px 20px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.28);color:#cfe8ff;font-size:12.5px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .15s}
   .homeMini:hover{background:rgba(140,200,255,.16)}
   #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.9),rgba(4,6,14,.97));z-index:20;transition:opacity .35s;padding:20px}
@@ -351,6 +354,7 @@
 <div id="autoBadge" style="position:fixed;right:14px;top:108px;z-index:14;display:none;padding:5px 10px;border-radius:9px;background:rgba(10,18,34,.78);border:1px solid rgba(60,220,160,.5);backdrop-filter:blur(8px);font-size:10.5px;font-weight:800;letter-spacing:2px;color:#8ef7c8;pointer-events:none;white-space:nowrap">智驾中</div>
 <div id="viewBar" style="position:fixed;right:14px;top:60px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="远景">1</div><div class="vbtn" data-v="1" title="中景">2</div><div class="vbtn" data-v="2" title="第一视角">3</div></div>
 <div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:16;width:44px;height:44px;border-radius:12px;background:rgba(20,40,70,.85);border:2px solid rgba(140,200,255,.5);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:900;color:#8ef7c8;backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);transition:background .15s">↻</div>
+<a id="elGitMark" href="https://github.com/gcy529/turbo-game" target="_blank" style="position:fixed;left:12px;bottom:12px;z-index:13;font-size:9.5px;font-weight:700;color:rgba(140,180,220,.4);text-decoration:none;letter-spacing:.5px;pointer-events:auto">github.com/gcy529/turbo-game</a>
 <div id="fpsBox" style="position:fixed;right:14px;bottom:14px;z-index:14;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums;backdrop-filter:blur(6px);pointer-events:none;letter-spacing:.5px">-- FPS</div>
 <div id="settingsBtn" title="设置"><span class="gear">⚙</span></div>
 <div id="settingsPanel">
@@ -383,12 +387,7 @@
         <button class="bsbtn" data-bs="left" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">⬅ 左边</button>
         <button class="bsbtn" data-bs="right" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">➡ 右边</button>
       </div>
-      <div class="setlabel">按键功能<small>刹车 或 漂移手刹</small></div>
-      <div style="display:flex;gap:7px">
-        <button class="bmbtn" data-bm="brake" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">⛔ 刹车</button>
-        <button class="bmbtn" data-bm="drift" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">💨 漂移</button>
-      </div>
-    </div>
+
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div class="setlabel">视角<small>1 俯瞰 / 2 贴地 / 3 驾驶舱</small></div>
       <div style="display:flex;gap:7px">
@@ -431,10 +430,12 @@
       </button>
     </div>
     <button class="homeBtn" id="toSettingsHome" style="margin-top:14px"><span data-i18n="settings">设置</span></button>
-    <div class="homeRow">
+    <a class="homeGit" href="https://github.com/gcy529/turbo-game" target="_blank" style="margin-top:16px;display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(140,200,255,.25);color:#9dbdd8;font-size:11.5px;font-weight:750;letter-spacing:.5px;text-decoration:none;transition:all .15s">⭐ github.com/gcy529/turbo-game</a>
+    <div class="homeRow" style="margin-top:14px">
+      <button class="homeMini" id="soundBtn" title="开启声音">🔇 开启声音</button>
       <button class="homeMini" id="langBtn">中/EN</button>
       <button class="homeMini" id="themeBtn">☀️</button>
-      <a class="homeMini" href="index-3d.html" style="text-decoration:none;background:linear-gradient(180deg,#ffc078,#ff9a30);color:#231000;border-color:transparent;font-weight:900">🆕 真 3D 版</a>
+      <a class="homeMini" href="index-3d.html" style="text-decoration:none;background:linear-gradient(180deg,#ffc078,#ff9a30);color:#231000;border-color:transparent;font-weight:900">🎮 逆反3D · 敬请期待</a>
     </div>
   </div>
 </div>
@@ -500,7 +501,7 @@
     <!-- 起步/加速：中下 -->
     <div class="tb tb-gas" id="a1g" style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%)">▲</div>
     <!-- 手刹：左转上方偏内（留出空位，方便拇指上移） -->
-    <div class="tb tb-brake" id="a1b" style="position:absolute;right:16px;bottom:118px">⛔</div>
+    <div class="tb tb-brake" id="a1b" style="position:absolute;right:16px;bottom:118px">🅿️</div>
   </div>
   <!-- 双人：上下各一组，都在中下方 -->
   <div id="duoPad" style="position:fixed;inset:0;pointer-events:none">
@@ -3581,6 +3582,29 @@
     THEME = THEME === 'dark' ? 'light' : 'dark';
     applyTheme();
   }
+  function updateSoundBtn() {
+    var b = document.getElementById('soundBtn');
+    if (!b) return;
+    var on = CFG.sfx || CFG.bgm;
+    b.textContent = on ? '🔊 声音已开' : '🔇 开启声音';
+    b.className = 'homeMini' + (on ? ' on' : '');
+  }
+  function toggleSound() {
+    var on = !(CFG.sfx || CFG.bgm);
+    CFG.sfx = on; CFG.bgm = on;
+    updateSoundBtn();
+    syncToggles();
+    if (on) {
+      initAudio();
+      if (AC && AC.state === 'suspended') AC.resume();
+      startEngines(); initDriftNoise(); startBgm();
+      flashTip('🔊 声音已开启');
+    } else {
+      applyAudioSettings();
+      flashTip('🔇 已静音');
+    }
+    try { localStorage.setItem('turbo-racer-sound', on ? '1' : '0'); } catch (e) {}
+  }
   function showHome() {
     var hb = document.getElementById('home');
     var ov = document.getElementById('overlay');
@@ -3724,7 +3748,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right' };  // 幽灵车默认关（有重影）
+  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right' };  // 默认静音;  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 0;
   var VIEW_LIST = [
@@ -3985,7 +4009,7 @@
     var el = document.getElementById('a1b');
     if (!el) return;
     var isDrift = (CFG.brakeMode === 'drift');
-    el.textContent = isDrift ? '💨' : '⛔';
+    el.textContent = isDrift ? '💨' : '🅿️';
     el.className = 'tb' + (isDrift ? ' tb-drift' : ' tb-brake');
     el.title = isDrift ? '漂移手刹' : '刹车 / 倒退';
   }
@@ -4769,6 +4793,12 @@
   }
 
   function boot() {
+    // 恢复静音设置（CFG 已定义）
+    try {
+      var _snd = localStorage.getItem('turbo-racer-sound');
+      if (_snd === '1') { CFG.sfx = true; CFG.bgm = true; }
+      else { CFG.sfx = false; CFG.bgm = false; }
+    } catch (e) {}
     try {
       var _st = localStorage.getItem('turbo-racer-theme');
       if (_st === 'light' || _st === 'dark') THEME = _st;
@@ -4824,6 +4854,9 @@
     if (tb2) tb2.addEventListener('click', function () { goSetup(); setTimeout(openSettings, 60); });
     var lb2 = document.getElementById('langBtn');
     if (lb2) lb2.addEventListener('click', toggleLang);
+    var sndb = document.getElementById('soundBtn');
+    if (sndb) sndb.addEventListener('click', toggleSound);
+    updateSoundBtn();
     var thb = document.getElementById('themeBtn');
     if (thb) thb.addEventListener('click', toggleTheme);
     var rb = document.getElementById('restartBtn');
