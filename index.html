@@ -91,6 +91,8 @@
   body[data-theme='light'] .stepDot em{color:#7a92aa}
   body[data-theme='light'] .stepDot.on i{background:#2a9d8f;border-color:#2a9d8f;color:#fff}
   body[data-theme='light'] .stepDot.on em{color:#14685c}
+  .tabPane{animation:paneIn .32s ease-out}
+  @keyframes paneIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
   .setupTabs{display:flex;gap:7px;margin-bottom:16px;justify-content:center}
   .stab{flex:1;max-width:140px;padding:9px 6px;border-radius:11px;background:rgba(255,255,255,.05);border:1.5px solid rgba(140,200,255,.18);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .15s}
   .stab span{font-size:17px;line-height:1}
@@ -133,7 +135,10 @@
   .res b{color:#7ef0c0;font-size:19px}
   #touch{position:fixed;inset:0;z-index:11;pointer-events:none;display:none}
   .tb{width:96px;height:96px;border-radius:50%;background:rgba(140,200,255,.22);border:3px solid rgba(140,200,255,.55);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#e8f4ff;pointer-events:auto;backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0;box-shadow:0 6px 22px rgba(0,0,0,.45);margin:0 3px}
-  .tb:active{background:rgba(140,200,255,.34)}
+  .tb:active{background:rgba(140,200,255,.38)}
+  .tb-brake{background:rgba(255,90,110,.22);border-color:rgba(255,110,130,.6);color:#ffc8d0}
+  .tb-brake:active{background:rgba(255,90,110,.45)}
+  .tb-drift{background:rgba(255,190,80,.22);border-color:rgba(255,200,90,.65);color:#ffe0a0}
   @media (hover:none) and (pointer:coarse){#touch{display:block}}
   /* ── 竖屏模式（默认）── */
   @media (orientation:portrait){
@@ -361,6 +366,21 @@
       <div class="setlabel">智驾<small>AI 跑完美路线，供学习参考</small></div>
       <div class="toggle" id="tgAuto"></div>
     </div>
+    <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div class="setlabel">右侧按键<small>刹车 或 漂移手刹</small></div>
+      <div style="display:flex;gap:7px">
+        <button class="bmbtn" data-bm="brake" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">⛔ 刹车</button>
+        <button class="bmbtn" data-bm="drift" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">💨 漂移</button>
+      </div>
+    </div>
+    <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div class="setlabel">视角<small>1 俯瞰 / 2 贴地 / 3 驾驶舱</small></div>
+      <div style="display:flex;gap:7px">
+        <button class="vmbtn" data-v="0" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">1 俯瞰</button>
+        <button class="vmbtn" data-v="1" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">2 贴地</button>
+        <button class="vmbtn" data-v="2" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">3 驾驶舱</button>
+      </div>
+    </div>
     <div class="setclose">
       <button class="setbtn primary" id="setResume">继续游戏</button>
       <button class="setbtn danger" id="setQuit">退出到菜单</button>
@@ -405,6 +425,7 @@
 <div id="overlay">
   <div class="panel">
     <!-- 步骤指示 -->
+    <div id="wizTitle" style="text-align:center;margin-bottom:14px;min-height:44px"></div>
     <div class="stepBar">
       <div class="stepDot on" data-step="0"><i>1</i><em>选车</em></div>
       <div class="stepLine"></div>
@@ -415,12 +436,21 @@
     <div class="title" data-i18n="gameTitle" style="display:none">极速狂飙</div>
     <div class="sub">双 人 对 战 · 3 圈 决 胜</div>
     <div class="cols" id="keysArea"></div>
+    <div class="tabPane" data-pane="car" style="margin-bottom:16px">
+      <div data-i18n="cars" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">选择赛车</div>
+      <div id="carList" style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;max-width:520px"></div>
+      <button class="wizRandom" id="wizRandom" style="margin-top:12px;width:100%;max-width:300px;padding:11px;font-size:12.5px;background:rgba(255,255,255,.08);color:#cfe8ff;border:1px solid rgba(140,200,255,.35);border-radius:10px;cursor:pointer;font-weight:800">🎲 随机选车选图</button>
+    </div>
     <div style="display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
-    <div>
+    <div class="tabPane" data-pane="race" style="display:none">
+
+      <div data-i18n="modes" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">模式</div>
+      <div class="modes" id="modeList"></div>
       <div data-i18n="laps" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin:14px 0 9px;text-align:left">圈数</div>
       <div class="laps" id="lapList"></div>
       <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin:14px 0 9px;text-align:left">天气</div>
       <div class="laps" id="weatherList"></div>
+    </div>
     </div>
     <div class="tabPane" data-pane="track" style="display:none">
       <div data-i18n="maps" style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:9px;text-align:left">地图</div>
@@ -433,12 +463,9 @@
     </div>
     <!-- 分页导航 -->
     <div id="wizSummary" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:11px;font-weight:750;color:#9dbdd8;margin-bottom:14px;letter-spacing:.5px"></div>
-    <div class="wizNav" style="flex-direction:column;gap:10px">
-      <button class="wizRandom" id="wizRandom" style="width:100%;max-width:300px;padding:11px;font-size:12.5px;background:rgba(255,255,255,.08);color:#cfe8ff;border-color:rgba(140,200,255,.35)">🎲 随机选车选图</button>
-      <div style="display:flex;gap:10px;justify-content:center;width:100%">
-        <button class="wizBtn ghost" id="wizPrev">← 上一步</button>
-        <button class="wizBtn primary" id="wizNext">下一步 →</button>
-      </div>
+    <div class="wizNav">
+      <button class="wizBtn ghost" id="wizPrev">← 上一步</button>
+      <button class="wizBtn primary" id="wizNext">下一步 →</button>
       <button class="go" id="startBtn" style="display:none"><span data-i18n="start">开始比赛</span></button>
     </div>
     <div class="tip">🚗 自动加速 · <b style="color:#ffd166">倒计时按 W/↑ 起步喷</b> · 踩橙色加速带提速 · 高速过弯自动漂移</div>
@@ -447,10 +474,11 @@
 
 <div id="touch">
   <!-- 单人：中下方三键 -->
-  <div id="soloPad" style="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);gap:20px;align-items:center;pointer-events:auto">
-    <div class="tb" id="a1l">◀</div>
-    <div class="tb" id="a1g">▲</div>
-    <div class="tb" id="a1r">▶</div>
+  <div id="soloPad" style="position:fixed;inset:auto 0 18px 0;height:96px;pointer-events:none">
+    <div class="tb" id="a1l" style="position:absolute;left:14px;bottom:0">◀</div>
+    <div class="tb" id="a1r" style="position:absolute;left:126px;bottom:0">▶</div>
+    <div class="tb" id="a1g" style="position:absolute;left:50%;bottom:0;transform:translateX(-50%)">▲</div>
+    <div class="tb tb-brake" id="a1b" style="position:absolute;right:14px;bottom:0">⛔</div>
   </div>
   <!-- 双人：上下各一组，都在中下方 -->
   <div id="duoPad" style="position:fixed;inset:0;pointer-events:none">
@@ -669,7 +697,7 @@
 
   function smoothLoopSeam() {
     var N = segments.length;
-    if (N < 20) return;   // 段数太少不处理
+    if (N < 20) return;
     var blend = Math.min(150, Math.floor(N * 0.08));
     var startY = segments[0].p1.world.y;
     for (var i = 0; i < blend; i++) {
@@ -2450,6 +2478,11 @@
         // 后退（倒车）
         p.speed = Math.max(REVERSE_MAX, p.speed + REVERSE_ACCEL * dt);
       }
+    } else if (inp.brake && CFG.brakeMode === 'drift' && p.speed > carMaxSpeed() * 0.35) {
+      p.speed *= Math.pow(0.94, dt * 60);
+      p.drift = Math.min(1, (p.drift || 0) + dt * 3.2);
+      p.driftDir = (inp.left ? -1 : (inp.right ? 1 : (p.driftDir || 1)));
+      p.padShake = Math.max(p.padShake || 0, 0.25);
     } else if (CFG.manualGas ? inp.gas : (AUTO_GAS || inp.gas)) {
       // 手动挡：必须按住加速键；自动挡：默认一直加速
       var accelMul = 1;
@@ -2815,12 +2848,12 @@
       return;
     }
     var remain = p.launchAt;   // 剩余倒计时：越小越准（压哨）
-    if (remain <= 0.62) {
+    if (remain <= 1.20) {
       p.launchQuality = 'perfect';
       p.boostPower = BOOST_PERFECT;
       p.boostTimer = BOOST_PERFECT_TIME;
       p.boostShown = 2.0;
-    } else if (remain <= 1.45) {
+    } else if (remain <= 2.40) {
       p.launchQuality = 'good';
       p.boostPower = BOOST_GOOD;
       p.boostTimer = BOOST_GOOD_TIME;
@@ -3518,7 +3551,7 @@
   function applyTheme() {
     document.body.setAttribute('data-theme', THEME);
     var btn = document.getElementById('themeBtn');
-    if (btn) btn.textContent = THEME === 'light' ? '🌙' : '☀️';
+    if (btn) btn.textContent = THEME === 'dark' ? '☀️' : '🌙';
     try { localStorage.setItem('turbo-racer-theme', THEME); } catch (e) {}
   }
   function toggleTheme() {
@@ -3533,10 +3566,11 @@
     updateHomeBest();
   }
   /* ================= 三步向导 ================= */
-  var WIZ_STEP = 0;
+  var WIZ_STEP = 0, lastStep = null;
   var WIZ_MAP = ['car', 'track', 'race'];   // 三步 → 面板
 
   function gotoStep(n) {
+    lastStep = WIZ_STEP;
     WIZ_STEP = Math.max(0, Math.min(2, n));
     var pane = WIZ_MAP[WIZ_STEP];
 
@@ -3546,6 +3580,12 @@
       var pn = panes[j].getAttribute('data-pane');
       var show = (pn === pane);
       panes[j].style.display = show ? '' : 'none';
+    }
+    var bigTitle = document.getElementById('wizTitle');
+    if (bigTitle) {
+      var titles = ['① 选择你的赛车', '② 选择赛道', '③ 出发！'];
+      var subs = ['挑一辆适合你手感的车', '4 张地图，各有各的脾气', '调整圈数与天气，然后冲刺'];
+      bigTitle.innerHTML = '<div style="font-size:20px;font-weight:900;letter-spacing:2px;color:#fff">' + titles[WIZ_STEP] + '</div><div style="font-size:11px;color:#6f8db0;margin-top:4px">' + subs[WIZ_STEP] + '</div>';
     }
     // 步骤点
     var dots = document.querySelectorAll ? document.querySelectorAll('.stepDot') : [];
@@ -3598,6 +3638,24 @@
     flashTip('随机配置完成！');
   }
 
+  function bindSwipe() {
+    var ov = document.getElementById('overlay');
+    if (!ov) return;
+    var sx = 0, sy = 0, st = 0;
+    ov.addEventListener('touchstart', function (e) {
+      if (!e.touches || !e.touches.length) return;
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
+    }, { passive: true });
+    ov.addEventListener('touchend', function (e) {
+      if (!e.changedTouches || !e.changedTouches.length) return;
+      var dx = e.changedTouches[0].clientX - sx;
+      var dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.6 && (Date.now() - st) < 700) {
+        if (dx < 0) gotoStep(WIZ_STEP + 1); else gotoStep(WIZ_STEP - 1);
+      }
+    }, { passive: true });
+  }
+
   function bindTabs() {
     // 步骤点可点击跳转
     var dots = document.querySelectorAll ? document.querySelectorAll('.stepDot') : [];
@@ -3642,7 +3700,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false };  // 幽灵车默认关（有重影）
+  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false, brakeMode: 'brake' };  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 0;
   var VIEW_LIST = [
@@ -3652,15 +3710,15 @@
   ];
   // 各视角的相机高度和车位置
   function viewParams() {
+    // 1 = 俯瞰（高机位、小车）  2 = 贴地（低机位、大车）  3 = 驾驶舱
     if (CAM_VIEW === 2) {
-      // 3 = 第一视角
       return { camH: 360, carScale: 0, carY: 0, drawCar: false, fov: 1.30 };
     } else if (CAM_VIEW === 1) {
-      // 2 = 中景（高机位、小车）
-      return { camH: 1250, carScale: 0.62, carY: 0, drawCar: true, fov: 1.12 };
+      // 2 贴地：低机位 + 大车 + 标准视野
+      return { camH: 0, carScale: 1.25, carY: 0, drawCar: true, fov: 1.0, lowCam: true, camDist: 620 };
     }
-    // 1 = 远景（低机位、大车、贴地跟随）
-    return { camH: 820, carScale: 1.15, carY: 0, drawCar: true, fov: 1.0 };
+    // 1 俯瞰：高机位 + 小车 + 广角
+    return { camH: 1350, carScale: 0.58, carY: 0, drawCar: true, fov: 1.15 };
   }
 
   /* ================= 赛车数据 ================= */
@@ -3869,6 +3927,31 @@
     flashTip(VIEW_LIST[CAM_VIEW].name + '视角');
     updateViewBtns();
     try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
+  }
+
+  function setBrakeMode(mode) {
+    CFG.brakeMode = mode;
+    var el = document.getElementById('a1b');
+    if (el) { el.textContent = mode === 'drift' ? '💨' : '⛔'; el.className = 'tb ' + (mode === 'drift' ? 'tb-drift' : 'tb-brake'); }
+    updateBrakeBtn(mode);
+    flashTip(mode === 'drift' ? '右侧改为漂移手刹' : '右侧是刹车');
+    try { localStorage.setItem('turbo-racer-brake', mode); } catch (e) {}
+  }
+  function updateBrakeBtn(mode) {
+    var btns = document.querySelectorAll ? document.querySelectorAll('.bmbtn') : [];
+    for (var i = 0; i < btns.length; i++) {
+      var bm = btns[i].getAttribute('data-bm');
+      if (bm === mode) { btns[i].style.background = 'rgba(60,220,160,.22)'; btns[i].style.borderColor = 'rgba(60,220,160,.7)'; btns[i].style.color = '#8ef7c8'; }
+      else { btns[i].style.background = 'rgba(255,255,255,.06)'; btns[i].style.borderColor = 'rgba(140,200,255,.22)'; btns[i].style.color = '#cfe4f7'; }
+    }
+  }
+  function updateVmBtn() {
+    var btns = document.querySelectorAll ? document.querySelectorAll('.vmbtn') : [];
+    for (var i = 0; i < btns.length; i++) {
+      var v = Number(btns[i].getAttribute('data-v'));
+      if (v === CAM_VIEW) { btns[i].style.background = 'rgba(60,220,160,.22)'; btns[i].style.borderColor = 'rgba(60,220,160,.7)'; btns[i].style.color = '#8ef7c8'; }
+      else { btns[i].style.background = 'rgba(255,255,255,.06)'; btns[i].style.borderColor = 'rgba(140,200,255,.22)'; btns[i].style.color = '#cfe4f7'; }
+    }
   }
 
   function updateAutoUI() {
@@ -4117,8 +4200,6 @@
     applyModeUi();
     bindSettingsUi();
     showHome();
-    var cp2 = document.getElementById('customPanel');
-    if (cp2) cp2.style.display = selectedMap === 'custom' ? 'block' : 'none';
   }
 
   /* ================= 地图选择 ================= */
@@ -4553,8 +4634,13 @@
     startBgm();
     TOTAL_LAPS = selectedLaps;
     applyCar(selectedCar);
-    // 应用地图配色主题（注意：与 UI 日夜主题无关）
-    applyMapTheme(selectedMap);
+    CUSTOM_ACTIVE = selectedMap === 'custom';
+    if (CUSTOM_ACTIVE) {
+      // 自定义赛道用黄昏主题
+      applyMapTheme('dusk');
+    } else {
+      applyMapTheme(selectedMap);
+    }
     buildTrack(selectedMap);
     addRoadsideProps();
     resetRace();
@@ -4562,7 +4648,7 @@
     running = true;
     paused = false;
     // 起跑倒计时 3-2-1
-    countdown = 3.2;
+    countdown = 4.2;   // 倒计时加长，容错更大
     P1.launchPressed = false; P1.launchAt = 0;
     if (P2) { P2.launchPressed = false; P2.launchAt = 0; }
     lastCountShown = -1;
@@ -4580,7 +4666,7 @@
   }
 
   function resetRace() {
-    P1 = createPlayer(0, '#e63946');
+    P1 = createPlayer(0, (CAR && CAR.color) ? CAR.color : '#e63946');
     P1.playerX = 0.35;   // 右行：默认靠右
     P2 = createPlayer(SEG_LEN * 2, '#2f7fd0');
     P2.playerX = 0.35;
@@ -4623,7 +4709,6 @@
       if (_st === 'light' || _st === 'dark') THEME = _st;
     } catch (e) {}
     applyTheme();
-    applyLang();
     var _p = overlay.querySelector('.panel');
     if (_p) START_PANEL_HTML = _p.innerHTML;
     resize();
@@ -4649,7 +4734,6 @@
     renderLapList();
     applyModeUi();
     bindSettingsUi();
-    bindCustomUi();
     if (elSetBtn) elSetBtn.addEventListener('click', openSettings);
     // 视角按钮 1/2/3
     var vbtns2 = document.querySelectorAll ? document.querySelectorAll('.vbtn') : [];
@@ -4680,6 +4764,7 @@
     var rb = document.getElementById('restartBtn');
     if (rb) rb.addEventListener('click', restartRace);
     bindTabs();
+    bindSwipe();
     gotoStep(0);
     applyTheme();
     applyLang();
