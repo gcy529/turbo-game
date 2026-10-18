@@ -4192,12 +4192,23 @@
     requestAnimationFrame(frame);
   }
 
+  window.__TR__ = { running: function(){return running;}, paused: function(){return paused;}, countdown: function(){return countdown;}, homeShown: function(){ var hb=document.getElementById('home'); return hb && !hb.classList.contains('hide'); }, ovShown: function(){ var o=document.getElementById('overlay'); return o && !o.classList.contains('hide'); } };
   boot();
 
   // ── PWA：注册 Service Worker（离线可用）──
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function () {});
+      navigator.serviceWorker.register('sw.js').then(function (reg) {
+        // 检测到新版本立即激活（配合 sw 里的 skipWaiting）
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (nw) nw.addEventListener('statechange', function () {
+            if (nw.state === 'activated' && navigator.serviceWorker.controller) {
+              location.reload();   // 新版已就位，刷新拿到
+            }
+          });
+        });
+      }).catch(function () {});
     });
   }
 })();
