@@ -79,6 +79,18 @@
   .homeBtn:hover{transform:translateY(-2px);border-color:rgba(140,200,255,.6)}
   .homeBtn.primary{background:linear-gradient(180deg,#8ef7c8,#38d99a);color:#06121e;border-color:transparent;box-shadow:0 10px 34px rgba(60,220,160,.4);font-size:17px}
   .homeBtn.primary:hover{box-shadow:0 14px 44px rgba(60,220,160,.55)}
+  .stepBar{display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:18px;padding:0 6px}
+  .stepDot{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;flex-shrink:0}
+  .stepDot i{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.08);border:1.5px solid rgba(140,200,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#8ba3bd;font-style:normal;transition:all .2s}
+  .stepDot em{font-size:10px;font-weight:800;letter-spacing:.5px;color:#6f8db0;font-style:normal;transition:color .2s}
+  .stepDot.on i{background:rgba(60,220,160,.8);border-color:rgba(60,220,160,1);color:#06121e;box-shadow:0 0 16px rgba(60,220,160,.5)}
+  .stepDot.on em{color:#8ef7c8}
+  .stepDot.done i{background:rgba(60,220,160,.25);border-color:rgba(60,220,160,.6);color:#8ef7c8}
+  .stepLine{width:34px;height:2px;background:rgba(140,200,255,.18);border-radius:2px;flex-shrink:0}
+  body[data-theme='light'] .stepDot i{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#5a7695}
+  body[data-theme='light'] .stepDot em{color:#7a92aa}
+  body[data-theme='light'] .stepDot.on i{background:#2a9d8f;border-color:#2a9d8f;color:#fff}
+  body[data-theme='light'] .stepDot.on em{color:#14685c}
   .setupTabs{display:flex;gap:7px;margin-bottom:16px;justify-content:center}
   .stab{flex:1;max-width:140px;padding:9px 6px;border-radius:11px;background:rgba(255,255,255,.05);border:1.5px solid rgba(140,200,255,.18);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .15s}
   .stab span{font-size:17px;line-height:1}
@@ -104,6 +116,17 @@
   .n1{color:#ff7d8f}.n2{color:#6cc4ff}
   .key{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#a9c6e2;margin-bottom:7px}
   .key b{color:#fff;font-weight:800;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:2px 8px;font-size:11.5px;min-width:26px;text-align:center}
+  .wizNav{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:6px}
+  .wizBtn{min-width:120px;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:850;letter-spacing:1.5px;cursor:pointer;border:0;transition:all .15s}
+  .wizBtn.primary{background:linear-gradient(180deg,#8ef7c8,#38d99a);color:#06121e;box-shadow:0 8px 26px rgba(60,220,160,.35)}
+  .wizBtn.ghost{background:rgba(255,255,255,.07);color:#cfe8ff;border:1.5px solid rgba(140,200,255,.3)}
+  .wizBtn:hover{transform:translateY(-2px)}
+  .wizBtn:active{transform:translateY(0) scale(.97)}
+  .wizBtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+  .wizRandom{margin-top:12px;padding:9px 20px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(140,200,255,.25);color:#8ba3bd;font-size:11.5px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .15s}
+  .wizRandom:hover{background:rgba(140,200,255,.14);color:#cfe8ff}
+  body[data-theme='light'] .wizBtn.ghost{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
+  body[data-theme='light'] .wizRandom{background:rgba(40,80,140,.06);border-color:rgba(40,80,140,.2);color:#5a7695}
   .go{font-size:15px;font-weight:800;letter-spacing:2px;color:#06121e;background:linear-gradient(180deg,#8ef7c8,#38d99a);padding:13px 44px;border-radius:13px;display:inline-block;box-shadow:0 10px 30px rgba(60,220,160,.35);cursor:pointer;border:0}
   .tip{margin-top:14px;font-size:11px;color:#4e6b88;letter-spacing:1px}
   .res{font-size:15px;color:#cfe4f7;margin-bottom:20px;line-height:1.9}
@@ -131,7 +154,7 @@
     #launch .s{font-size:11px}
     #shortcut{bottom:calc(50% + 34px);font-size:12px;padding:4px 12px}
     #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
-    #restartBtn{right:46px;top:8px;width:32px;height:32px;font-size:15px}
+    #restartBtn{right:48px;top:8px;width:38px;height:38px;font-size:21px}
     #viewBar{right:8px;top:46px;gap:4px}
     .vbtn{width:29px;height:29px;font-size:11.5px;border-radius:8px}
     #autoBadge{right:8px;top:88px;font-size:9.5px;padding:4px 8px}
@@ -266,9 +289,11 @@
   .vbtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
   .vbtn.sel{background:rgba(60,220,160,.25);border-color:rgba(60,220,160,.75);color:#8ef7c8;box-shadow:0 0 14px rgba(60,220,160,.35)}
   #restartBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
-  #restartBtn.show{opacity:1;pointer-events:auto}
-  #settingsBtn .gear{display:inline-block;animation:gearSpin 14s linear infinite}
-  #settingsBtn:hover .gear{animation-duration:1.6s}
+  #restartBtn.show{display:flex}
+  #restartBtn:active{transform:scale(.92)}
+  #settingsBtn .gear{display:inline-block}
+  #settingsBtn .gear.spin{animation:gearSpin 3.2s linear infinite}
+  #settingsBtn:hover .gear.spin{animation-duration:1.1s}
   @keyframes gearSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   #settingsBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
   #settingsPanel{position:fixed;inset:0;background:rgba(4,7,14,.86);z-index:30;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px);padding:20px}
@@ -306,9 +331,9 @@
   <span class="meta">圈 <b id="lap2">1</b>/3<br>本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
 </div>
 
-<div id="autoBadge" style="position:fixed;right:14px;top:108px;z-index:14;display:none;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:rgba(10,18,34,.78);border:1px solid rgba(140,200,255,.35);backdrop-filter:blur(8px);font-size:10.5px;font-weight:800;letter-spacing:1px;color:#8ef7c8;pointer-events:none;white-space:nowrap">🤖 AI 驾驶中</div>
+<div id="autoBadge" style="position:fixed;right:14px;top:108px;z-index:14;display:none;padding:5px 10px;border-radius:9px;background:rgba(10,18,34,.78);border:1px solid rgba(60,220,160,.5);backdrop-filter:blur(8px);font-size:10.5px;font-weight:800;letter-spacing:2px;color:#8ef7c8;pointer-events:none;white-space:nowrap">智驾中</div>
 <div id="viewBar" style="position:fixed;right:14px;top:60px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="远景">1</div><div class="vbtn" data-v="1" title="中景">2</div><div class="vbtn" data-v="2" title="第一视角">3</div></div>
-<div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:#cfe8ff;backdrop-filter:blur(8px);transition:background .15s,border-color .15s;opacity:0;pointer-events:none">↻</div>
+<div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:16;width:44px;height:44px;border-radius:12px;background:rgba(20,40,70,.85);border:2px solid rgba(140,200,255,.5);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:900;color:#8ef7c8;backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);transition:background .15s">↻</div>
 <div id="settingsBtn" title="设置"><span class="gear">⚙</span></div>
 <div id="settingsPanel">
   <div class="setbox">
@@ -331,7 +356,7 @@
       <div class="toggle" id="tgGhost"></div>
     </div>
     <div class="setrow">
-      <div class="setlabel">🧠 智能驾驶<small>AI 跑完美路线，供学习参考</small></div>
+      <div class="setlabel">智驾<small>AI 跑完美路线，供学习参考</small></div>
       <div class="toggle" id="tgAuto"></div>
     </div>
     <div class="setclose">
@@ -364,16 +389,18 @@
 </div>
 <div id="overlay">
   <div class="panel">
-    <!-- Tab 导航 -->
-    <div class="setupTabs">
-      <button class="stab on" data-tab="car"><span>🚗</span><em data-i18n="cars">赛车</em></button>
-      <button class="stab" data-tab="track"><span>🗺️</span><em data-i18n="maps">地图</em></button>
-      <button class="stab" data-tab="race"><span>🏁</span><em>比赛</em></button>
+    <!-- 步骤指示 -->
+    <div class="stepBar">
+      <div class="stepDot on" data-step="0"><i>1</i><em>选车</em></div>
+      <div class="stepLine"></div>
+      <div class="stepDot" data-step="1"><i>2</i><em>选赛道</em></div>
+      <div class="stepLine"></div>
+      <div class="stepDot" data-step="2"><i>3</i><em>出发</em></div>
     </div>
     <div class="title" data-i18n="gameTitle" style="display:none">极速狂飙</div>
     <div class="sub">双 人 对 战 · 3 圈 决 胜</div>
     <div class="cols" id="keysArea"></div>
-    <div id="customPanel" class="tabPane" data-pane="track" style="display:none;margin-bottom:16px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(140,200,255,.2);max-width:560px">
+    <div id="customPanel" class="tabPane" data-pane="custom" style="display:none;margin-bottom:16px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(140,200,255,.2);max-width:560px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div data-i18n="editor" style="font-size:12px;font-weight:850;letter-spacing:2px;color:#8ef7c8">赛道编辑器</div>
         <div style="font-size:10.5px;color:#6f8db0"><span id="planCount">0</span>/${MAX_PLAN} 段</div>
@@ -417,7 +444,14 @@
       <div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:8px;text-align:left">🏆 排行榜（本机）</div>
       <div id="lbList" style="font-size:11.5px;color:#9dbdd8;text-align:left;line-height:1.9"></div>
     </div>
-    <button class="go" id="startBtn"><span data-i18n="start">开始比赛</span></button>
+    <!-- 分页导航 -->
+    <div id="wizSummary" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:11px;font-weight:750;color:#9dbdd8;margin-bottom:14px;letter-spacing:.5px"></div>
+    <div class="wizNav">
+      <button class="wizBtn ghost" id="wizPrev">← 上一步</button>
+      <button class="wizBtn primary" id="wizNext">下一步 →</button>
+      <button class="go" id="startBtn" style="display:none"><span data-i18n="start">开始比赛</span></button>
+    </div>
+    <button class="wizRandom" id="wizRandom">🎲 随机全选并开跑</button>
     <div class="tip">🚗 自动加速 · <b style="color:#ffd166">开局瞬间按 W/↑ 起步喷</b> · 踩橙色加速带提速 · 高速过弯自动漂移</div>
   </div>
 </div>
@@ -939,12 +973,12 @@
         seg.rail = { side: seg.curve > 0 ? 1 : -1 };
         // 观众：弯道外侧（离心方向）人更多
         if (n % 2 === 0) {
-          var outerSide = seg.curve > 0 ? -1 : 1;   // 外侧 = 弯心反方向
+          var outerSide = seg.curve > 0 ? 1 : -1;   // 外侧（人群多的一侧）
           var crowdN = 3 + Math.floor(Math.abs(seg.curve) * 1.2);
           for (var spI = 0; spI < crowdN; spI++) {
             seg.sprites.push({
               type: 'crowd',
-              offset: outerSide * (1.55 + spI * 0.24),
+              offset: outerSide * (1.32 + spI * 0.20),
               w: rnd(130, 200), h: rnd(240, 350),
               tint: pick(['#e63946','#2a7fd4','#f4a261','#2a9d8f','#e9c46a','#8ecae6','#ffb4a2']),
               standing: true
@@ -955,7 +989,7 @@
             for (var spJ = 0; spJ < 2; spJ++) {
               seg.sprites.push({
                 type: 'crowd',
-                offset: -outerSide * (1.5 + spJ * 0.22),
+                offset: -outerSide * (1.28 + spJ * 0.18),
                 w: rnd(120, 180), h: rnd(220, 320),
                 tint: pick(['#e63946','#2a7fd4','#f4a261','#2a9d8f']),
                 standing: true
@@ -2392,7 +2426,7 @@
       if (pedSeg && pedSeg.sprites) {
         for (var psi = 0; psi < pedSeg.sprites.length; psi++) {
           var sp = pedSeg.sprites[psi];
-          if (sp.type === 'crowd' && sp.standing && Math.abs(sp.offset - p.playerX) < 0.5) {
+          if (sp.type === 'crowd' && sp.standing && Math.abs(sp.offset - p.playerX) < 0.72) {
             // 撞到行人：倒地 + 番茄汁
             sp.standing = false;
             sp.knocked = 1.0;       // 倒地动画计时
@@ -3339,14 +3373,14 @@
       finish: '完成！', over: '比赛结束', winner: '获胜', total: '总时间', bestLap: '最快单圈',
       driftScore: '漂移得分', again: '再来一局', share: '分享', lb: '🏆 排行榜（本机）', lbMap: '本图排行榜',
       noRec: '暂无记录', paused: '⏸ 游戏已暂停 · 关闭后继续',
-      sBgm: '背景音乐', sSfx: '音效', sManual: '手动挡', sGhost: '幽灵车', sAuto: '🧠 智能驾驶', sView: '视角',
+      sBgm: '背景音乐', sSfx: '音效', sManual: '手动挡', sGhost: '幽灵车', sAuto: '智驾', sView: '视角',
       sBgmD: '程序化合成的赛车 BGM', sSfxD: '引擎 / 漂移 / 碰撞 / 起步喷',
       sManualD: '关闭=自动加速；开启=一直按住加速键', sGhostD: '显示最佳圈速轨迹（有重影）',
       sAutoD: 'AI 跑完美路线，供学习参考', sViewD: '远景 / 中景 / 第一视角',
       resume: '继续游戏', quit: '退出到菜单',
            vFar: '远景', vMid: '中景', vFirst: '第一视角',
       lead: '领先', trail: '落后', tied: '并排',
-      aiDriving: '🧠 智驾中', boostPad: '⚡ 加速带',
+      aiDriving: '智驾中', boostPad: '⚡ 加速带',
     },
     en: {
       gameTitle: 'TURBO', gameSub: '极速狂飙 · TURBO GAME',
@@ -3362,14 +3396,14 @@
       finish: 'FINISH!', over: 'RACE OVER', winner: 'wins', total: 'Total', bestLap: 'Best Lap',
       driftScore: 'Drift', again: 'RACE AGAIN', share: 'SHARE', lb: '🏆 LEADERBOARD', lbMap: 'MAP RECORDS',
       noRec: 'No records yet', paused: '⏸ PAUSED · close to resume',
-      sBgm: 'Music', sSfx: 'Sound FX', sManual: 'Manual Gas', sGhost: 'Ghost Car', sAuto: '🧠 Autopilot', sView: 'Camera',
+      sBgm: 'Music', sSfx: 'Sound FX', sManual: 'Manual Gas', sGhost: 'Ghost Car', sAuto: 'Autopilot', sView: 'Camera',
       sBgmD: 'Procedural racing BGM', sSfxD: 'Engine / drift / crash / launch',
       sManualD: 'Off = auto-gas; On = hold to accelerate', sGhostD: 'Show best-lap ghost (semi-transparent)',
       sAutoD: 'AI drives the perfect line', sViewD: 'Far / Mid / First-person',
       resume: 'RESUME', quit: 'QUIT TO MENU',
            vFar: 'Far', vMid: 'Mid', vFirst: '1st-Person',
       lead: 'Lead', trail: 'Behind', tied: 'TIED',
-      aiDriving: '🧠 AUTOPILOT', boostPad: '⚡ BOOST',
+      aiDriving: 'AUTOPILOT', boostPad: '⚡ BOOST',
     }
   };
   function t(key) {
@@ -3411,34 +3445,86 @@
     if (hb) hb.classList.remove('hide');
     updateHomeBest();
   }
-  var SETUP_TAB = 'car';
-  function switchTab(name) {
-    SETUP_TAB = name;
-    var btns = document.querySelectorAll ? document.querySelectorAll('.stab') : [];
-    for (var i = 0; i < btns.length; i++) {
-      btns[i].className = 'stab' + (btns[i].getAttribute('data-tab') === name ? ' on' : '');
-    }
+  /* ================= 三步向导 ================= */
+  var WIZ_STEP = 0;
+  var WIZ_MAP = ['car', 'track', 'race'];   // 三步 → 面板
+
+  function gotoStep(n) {
+    WIZ_STEP = Math.max(0, Math.min(2, n));
+    var pane = WIZ_MAP[WIZ_STEP];
+
+    // 面板显示
     var panes = document.querySelectorAll ? document.querySelectorAll('.tabPane') : [];
     for (var j = 0; j < panes.length; j++) {
       var pn = panes[j].getAttribute('data-pane');
-      var show = (pn === name);
-      // customPanel 特殊：只有选自定义地图时才显示
-      if (pn === 'track' && panes[j].id === 'customPanel') {
-        show = (name === 'track' && selectedMap === 'custom');
-      }
+      var show = (pn === pane);
+      if (panes[j].id === 'customPanel') show = (WIZ_STEP === 1 && selectedMap === 'custom');
       panes[j].style.display = show ? '' : 'none';
     }
-    // 有 tab 时隐藏大标题省空间
+    // 步骤点
+    var dots = document.querySelectorAll ? document.querySelectorAll('.stepDot') : [];
+    for (var k = 0; k < dots.length; k++) {
+      var ds = Number(dots[k].getAttribute('data-step'));
+      dots[k].className = 'stepDot' + (ds === WIZ_STEP ? ' on' : (ds < WIZ_STEP ? ' done' : ''));
+    }
+    // 按钮
+    var prev = document.getElementById('wizPrev');
+    var next = document.getElementById('wizNext');
+    var start = document.getElementById('startBtn');
+    var rnd = document.getElementById('wizRandom');
+    if (prev) prev.disabled = (WIZ_STEP === 0);
+    if (next) next.style.display = (WIZ_STEP < 2) ? '' : 'none';
+    if (start) start.style.display = (WIZ_STEP === 2) ? '' : 'none';
+    if (rnd) rnd.style.display = (WIZ_STEP === 2) ? '' : 'none';
+    // 标题隐藏（首页已有大标题）
     var tt = document.querySelector ? document.querySelector('.panel .title') : null;
     if (tt) tt.style.display = 'none';
+    // 到第 3 步时显示当前选择摘要
+    if (WIZ_STEP === 2) updateSummary();
+    try { localStorage.setItem('turbo-racer-wiz', String(WIZ_STEP)); } catch (e) {}
   }
+
+  function updateSummary() {
+    var el = document.getElementById('wizSummary');
+    if (!el) return;
+    var car = CAR ? (CAR.nameKey ? t(CAR.nameKey) : CAR.name) : '-';
+    var map = selectedMap === 'custom' ? (TRACK_NAME || '自定义') : ((MAP_LIST.find(function(m){return m.id===selectedMap;})||{}).nameKey ? t((MAP_LIST.find(function(m){return m.id===selectedMap;})||{}).nameKey) : selectedMap);
+    var w = WEATHER_LIST.find(function(x){return x.id === WEATHER;});
+    el.innerHTML = '<span>🚗 ' + car + '</span><span>🗺️ ' + map + '</span><span>🌦️ ' + (w ? (w.nameKey ? t(w.nameKey) : w.name) : WEATHER) + '</span><span>🔁 ' + TOTAL_LAPS + ' 圈</span>';
+  }
+
+  function randomAll() {
+    // 随机车
+    applyCar(CARS[Math.floor(Math.random() * CARS.length)].id);
+    renderCarList();
+    // 随机地图（不含自定义）
+    var maps = MAP_LIST.filter(function(m){ return m.id !== 'custom'; });
+    selectedMap = maps[Math.floor(Math.random() * maps.length)].id;
+    renderMapList();
+    // 随机天气
+    WEATHER = WEATHER_LIST[Math.floor(Math.random() * WEATHER_LIST.length)].id;
+    renderWeatherList();
+    // 随机圈数
+    selectedLaps = LAP_OPTIONS[Math.floor(Math.random() * LAP_OPTIONS.length)];
+    TOTAL_LAPS = selectedLaps;
+    renderLapList();
+    updateSummary();
+    flashTip('随机配置完成，出发！');
+    setTimeout(startRace, 320);
+  }
+
   function bindTabs() {
-    var btns = document.querySelectorAll ? document.querySelectorAll('.stab') : [];
-    for (var i = 0; i < btns.length; i++) {
-      (function (b) {
-        b.onclick = function () { switchTab(b.getAttribute('data-tab')); };
-      })(btns[i]);
+    // 步骤点可点击跳转
+    var dots = document.querySelectorAll ? document.querySelectorAll('.stepDot') : [];
+    for (var i = 0; i < dots.length; i++) {
+      (function (b) { b.onclick = function () { gotoStep(Number(b.getAttribute('data-step'))); }; })(dots[i]);
     }
+    var prev = document.getElementById('wizPrev');
+    var next = document.getElementById('wizNext');
+    var rnd = document.getElementById('wizRandom');
+    if (prev) prev.onclick = function () { gotoStep(WIZ_STEP - 1); };
+    if (next) next.onclick = function () { gotoStep(WIZ_STEP + 1); };
+    if (rnd) rnd.onclick = randomAll;
   }
 
   function goSetup() {
@@ -3446,6 +3532,7 @@
     var ov = document.getElementById('overlay');
     if (hb) hb.classList.add('hide');
     if (ov) ov.classList.remove('hide');
+    gotoStep(0);
   }
   function updateHomeBest() {
     var el = document.getElementById('homeBest');
@@ -3692,6 +3779,13 @@
     try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
   }
 
+  function updateAutoUI() {
+    var ab2 = document.getElementById('autoBadge');
+    var gearEl = document.querySelector ? document.querySelector('#settingsBtn .gear') : null;
+    if (ab2) ab2.style.display = CFG.auto ? 'block' : 'none';
+    if (gearEl) gearEl.className = 'gear' + (CFG.auto ? ' spin' : '');
+  }
+
   function updateViewBtns() {
     var btns = document.querySelectorAll ? document.querySelectorAll('.vbtn') : [];
     for (var i = 0; i < btns.length; i++) {
@@ -3741,6 +3835,7 @@
     if (tm) tm.className = 'toggle' + (CFG.manualGas ? ' on' : '');
     var tgh = document.getElementById('tgGhost');
     if (tgh) tgh.className = 'toggle' + (CFG.ghost ? ' on' : '');
+    updateAutoUI();
   }
 
   function applyAudioSettings() {
@@ -3891,7 +3986,7 @@
     var sq = document.getElementById('setQuit');
     if (tb) tb.onclick = function () { CFG.bgm = !CFG.bgm; syncToggles(); applyAudioSettings(); };
     if (ts) ts.onclick = function () { CFG.sfx = !CFG.sfx; syncToggles(); applyAudioSettings(); };
-    if (ta) ta.onclick = function () { CFG.auto = !CFG.auto; syncToggles(); };
+    if (ta) ta.onclick = function () { CFG.auto = !CFG.auto; syncToggles(); updateAutoUI(); };
     var tmm = document.getElementById('tgManual');
     if (tmm) tmm.onclick = function () { CFG.manualGas = !CFG.manualGas; syncToggles(); flashTip(CFG.manualGas ? '手动挡：按住加速键才走' : '自动挡：自动加速'); };
     var tghost = document.getElementById('tgGhost');
@@ -3914,7 +4009,7 @@
     } catch (e) {}
     closeSettings();
     var rbtn2 = document.getElementById('restartBtn');
-    if (rbtn2) rbtn2.classList.remove('show');
+    if (rbtn2) { rbtn2.classList.remove('show'); rbtn2.style.display = 'none'; }
     if (elTrackLabel) elTrackLabel.style.display = 'none';
     // 恢复开始面板内容
     var panel = overlay.querySelector('.panel');
@@ -4162,8 +4257,7 @@
     if (shk > 0.02) ctx.restore();
 
     // 自动驾驶徽章（右上角）
-    var ab2 = document.getElementById('autoBadge');
-    if (ab2) { ab2.style.display = CFG.auto ? 'flex' : 'none'; if (CFG.auto) ab2.textContent = t('aiDriving'); }
+    updateAutoUI();
 
     // 起步喷提示
     var lp = P1 && P1.boostShown > 0 ? P1 : (GAME_MODE !== 'solo' && P2 && P2.boostShown > 0 ? P2 : null);
@@ -4393,7 +4487,7 @@
     overlay.classList.add('hide');
     finishedCount = 0;
     var rbtn = document.getElementById('restartBtn');
-    if (rbtn) rbtn.classList.add('show');
+    if (rbtn) { rbtn.classList.add('show'); rbtn.style.display = 'flex'; }
     if (elTrackLabel) {
       var tname = selectedMap === 'custom' ? (TRACK_NAME || '我的赛道') :
         (MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || '';
@@ -4485,7 +4579,7 @@
     var rb = document.getElementById('restartBtn');
     if (rb) rb.addEventListener('click', restartRace);
     bindTabs();
-    switchTab('car');
+    gotoStep(0);
     applyTheme();
     applyLang();
     showHome();
