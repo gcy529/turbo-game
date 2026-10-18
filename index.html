@@ -3998,6 +3998,14 @@
     }
   }
 
+  function applyBrakeBtnVisual() {
+    var el = document.getElementById('a1b');
+    if (!el) return;
+    el.textContent = '🅿️';
+    el.className = 'tb tb-brake';
+    el.title = '手刹';
+  }
+
   function updateVmBtn() {
     var btns = document.querySelectorAll ? document.querySelectorAll('.vmbtn') : [];
     for (var i = 0; i < btns.length; i++) {
