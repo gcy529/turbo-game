@@ -3978,8 +3978,9 @@
     CFG.brakeSide = side;
     var el = document.getElementById('a1b');
     if (el) {
-      el.style.left = ''; el.style.right = '';
-      if (side === 'left') { el.style.left = '104px'; el.style.right = ''; }
+      el.style.left = ''; el.style.right = ''; el.style.transform = '';
+      // 左手镜像：与左转键同一竖线（left:16px），正上方
+      if (side === 'left') { el.style.left = '16px'; el.style.right = ''; }
       else { el.style.right = '16px'; el.style.left = ''; }
     }
     updateBsBtn();
