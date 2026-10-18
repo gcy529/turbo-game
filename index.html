@@ -2942,6 +2942,7 @@
     }
 
     if (msgTimer > 0) { msgTimer -= dt; if (msgTimer <= 0) elMsg.style.opacity = '0'; }
+    applyBrakeBtnVisual();
     updateHud();
     updateFxHud();
     if (ghostFrames.length < 3000 && P1 && P1.totalDistance > 0) recordGhost(P1, dt);
@@ -4013,6 +4014,7 @@
     }
   }
   function syncToggles() {
+    applyBrakeBtnVisual();
     var tb = document.getElementById('tgBgm');
     var ts = document.getElementById('tgSfx');
     var ta = document.getElementById('tgAuto');
