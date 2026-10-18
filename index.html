@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="mobile-web-app-capable" content="yes" />
 <link rel="manifest" href="manifest.json" />
-<title>极速狂飙 · 双人对战</title>
+<title>Turbo</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{width:100%;height:100%;overflow:hidden;background:#05070e}
@@ -42,7 +42,7 @@
   .res{font-size:15px;color:#cfe4f7;margin-bottom:20px;line-height:1.9}
   .res b{color:#7ef0c0;font-size:19px}
   #touch{position:fixed;inset:0;z-index:11;pointer-events:none;display:none}
-  .tb{position:fixed;width:68px;height:68px;border-radius:50%;background:rgba(140,200,255,.16);border:2px solid rgba(140,200,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#cfe8ff;pointer-events:auto;backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none}
+  .tb{width:62px;height:62px;border-radius:50%;background:rgba(140,200,255,.18);border:2px solid rgba(140,200,255,.45);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#cfe8ff;pointer-events:auto;backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0}
   .tb:active{background:rgba(140,200,255,.34)}
   @media (hover:none) and (pointer:coarse){#touch{display:block}}
   /* ── 竖屏模式（默认）── */
@@ -64,13 +64,7 @@
     #launch .s{font-size:11px}
     #shortcut{bottom:calc(50% + 34px);font-size:12px;padding:4px 12px}
     #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
-    .tb{width:58px;height:58px;font-size:18px}
-    #a1l{left:10px;bottom:calc(50% + 10px)}
-    #a1r{left:76px;bottom:calc(50% + 10px)}
-    #a1g{left:43px;bottom:calc(50% + 76px)}
-    #a2l{right:76px;bottom:10px}
-    #a2r{right:10px;bottom:10px}
-    #a2g{right:43px;bottom:76px}
+    .tb{width:56px;height:56px;font-size:18px}
     .panel{padding:16px 14px;max-height:96vh;overflow-y:auto}
     .title{font-size:24px;letter-spacing:3px}
     .sub{font-size:9px;letter-spacing:2px;margin-bottom:14px}
@@ -195,6 +189,7 @@
   .cslider label b{color:#8ef7c8;font-weight:800;font-variant-numeric:tabular-nums}
   .cslider input[type=range]{-webkit-appearance:none;height:4px;border-radius:99px;background:rgba(255,255,255,.16);outline:none}
   .cslider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#8ef7c8;cursor:pointer;box-shadow:0 0 10px rgba(110,247,200,.6)}
+  #viewBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
   #settingsBtn{position:fixed;right:14px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#cfe8ff;backdrop-filter:blur(8px);transition:all .15s}
   #settingsBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
   #settingsPanel{position:fixed;inset:0;background:rgba(4,7,14,.86);z-index:30;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px);padding:20px}
@@ -232,6 +227,7 @@
   <span class="meta">圈 <b id="lap2">1</b>/3<br>本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
 </div>
 
+<div id="viewBtn" title="切换视角" style="position:fixed;right:56px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:#cfe8ff;backdrop-filter:blur(8px)">🎥</div>
 <div id="settingsBtn" title="设置">⚙</div>
 <div id="settingsPanel">
   <div class="setbox">
@@ -245,14 +241,32 @@
       <div class="toggle on" id="tgSfx"></div>
     </div>
     <div class="setrow">
-      <div class="setlabel">自动驾驶<small>示范完美路线，供学习参考</small></div>
+      <div class="setlabel">手动挡<small>关闭=自动加速；开启=一直按住加速键</small></div>
+      <div class="toggle" id="tgManual"></div>
+    </div>
+    <div class="setrow">
+      <div class="setlabel">幽灵车<small>显示你最佳圈速的半透明轨迹</small></div>
+      <div class="toggle on" id="tgGhost"></div>
+    </div>
+    <div class="setrow">
+      <div class="setlabel">🤖 自动驾驶示范<small>AI 跑完美路线，供学习参考</small></div>
       <div class="toggle" id="tgAuto"></div>
+    </div>
+    <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div class="setlabel">视角<small>远景 / 中景 / 第一视角</small></div>
+      <div style="display:flex;gap:7px">
+        <button class="viewbtn" data-v="0" style="flex:1;padding:9px 4px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:11.5px;font-weight:800;cursor:pointer">🎥 远景</button>
+        <button class="viewbtn" data-v="1" style="flex:1;padding:9px 4px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:11.5px;font-weight:800;cursor:pointer">📹 中景</button>
+        <button class="viewbtn" data-v="2" style="flex:1;padding:9px 4px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:11.5px;font-weight:800;cursor:pointer">👁️ 第一视角</button>
+      </div>
     </div>
     <div class="setclose">
       <button class="setbtn primary" id="setResume">继续游戏</button>
       <button class="setbtn danger" id="setQuit">退出到菜单</button>
     </div>
   </div>
+</div>
+</div>
 </div>
 <div id="msg"></div>
 <div id="pace"><div class="ico" id="paceIco">◀</div><div class="txt" id="paceTxt"></div></div>
@@ -262,7 +276,7 @@
 
 <div id="overlay">
   <div class="panel">
-    <div class="title">极速狂飙</div>
+    <div class="title">TURBO</div>
     <div class="sub">双 人 对 战 · 3 圈 决 胜</div>
     <div class="cols" id="keysArea"></div>
     <div id="customPanel" style="display:none;margin-bottom:16px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(140,200,255,.2);max-width:560px">
@@ -315,12 +329,25 @@
 </div>
 
 <div id="touch">
-  <div class="tb" id="a1l" style="left:14px;bottom:calc(50% + 14px)">◀</div>
-  <div class="tb" id="a1r" style="left:92px;bottom:calc(50% + 14px)">▶</div>
-  <div class="tb" id="a1g" style="left:53px;bottom:calc(50% + 92px)">▲</div>
-  <div class="tb" id="a2l" style="right:92px;bottom:14px">◀</div>
-  <div class="tb" id="a2r" style="right:14px;bottom:14px">▶</div>
-  <div class="tb" id="a2g" style="right:53px;bottom:92px">▲</div>
+  <!-- 单人：中下方三键 -->
+  <div id="soloPad" style="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:none;gap:10px;align-items:center;pointer-events:auto">
+    <div class="tb" id="a1l">◀</div>
+    <div class="tb" id="a1g">▲</div>
+    <div class="tb" id="a1r">▶</div>
+  </div>
+  <!-- 双人：上下各一组，都在中下方 -->
+  <div id="duoPad" style="position:fixed;inset:0;pointer-events:none;display:none">
+    <div style="position:absolute;left:50%;bottom:calc(50% + 12px);transform:translateX(-50%);display:flex;gap:9px;pointer-events:auto">
+      <div class="tb" id="a1l">◀</div>
+      <div class="tb" id="a1g">▲</div>
+      <div class="tb" id="a1r">▶</div>
+    </div>
+    <div style="position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:9px;pointer-events:auto">
+      <div class="tb" id="a2l">◀</div>
+      <div class="tb" id="a2g">▲</div>
+      <div class="tb" id="a2r">▶</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1530,8 +1557,9 @@
     }
   }
 
-  function drawPlayerCar(p) {
-    var w = Math.min(V.w * 0.155, 200);
+  function drawPlayerCar(p, scale) {
+    scale = scale === undefined ? 1 : scale;
+    var w = Math.min(V.w * 0.155, 200) * scale;
     var h = w * 0.86;
     var cx = V.w / 2 + p.steerVisual * w * 0.22;
     var bounce = Math.sin(clock * 24) * (p.speed / MAX_SPEED) * h * 0.018 + p.shake * h * 0.06;
@@ -1712,8 +1740,9 @@
   function renderView(p) {
     var baseSegment = findSegment(p.position);
     var basePercent = percentRemaining(p.position, SEG_LEN);
-    var playerSegment = findSegment(p.position + PLAYER_Z);
-    var playerPercent = percentRemaining(p.position + PLAYER_Z, SEG_LEN);
+    var vpZ = viewParams();
+    var playerSegment = findSegment(p.position + vpZ.camH * CAM_DEPTH);
+    var playerPercent = percentRemaining(p.position + vpZ.camH * CAM_DEPTH, SEG_LEN);
     var playerY = interpolate(playerSegment.p1.world.y, playerSegment.p2.world.y, playerPercent);
     var maxy = V.h;
     var x = 0;
@@ -1728,8 +1757,9 @@
       seg.fog = fogFactor(n / DRAW_DIST, FOG_DENSITY);
       seg.clip = maxy;
 
-      project(seg.p1, (p.playerX * ROAD_W) - x, playerY + CAM_HEIGHT, p.position - (seg.looped ? trackLength : 0), CAM_DEPTH, V.w, V.h, ROAD_W);
-      project(seg.p2, (p.playerX * ROAD_W) - x - dx, playerY + CAM_HEIGHT, p.position - (seg.looped ? trackLength : 0), CAM_DEPTH, V.w, V.h, ROAD_W);
+      var vp = viewParams();
+      project(seg.p1, (p.playerX * ROAD_W) - x, playerY + vp.camH, p.position - (seg.looped ? trackLength : 0), CAM_DEPTH, V.w, V.h, ROAD_W);
+      project(seg.p2, (p.playerX * ROAD_W) - x - dx, playerY + vp.camH, p.position - (seg.looped ? trackLength : 0), CAM_DEPTH, V.w, V.h, ROAD_W);
 
       x += dx;
       dx += seg.curve;
@@ -1774,7 +1804,8 @@
       }
     }
 
-    drawPlayerCar(p);
+    var vpDraw = viewParams();
+    if (vpDraw.drawCar) drawPlayerCar(p, vpDraw.carScale);
 
     var sp = p.speed / MAX_SPEED;
     var boosting = p.boostTimer > 0;
@@ -1847,6 +1878,66 @@
       ctx.lineTo(V.w / 2 - V.w * 0.42, V.h * 0.05);
       ctx.lineTo(V.w / 2 + V.w * 0.42, V.h * 0.05);
       ctx.lineTo(V.w / 2 + V.w * 0.06, V.h * 0.8);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // ── 第一视角：驾驶舱框架 ──
+    if (CAM_VIEW === 2) {
+      // 底部仪表台
+      var dashH = V.h * 0.16;
+      var dashG = ctx.createLinearGradient(0, V.h - dashH, 0, V.h);
+      dashG.addColorStop(0, 'rgba(20,24,34,0.92)');
+      dashG.addColorStop(1, 'rgba(8,10,16,0.98)');
+      ctx.fillStyle = dashG;
+      ctx.beginPath();
+      ctx.moveTo(0, V.h);
+      ctx.lineTo(0, V.h - dashH * 0.6);
+      ctx.quadraticCurveTo(V.w * 0.5, V.h - dashH * 1.35, V.w, V.h - dashH * 0.6);
+      ctx.lineTo(V.w, V.h);
+      ctx.closePath();
+      ctx.fill();
+      // 方向盘（下半圆）
+      var swR = Math.min(V.w * 0.22, V.h * 0.16);
+      var swX = V.w / 2, swY = V.h - dashH * 0.15;
+      ctx.strokeStyle = 'rgba(60,70,90,0.9)';
+      ctx.lineWidth = Math.max(6, swR * 0.16);
+      ctx.beginPath();
+      ctx.arc(swX, swY, swR, Math.PI * 0.08, Math.PI * 0.92);
+      ctx.stroke();
+      // 方向盘辐条
+      ctx.strokeStyle = 'rgba(50,58,75,0.85)';
+      ctx.lineWidth = Math.max(4, swR * 0.1);
+      ctx.beginPath();
+      ctx.moveTo(swX - swR, swY);
+      ctx.lineTo(swX - swR * 0.3, swY - swR * 0.12);
+      ctx.moveTo(swX + swR, swY);
+      ctx.lineTo(swX + swR * 0.3, swY - swR * 0.12);
+      ctx.stroke();
+      // 方向盘随转向转动
+      var steerAng = p.steerVisual * 0.35;
+      ctx.save();
+      ctx.translate(swX, swY);
+      ctx.rotate(steerAng);
+      ctx.strokeStyle = 'rgba(90,105,130,0.55)';
+      ctx.lineWidth = Math.max(3, swR * 0.07);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -swR * 0.85);
+      ctx.stroke();
+      ctx.restore();
+      // 顶部 A 柱阴影
+      ctx.fillStyle = 'rgba(6,8,14,0.55)';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(V.w * 0.12, 0);
+      ctx.lineTo(0, V.h * 0.42);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(V.w, 0);
+      ctx.lineTo(V.w * 0.88, 0);
+      ctx.lineTo(V.w, V.h * 0.42);
       ctx.closePath();
       ctx.fill();
     }
@@ -2889,6 +2980,23 @@
 
   /* ================= 设置 ================= */
   var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: true };
+  // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
+  var CAM_VIEW = 0;
+  var VIEW_LIST = [
+    { id: 0, name: '远景', icon: '🎥', desc: '车在下方，视野开阔' },
+    { id: 1, name: '中景', icon: '📹', desc: '车在中下，平衡' },
+    { id: 2, name: '第一视角', icon: '👁️', desc: '驾驶舱视角' }
+  ];
+  // 各视角的相机高度和车位置
+  function viewParams() {
+    if (CAM_VIEW === 2) {
+      // 第一视角：相机贴地、车几乎不可见
+      return { camH: 420, carScale: 0.0, carY: 0, drawCar: false };
+    } else if (CAM_VIEW === 1) {
+      return { camH: 760, carScale: 0.72, carY: 0, drawCar: true };
+    }
+    return { camH: 1000, carScale: 1.0, carY: 0, drawCar: true };
+  }
 
   /* ================= 赛车数据 ================= */
   var CARS = [
@@ -3090,6 +3198,31 @@
   var elSetPanel = document.getElementById('settingsPanel');
   var elSetBtn = document.getElementById('settingsBtn');
 
+  function cycleView() {
+    CAM_VIEW = (CAM_VIEW + 1) % 3;
+    var v = VIEW_LIST[CAM_VIEW];
+    flashTip('视角：' + v.name);
+    var btn = document.getElementById('viewBtn');
+    if (btn) btn.textContent = v.icon;
+    try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
+  }
+
+  function updateViewBtns() {
+    var btns = document.querySelectorAll ? document.querySelectorAll('.viewbtn') : [];
+    for (var i = 0; i < btns.length; i++) {
+      var v = Number(btns[i].getAttribute('data-v'));
+      if (v === CAM_VIEW) {
+        btns[i].style.background = 'rgba(60,220,160,.22)';
+        btns[i].style.borderColor = 'rgba(60,220,160,.7)';
+        btns[i].style.color = '#8ef7c8';
+      } else {
+        btns[i].style.background = 'rgba(255,255,255,.06)';
+        btns[i].style.borderColor = 'rgba(140,200,255,.22)';
+        btns[i].style.color = '#cfe4f7';
+      }
+    }
+  }
+
   function openSettings() {
     elSetPanel.classList.add('on');
     syncToggles();
@@ -3263,6 +3396,20 @@
     if (tmm) tmm.onclick = function () { CFG.manualGas = !CFG.manualGas; syncToggles(); };
     var tghost = document.getElementById('tgGhost');
     if (tghost) tghost.onclick = function () { CFG.ghost = !CFG.ghost; syncToggles(); };
+    // 视角按钮
+    var vbtns = document.querySelectorAll ? document.querySelectorAll('.viewbtn') : [];
+    for (var vi = 0; vi < vbtns.length; vi++) {
+      (function (b) {
+        b.onclick = function () {
+          CAM_VIEW = Number(b.getAttribute('data-v'));
+          try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
+          var vbtn2 = document.getElementById('viewBtn');
+          if (vbtn2) vbtn2.textContent = VIEW_LIST[CAM_VIEW].icon;
+          updateViewBtns();
+        };
+      })(vbtns[vi]);
+    }
+    updateViewBtns();
     if (sr) sr.onclick = closeSettings;
     if (sq) sq.onclick = quitToMenu;
   }
@@ -3341,6 +3488,12 @@
   function applyModeUi() {
     var p2 = document.querySelector('.p2box');
     if (p2) p2.style.display = GAME_MODE === 'solo' ? 'none' : '';
+    // 触屏按键布局
+    var soloPad = document.getElementById('soloPad');
+    var duoPad = document.getElementById('duoPad');
+    var isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.innerWidth < 900;
+    if (soloPad) soloPad.style.display = (isTouch && GAME_MODE === 'solo') ? 'flex' : 'none';
+    if (duoPad) duoPad.style.display = (isTouch && GAME_MODE === 'duo') ? 'block' : 'none';
     renderKeys();
   }
 
@@ -3775,6 +3928,14 @@
     bindSettingsUi();
     bindCustomUi();
     if (elSetBtn) elSetBtn.addEventListener('click', openSettings);
+    var vbtn = document.getElementById('viewBtn');
+    if (vbtn) vbtn.addEventListener('click', cycleView);
+    // 恢复上次视角
+    try {
+      var savedView = parseInt(localStorage.getItem('turbo-racer-view') || '0', 10);
+      if (savedView >= 0 && savedView <= 2) { CAM_VIEW = savedView; }
+      if (vbtn) vbtn.textContent = VIEW_LIST[CAM_VIEW].icon;
+    } catch (e) {}
     render();
     requestAnimationFrame(frame);
   }
