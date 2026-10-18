@@ -23,7 +23,7 @@
   body[data-theme='light'] .meta{color:#4a6484}
   body[data-theme='light'] .meta b{color:#12233a}
   body[data-theme='light'] #msg{color:#12233a;text-shadow:0 0 40px rgba(47,127,208,.5)}
-  body[data-theme='light'] #settingsBtn,body[data-theme='light'] .vbtn,body[data-theme='light'] #viewBtn{background:rgba(255,255,255,.85);border-color:rgba(40,80,140,.3);color:#2a4562}
+  body[data-theme='light'] #settingsBtn,body[data-theme='light'] .vbtn,body[data-theme='light'] #viewBtn,body[data-theme='light'] #restartBtn{background:rgba(255,255,255,.85);border-color:rgba(40,80,140,.3);color:#2a4562}
   body[data-theme='light'] #autoBadge{background:rgba(255,255,255,.88);border-color:rgba(42,157,143,.5);color:#1a7f6f}
   body[data-theme='light'] #pace{background:rgba(255,255,255,.88);border-color:rgba(200,150,40,.4)}
   body[data-theme='light'] #pace .txt{color:#1a2434}
@@ -120,6 +120,7 @@
     #launch .s{font-size:11px}
     #shortcut{bottom:calc(50% + 34px);font-size:12px;padding:4px 12px}
     #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
+    #restartBtn{right:46px;top:8px;width:32px;height:32px;font-size:15px}
     #viewBar{right:8px;top:46px;gap:4px}
     .vbtn{width:29px;height:29px;font-size:11.5px;border-radius:8px}
     #autoBadge{right:8px;top:88px;font-size:9.5px;padding:4px 8px}
@@ -253,6 +254,8 @@
   .vbtn{width:34px;height:34px;border-radius:9px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#8ba3bd;backdrop-filter:blur(8px);transition:all .15s;user-select:none}
   .vbtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
   .vbtn.sel{background:rgba(60,220,160,.25);border-color:rgba(60,220,160,.75);color:#8ef7c8;box-shadow:0 0 14px rgba(60,220,160,.35)}
+  #restartBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
+  #restartBtn.show{opacity:1;pointer-events:auto}
   #settingsBtn .gear{display:inline-block;animation:gearSpin 14s linear infinite}
   #settingsBtn:hover .gear{animation-duration:1.6s}
   @keyframes gearSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -294,6 +297,7 @@
 
 <div id="autoBadge" style="position:fixed;right:14px;top:108px;z-index:14;display:none;align-items:center;gap:5px;padding:5px 11px;border-radius:9px;background:rgba(10,18,34,.78);border:1px solid rgba(140,200,255,.35);backdrop-filter:blur(8px);font-size:10.5px;font-weight:800;letter-spacing:1px;color:#8ef7c8;pointer-events:none;white-space:nowrap">🤖 AI 驾驶中</div>
 <div id="viewBar" style="position:fixed;right:14px;top:60px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="远景">1</div><div class="vbtn" data-v="1" title="中景">2</div><div class="vbtn" data-v="2" title="第一视角">3</div></div>
+<div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:#cfe8ff;backdrop-filter:blur(8px);transition:background .15s,border-color .15s;opacity:0;pointer-events:none">↻</div>
 <div id="settingsBtn" title="设置"><span class="gear">⚙</span></div>
 <div id="settingsPanel">
   <div class="setbox">
@@ -318,15 +322,6 @@
     <div class="setrow">
       <div class="setlabel">🤖 自动驾驶示范<small>AI 跑完美路线，供学习参考</small></div>
       <div class="toggle" id="tgAuto"></div>
-    </div>
-    <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
-      <div class="setlabel">倒计时<small>起步前等待时间，按剩余时间按 W/↑ 触发起步喷</small></div>
-      <div style="display:flex;gap:7px">
-        <button class="cdbtn" data-c="0" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">关</button>
-        <button class="cdbtn" data-c="1" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">1秒</button>
-        <button class="cdbtn" data-c="3" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">3秒</button>
-        <button class="cdbtn" data-c="5" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">5秒</button>
-      </div>
     </div>
     <div class="setclose">
       <button class="setbtn primary" id="setResume">继续游戏</button>
@@ -2222,6 +2217,12 @@
     if (p.speed > 0) p.totalDistance += p.speed * dt;
     else p.totalDistance = Math.max(0, p.totalDistance + p.speed * dt);
 
+    // ── 起步喷窗口 ──
+    if (p.launchWindow > 0) {
+      p.launchWindow -= dt;
+      if (p.launchWindow <= 0 && !p.launchPressed) { p.launchWindow = 0; p.launchQuality = ''; }
+    }
+
     // ── 撞飞状态 ──
     if (p.tumble > 0) {
       p.tumble -= dt;
@@ -2530,10 +2531,12 @@
   /* ================= 起步喷 ================= */
   // 记录按键：只在倒计时期间有效
   function pressLaunch(p) {
-    if (!running || countdown <= 0) return;
-    if (p.launchPressed) return;      // 只算第一次
+    if (!running || p.finished) return;
+    if (p.launchPressed) return;
+    if (!p.launchWindow || p.launchWindow <= 0) return;
     p.launchPressed = true;
-    p.launchAt = countdown;           // 按下时剩余倒计时
+    p.launchAt = p.launchWindow;
+    evaluateLaunch(p);
   }
 
   function evaluateLaunch(p) {
@@ -2541,13 +2544,13 @@
       p.launchQuality = '';
       return;
     }
-    var remain = p.launchAt;
-    if (remain <= LAUNCH_PERFECT_WINDOW) {
+    var remain = p.launchAt;   // 剩余窗口：越小越准（压哨）
+    if (remain <= 0.22) {
       p.launchQuality = 'perfect';
       p.boostPower = BOOST_PERFECT;
       p.boostTimer = BOOST_PERFECT_TIME;
       p.boostShown = 2.0;
-    } else if (remain <= LAUNCH_GOOD_WINDOW) {
+    } else if (remain <= 0.55) {
       p.launchQuality = 'good';
       p.boostPower = BOOST_GOOD;
       p.boostTimer = BOOST_GOOD_TIME;
@@ -3178,7 +3181,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false, countdown: 3 };  // 倒计时秒数  // 幽灵车默认关（有重影）
+  var CFG = { bgm: true, sfx: true, auto: false, manualGas: false, ghost: false };  // 倒计时秒数  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 0;
   var VIEW_LIST = [
@@ -3405,28 +3408,6 @@
     try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
   }
 
-  function setCd(sec) {
-    CFG.countdown = sec;
-    updateCdBtns();
-    flashTip(sec === 0 ? '倒计时已关' : '倒计时 ' + sec + ' 秒');
-    try { localStorage.setItem('turbo-racer-cd', String(sec)); } catch (e) {}
-  }
-  function updateCdBtns() {
-    var btns = document.querySelectorAll ? document.querySelectorAll('.cdbtn') : [];
-    for (var i = 0; i < btns.length; i++) {
-      var c = Number(btns[i].getAttribute('data-c'));
-      if (c === CFG.countdown) {
-        btns[i].style.background = 'rgba(60,220,160,.22)';
-        btns[i].style.borderColor = 'rgba(60,220,160,.7)';
-        btns[i].style.color = '#8ef7c8';
-      } else {
-        btns[i].style.background = 'rgba(255,255,255,.06)';
-        btns[i].style.borderColor = 'rgba(140,200,255,.22)';
-        btns[i].style.color = '#cfe4f7';
-      }
-    }
-  }
-
   function updateViewBtns() {
     var btns = document.querySelectorAll ? document.querySelectorAll('.vbtn') : [];
     for (var i = 0; i < btns.length; i++) {
@@ -3445,7 +3426,6 @@
     if (ph) ph.style.display = (running && !pausedBySettings) ? 'none' : (running || countdown > 0 ? 'block' : 'none');
     if (ph && running) ph.style.display = 'block';
     syncToggles();
-    updateCdBtns();
     // 游戏进行中打开设置 → 自动暂停
     if (running && !paused) {
       paused = true;
@@ -3649,6 +3629,8 @@
       if (driftNoise) driftNoise.gain.gain.value = 0;
     } catch (e) {}
     closeSettings();
+    var rbtn2 = document.getElementById('restartBtn');
+    if (rbtn2) rbtn2.classList.remove('show');
     if (elTrackLabel) elTrackLabel.style.display = 'none';
     // 恢复开始面板内容
     var panel = overlay.querySelector('.panel');
@@ -4036,7 +4018,7 @@
       if (!running) startRace();
       e.preventDefault();
     }
-    if (e.code === 'KeyR') { location.reload(); e.preventDefault(); }
+    if (e.code === 'KeyR') { restartRace(); e.preventDefault(); }
   }
 
   function onKeyUp(e) {
@@ -4057,6 +4039,41 @@
     el.addEventListener('pointerup', set(false), { passive: false });
     el.addEventListener('pointercancel', set(false), { passive: false });
     el.addEventListener('pointerleave', set(false), { passive: false });
+  }
+
+  // 重玩：保留车/图/天气设置，只重置比赛状态
+  function restartRace() {
+    if (!running && !overlay.classList.contains('hide')) return;
+    var keepMap = selectedMap, keepCar = selectedCar, keepLaps = selectedLaps, keepW = WEATHER;
+    closeSettings();
+    // 重置比赛
+    totalDistanceInit();
+    raceStart = performance.now();
+    P1 = createPlayer(0, CAR.color);
+    P1.playerX = 0.35;
+    P2 = createPlayer(SEG_LEN * 2, '#2f7fd0');
+    P2.playerX = 0.35;
+    P1.lapStart = P2.lapStart = raceStart;
+    P1.launchWindow = 0.9; P1.launchPressed = false;
+    P2.launchWindow = 0.9; P2.launchPressed = false;
+    if (GAME_MODE === 'solo') P2.finished = true;   // 单人时 P2 不参与
+    resetTraffic();
+    assignCars(P1);
+    finishedCount = 0;
+    // 幽灵车重录
+    ghostFrames = [];
+    ghostRecTimer = 0;
+    ghostPlayback = CFG.ghost ? loadGhost(selectedMap) : null;
+    running = true;
+    paused = false;
+    pausedBySettings = false;
+    countdown = 0;
+    setMsg('重新开始', 0.6);
+    flashTip('重新开始');
+  }
+
+  function totalDistanceInit() {
+    // 占位：createPlayer 已重置 totalDistance
   }
 
   function startRace() {
@@ -4080,22 +4097,19 @@
     if (GAME_MODE === 'solo') { input.p2.left = false; input.p2.right = false; input.p2.brake = false; }
     running = true;
     paused = false;
-    if (CFG.countdown <= 0) {
-      // 无倒计时：直接 GO
-      countdown = 0;
-      setMsg('GO!', 0.8);
-      playBeep(1320, 0.22);
-      raceStart = performance.now();
-      P1.lapStart = raceStart;
-      if (P2) P2.lapStart = raceStart;
-      evaluateLaunch(P1);
-      if (GAME_MODE !== 'solo') evaluateLaunch(P2);
-    } else {
-      countdown = CFG.countdown + 0.2;
-      setMsg(String(CFG.countdown), 0.9);
-    }
+    countdown = 0;
+    raceStart = performance.now();
+    P1.lapStart = raceStart;
+    if (P2) P2.lapStart = raceStart;
+    // 起步喷：开局 0.9 秒内按 W/↑
+    P1.launchWindow = 0.9; P1.launchPressed = false;
+    if (P2) { P2.launchWindow = 0.9; P2.launchPressed = false; }
+    setMsg('GO!', 0.7);
+    playBeep(1320, 0.22);
     overlay.classList.add('hide');
     finishedCount = 0;
+    var rbtn = document.getElementById('restartBtn');
+    if (rbtn) rbtn.classList.add('show');
     if (elTrackLabel) {
       var tname = selectedMap === 'custom' ? (TRACK_NAME || '我的赛道') :
         (MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || '';
@@ -4135,11 +4149,6 @@
   }
 
   function boot() {
-    // 恢复倒计时设置
-    try {
-      var savedCd = parseInt(localStorage.getItem('turbo-racer-cd') || '3', 10);
-      if ([0,1,3,5].indexOf(savedCd) >= 0) CFG.countdown = savedCd;
-    } catch (e) {}
     var _p = overlay.querySelector('.panel');
     if (_p) START_PANEL_HTML = _p.innerHTML;
     resize();
@@ -4189,6 +4198,8 @@
     if (lb2) lb2.addEventListener('click', toggleLang);
     var thb = document.getElementById('themeBtn');
     if (thb) thb.addEventListener('click', toggleTheme);
+    var rb = document.getElementById('restartBtn');
+    if (rb) rb.addEventListener('click', restartRace);
     applyTheme();
     applyLang();
     showHome();
