@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="mobile-web-app-capable" content="yes" />
+<link rel="icon" type="image/png" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="manifest" href="manifest.json" />
 <title>极速狂飙 Turbo Game</title>
 <style>
@@ -4128,18 +4130,6 @@
     update(dt);
     // 每帧为两个视角分别分配车流
     assignCars(P1);
-    // 首页按钮 + 语言 + 主题
-    var tb1 = document.getElementById('toSetup');
-    if (tb1) tb1.addEventListener('click', goSetup);
-    var tb2 = document.getElementById('toSettingsHome');
-    if (tb2) tb2.addEventListener('click', function () { goSetup(); setTimeout(openSettings, 60); });
-    var lb2 = document.getElementById('langBtn');
-    if (lb2) lb2.addEventListener('click', toggleLang);
-    var thb = document.getElementById('themeBtn');
-    if (thb) thb.addEventListener('click', toggleTheme);
-    applyTheme();
-    applyLang();
-    showHome();
     render();
     requestAnimationFrame(frame);
   }
@@ -4190,6 +4180,18 @@
     updateViewBtns();
     render();
     requestAnimationFrame(frame);
+    // 首页按钮 + 语言 + 主题（只绑定一次）
+    var tb1 = document.getElementById('toSetup');
+    if (tb1) tb1.addEventListener('click', goSetup);
+    var tb2 = document.getElementById('toSettingsHome');
+    if (tb2) tb2.addEventListener('click', function () { goSetup(); setTimeout(openSettings, 60); });
+    var lb2 = document.getElementById('langBtn');
+    if (lb2) lb2.addEventListener('click', toggleLang);
+    var thb = document.getElementById('themeBtn');
+    if (thb) thb.addEventListener('click', toggleTheme);
+    applyTheme();
+    applyLang();
+    showHome();
   }
 
   window.__TR__ = { running: function(){return running;}, paused: function(){return paused;}, countdown: function(){return countdown;}, homeShown: function(){ var hb=document.getElementById('home'); return hb && !hb.classList.contains('hide'); }, ovShown: function(){ var o=document.getElementById('overlay'); return o && !o.classList.contains('hide'); } };
