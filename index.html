@@ -229,7 +229,11 @@
     .setbox{padding:18px 16px;min-width:0;max-width:96vw}
     .settitle{font-size:17px;margin-bottom:14px}
     .setrow{padding:8px 0;gap:14px}
-    .setlabel{font-size:12px}
+    .sbtn{padding:3px 9px;border-radius:7px;border:1px solid rgba(140,200,255,.25);background:rgba(255,255,255,.05);color:#8ba3bd;font-size:10px;font-weight:800;cursor:pointer;letter-spacing:.5px}
+  .sbtn.on{background:rgba(255,209,102,.18);border-color:rgba(255,209,102,.55);color:#ffd166}
+  .chipBtn{padding:5px 12px;border-radius:999px;border:1px solid rgba(140,200,255,.3);background:rgba(140,200,255,.1);color:#cfe8ff;font-size:11.5px;font-weight:800;cursor:pointer}
+  .chipBtn:hover{background:rgba(140,200,255,.22)}
+  .setlabel{font-size:12px}
     .setlabel small{font-size:9px}
     #lbPanel{max-width:100%}
   }
@@ -3587,17 +3591,46 @@
 
   /* ================= 分享成绩 ================= */
   function shareScore(totalTime) {
-    var mapName = selectedMap === 'custom' ? (TRACK_NAME || '自定义赛道') : ((MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || selectedMap);
-    var text = '我在《极速狂飙》' + mapName + '跑了 ' + formatTime(totalTime) + '（' + TOTAL_LAPS + '圈）';
+    var nm = getLastName() || '玩家';
+    var mapObj = (MAP_LIST.find(function(m){return m.id===selectedMap;}) || {});
+    var mapName = mapObj.name || selectedMap;
+    var wObj = (WEATHER_LIST.find(function(w){return w.id===WEATHER;}) || {});
+    var url = 'https://gcy529.github.io/turbo-game/';
+    var score = calcScore(P1);
+    var L = [];
+    L.push('🏁 极速狂飙' + (DAILY_MODE ? ' · 今日挑战' : ''));
+    L.push('🏆 ' + nm + ' · ' + score + '分 · ' + formatTime(totalTime) + '（' + TOTAL_LAPS + '圈）');
+    L.push('🏎️ ' + (CAR ? CAR.name : '') + ' · ' + mapName + ' · ' + (wObj.name || WEATHER));
+    if (DAILY_MODE) {
+      var d = new Date();
+      L.push('📅 ' + d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate() + ' · 全网同一条赛道，来比！');
+    } else {
+      var code = encodeConfig();
+      if (code) L.push('🎮 同款邀请码 ' + code + '：' + url + '#g=' + code);
+    }
+    L.push('▶ ' + url);
+    L.push('（微信打不开？点右上角 ··· 用浏览器打开）');
+    var text = L.join('\n');
     if (navigator.share) {
-      navigator.share({ title: '极速狂飙', text: text }).catch(function(){});
+      navigator.share({ title: '极速狂飙战报', text: text }).catch(function(){});
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(function () {
-        flashTip('成绩已复制到剪贴板');
-      }).catch(function () { alert(text); });
+        flashTip('📋 战报已复制，发给好友吧！');
+      }).catch(function () { showShareText(text); });
     } else {
-      alert(text);
+      showShareText(text);
     }
+  }
+  function showShareText(text) {
+    var old = document.getElementById('shareBox');
+    if (old) old.remove();
+    var d = document.createElement('div');
+    d.id = 'shareBox';
+    d.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,6,14,.88);padding:20px';
+    d.innerHTML = '<div style="max-width:340px;width:100%;padding:18px 20px;border-radius:14px;background:rgba(10,18,34,.95);border:1px solid rgba(140,200,255,.3);font-size:12.5px;line-height:2;color:#eaf2ff;white-space:pre-wrap;word-break:break-all">' + text.replace(/</g, '&lt;') + '</div>';
+    d.addEventListener('click', function () { d.remove(); });
+    document.body.appendChild(d);
+    flashTip('长按文字复制 · 点空白关闭');
   }
 
   var overlay = document.getElementById('overlay');
@@ -3845,6 +3878,50 @@
     if (rnd) rnd.onclick = randomAll;
   }
 
+  /* ================= 玩家名字 ================= */
+  function getLastName() { try { return localStorage.getItem('turbo-racer-name') || ''; } catch (e) { return ''; } }
+  function saveName(n) {
+    n = (n || '').trim().slice(0, 12);
+    try {
+      localStorage.setItem('turbo-racer-name', n);
+      if (n) {
+        var list = getRecentNames().filter(function (x) { return x !== n; });
+        list.unshift(n);
+        localStorage.setItem('turbo-racer-names', JSON.stringify(list.slice(0, 3)));
+      }
+    } catch (e) {}
+    return n;
+  }
+  function getRecentNames() {
+    try { var a = JSON.parse(localStorage.getItem('turbo-racer-names')); return Array.isArray(a) ? a.slice(0, 3) : []; } catch (e) { return []; }
+  }
+
+  /* ================= 邀请码（自定义局）================= */
+  var INV_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';   // 54 字符（去掉 I L O 0 1）
+  function encodeConfig() {
+    var ci = CARS.findIndex(function (c) { return c.id === selectedCar; });
+    var mi = MAP_LIST.findIndex(function (m) { return m.id === selectedMap; });
+    var wi = WEATHER_LIST.findIndex(function (w) { return w.id === WEATHER; });
+    var li = LAP_OPTIONS.indexOf(selectedLaps);
+    if (ci < 0 || mi < 0 || wi < 0 || li < 0) return '';
+    var num = (((ci * 4) + mi) * 4 + wi) * 3 + li;   // 0..191
+    return INV_CHARS[Math.floor(num / 54)] + INV_CHARS[num % 54];
+  }
+  function decodeConfig(code) {
+    if (!code || code.length < 2) return null;
+    var a = INV_CHARS.indexOf(code[0]);
+    var b = INV_CHARS.indexOf(code[1]);
+    if (a < 0 || b < 0) return null;
+    var num = a * 54 + b;
+    if (num >= 192) return null;
+    var li = num % 3; num = Math.floor(num / 3);
+    var wi = num % 4; num = Math.floor(num / 4);
+    var mi = num % 4; num = Math.floor(num / 4);
+    var ci = num;
+    if (ci >= CARS.length || mi >= MAP_LIST.length || wi >= WEATHER_LIST.length) return null;
+    return { car: CARS[ci].id, map: MAP_LIST[mi].id, weather: WEATHER_LIST[wi].id, laps: LAP_OPTIONS[li] };
+  }
+
   /* ================= 积分系统 ================= */
   function calcScore(p) {
     if (!p) return 0;
@@ -4049,7 +4126,7 @@
     Object.keys(byMap).forEach(function (k) {
       var e = byMap[k];
       html += '<div style="display:flex;justify-content:space-between;gap:12px">' +
-        '<span>' + (e.mapName || k) + '</span>' +
+        '<span>' + (e.name || '无名') + ' · ' + (e.mapName || k) + '</span>' +
         '<b style="color:#ffd166">' + formatTime(e.time) + '</b></div>';
     });
     list.innerHTML = html;
@@ -4792,45 +4869,96 @@
     }
   }
 
+  var LB_SORT = 'time';   // 'time' | 'score'（showResult 时会同步）
+  function getLbSort() { try { var v = localStorage.getItem('turbo-racer-lbsort'); return (v === 'score') ? 'score' : 'time'; } catch (e) { return 'time'; } }
+  function setLbSort(v) { LB_SORT = v; try { localStorage.setItem('turbo-racer-lbsort', v); } catch (e) {} }
+
   function showResult() {
     running = false;
-    // ── 提交成绩 + 保存幽灵车 ──
+    LB_SORT = getLbSort();
+    // 幽灵车：只有刷新最佳成绩才保存（提交挪到名字确认时）
     if (P1 && P1.finished && P1.finishTime > 0) {
-      var entry = {
-        map: selectedMap,
-        mapName: selectedMap === 'custom' ? (TRACK_NAME || '自定义') : ((MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || selectedMap),
-        time: P1.finishTime,
-        laps: TOTAL_LAPS,
-        weather: WEATHER,
-        bestLap: P1.bestLap,
-        drift: Math.round(P1.driftScore),
-        date: Date.now()
-      };
-      submitScore(entry);
-      if (DAILY_MODE) {
-        var dl = loadDailyLb();
-        dl.push({ time: P1.finishTime, bestLap: P1.bestLap, drift: Math.round(P1.driftScore), score: calcScore(P1), ts: Date.now() });
-        dl.sort(function (a, b) { return a.time - b.time; });
-        saveDailyLb(dl);
-      }
-      // 幽灵车：只有刷新最佳成绩才保存
       var prevBest = getBest(selectedMap);
       if (ghostFrames.length > 10 && (!prevBest || P1.finishTime <= prevBest.time)) {
         saveGhost(selectedMap, ghostFrames, P1.finishTime);
       }
     }
+    var resultSubmitted = false;
+    function ensureSubmit() {
+      if (resultSubmitted) { updateLastNameOnly(); return; }
+      resultSubmitted = true;
+      var ni = document.getElementById('nameInput');
+      var nm = saveName(ni ? ni.value : getLastName()) || '玩家';
+      var entry = {
+        map: selectedMap,
+        mapName: selectedMap === 'custom' ? (TRACK_NAME || '自定义') : ((MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || selectedMap),
+        name: nm,
+        time: P1.finishTime,
+        laps: TOTAL_LAPS,
+        weather: WEATHER,
+        bestLap: P1.bestLap,
+        drift: Math.round(P1.driftScore),
+        score: calcScore(P1),
+        date: Date.now()
+      };
+      submitScore(entry);
+      if (DAILY_MODE) {
+        var dl = loadDailyLb();
+        dl.push({ name: nm, time: P1.finishTime, bestLap: P1.bestLap, drift: Math.round(P1.driftScore), score: calcScore(P1), ts: Date.now() });
+        dl.sort(function (a, b) { return a.time - b.time; });
+        saveDailyLb(dl);
+      }
+      renderResultLb();
+    }
+    // 已提交后改名：只更新本次记录的名字（不再插新记录）
+    function updateLastNameOnly() {
+      try {
+        var ni2 = document.getElementById('nameInput');
+        if (!ni2) return;
+        var nm2 = saveName(ni2.value);
+        if (!nm2) return;
+        if (DAILY_MODE) {
+          var dl2 = loadDailyLb();
+          if (dl2.length && dl2[0].ts && Date.now() - dl2[0].ts < 60000) dl2[0].name = nm2;
+          saveDailyLb(dl2);
+        } else {
+          var all = loadLeaderboard();
+          for (var i2 = all.length - 1; i2 >= 0; i2--) {
+            if (all[i2].map === selectedMap && Math.abs(all[i2].time - P1.finishTime) < 0.01) { all[i2].name = nm2; break; }
+          }
+          saveLeaderboard(all);
+        }
+        renderResultLb();
+      } catch (e) {}
+    }
+    function renderResultLb() {
+      var box = document.getElementById('resultLb');
+      if (!box) return;
+      var raw = DAILY_MODE ? loadDailyLb() : loadLeaderboard().filter(function(e){ return e.map === selectedMap; });
+      if (LB_SORT === 'score') raw = raw.slice().sort(function (a, b) { return (b.score || 0) - (a.score || 0); });
+      else raw = raw.slice().sort(function (a, b) { return a.time - b.time; });
+      raw = raw.slice(0, 5);
+      var html = raw.map(function (e, i) {
+        var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '  ';
+        var nm = e.name || '无名';
+        return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">' +
+          '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + medal + ' ' + nm + '</span>' +
+          '<span style="white-space:nowrap"><b style="color:#8ef7c8">' + formatTime(e.time) + '</b> <span style="color:#ffd166;font-size:11px">' + (e.score || 0) + '分</span></span></div>';
+      }).join('') || '<div style="color:#6f8db0">暂无记录</div>';
+      box.innerHTML = html;
+      var bt = document.getElementById('sortTime'), bs = document.getElementById('sortScore');
+      if (bt) bt.className = 'sbtn' + (LB_SORT === 'time' ? ' on' : '');
+      if (bs) bs.className = 'sbtn' + (LB_SORT === 'score' ? ' on' : '');
+    }
     var panel = overlay.querySelector('.panel');
     if (GAME_MODE === 'solo') {
       var best = P1.bestLap > 0 ? fmt(P1.bestLap) : '--';
       var lb = DAILY_MODE ? loadDailyLb().slice(0, 5) : loadLeaderboard().filter(function(e){ return e.map === selectedMap; }).slice(0, 5);
-      var lbHtml = lb.map(function(e, i) {
-        var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '  ';
-        var isMe = Math.abs(e.time - P1.finishTime) < 0.01;
-        var line = DAILY_MODE
-          ? (formatTime(e.time) + ' · ' + (e.score || 0) + '分')
-          : (formatTime(e.time) + ' · ' + e.laps + '圈' + (e.weather && e.weather !== 'clear' ? ' · ' + e.weather : ''));
-        return '<div style="' + (isMe ? 'color:#8ef7c8;font-weight:800;' : '') + '">' + medal + ' ' + line + '</div>';
-      }).join('') || '<div style="color:#6f8db0">暂无记录</div>';
+      var lastName0 = getLastName();
+      // chips：最近用过的名字全部显示（点谁填谁），最多 3 个
+      var rn = getRecentNames();
+      if (lastName0 && rn.indexOf(lastName0) < 0) rn = [lastName0].concat(rn).slice(0, 3);
+      var chips0 = rn.filter(function (n) { return !!n; }).slice(0, 3);
       panel.innerHTML = '<div class="title">完成！</div>' +
         '<div class="sub">R A C E &nbsp; F I N I S H E D</div>' +
         '<div class="res">' +
@@ -4841,9 +4969,17 @@
         '<div style="margin:12px 0;padding:10px 14px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.2);text-align:left;max-width:300px;font-size:12px;line-height:2;color:#cfe4f7">' +
         scoreBreakdown(P1).map(function (r) { return '<div style="display:flex;justify-content:space-between"><span>' + r[0] + '</span><b style="color:#ffd166">+' + r[1] + '</b></div>'; }).join('') +
         '</div>' +
+        '<div style="margin:12px 0;padding:11px 15px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.22);max-width:300px;text-align:left">' +
+        '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#8ef7c8;margin-bottom:8px">✍ 你的大名（上榜用）</div>' +
+        '<input id="nameInput" maxlength="12" placeholder="玩家" value="' + lastName0 + '" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(0,0,0,.3);color:#eaf2ff;font-size:14px;font-weight:800;text-align:center;outline:none;font-family:inherit">' +
+        (chips0.length ? '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + chips0.map(function (n) { return '<button class="chipBtn" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' : '') +
+        '</div>' +
         '<div style="margin:14px 0;padding:11px 15px;border-radius:11px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28);text-align:left;max-width:300px">' +
-        '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px">' + (DAILY_MODE ? '🎯 今日挑战排行 · 0 点重置' : '🏆 本图排行榜') + '</div>' +
-        '<div style="font-size:12.5px;color:#cfe4f7;line-height:1.85">' + lbHtml + '</div>' +
+        '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center">' +
+        '<span>' + (DAILY_MODE ? '🎯 今日挑战排行' : '🏆 本图排行榜') + '</span>' +
+        '<span style="display:flex;gap:5px"><button id="sortTime" class="sbtn on">⏱时间</button><button id="sortScore" class="sbtn">🏅积分</button></span>' +
+        '</div>' +
+        '<div id="resultLb" style="font-size:12.5px;color:#cfe4f7;line-height:1.85"></div>' +
         '</div>' +
         '<div style="display:flex;gap:9px;justify-content:center">' +
         '<button class="go" id="againBtn">再来一局</button>' +
@@ -4851,9 +4987,32 @@
         '</div>';
       overlay.classList.remove('hide');
       var ab = document.getElementById('againBtn');
-      if (ab) ab.addEventListener('click', function () { location.reload(); });
+      if (ab) ab.addEventListener('click', function () { ensureSubmit(); location.reload(); });
       var shb = document.getElementById('shareBtn');
-      if (shb) shb.addEventListener('click', function () { shareScore(P1.finishTime); });
+      if (shb) shb.addEventListener('click', function () { ensureSubmit(); shareScore(P1.finishTime); });
+      // 名字：回车/失焦即提交上榜（程序化 blur 不触发事件，用 change + 显式调用）
+      var ni = document.getElementById('nameInput');
+      if (ni) {
+        var submitName = function () { ensureSubmit(); };
+        ni.addEventListener('change', submitName);
+        ni.addEventListener('keydown', function (e2) { if (e2.key === 'Enter') { ni.blur(); ensureSubmit(); } });
+      }
+      // 最近名字快切
+      var chips = panel.querySelectorAll('.chipBtn');
+      for (var ci2 = 0; ci2 < chips.length; ci2++) {
+        (function (cbtn) {
+          cbtn.onclick = function () {
+            var nv = document.getElementById('nameInput');
+            if (nv) nv.value = cbtn.getAttribute('data-n');
+            ensureSubmit();
+          };
+        })(chips[ci2]);
+      }
+      // 排序切换
+      var bt2 = document.getElementById('sortTime'), bs2 = document.getElementById('sortScore');
+      if (bt2) bt2.onclick = function () { setLbSort('time'); renderResultLb(); };
+      if (bs2) bs2.onclick = function () { setLbSort('score'); renderResultLb(); };
+      renderResultLb();
       return;
     }
     var t1 = P1.finished ? P1.finishTime : Infinity;
@@ -5068,7 +5227,16 @@
     requestAnimationFrame(frame);
   }
 
+  var INVITE_JUMP = null;   // 邀请码跳转配置
   function boot() {
+    // 邀请码：#g=xx 直接进同款配置开跑
+    try {
+      var hm = (location.hash || '').match(/[#&]g=([A-Za-z0-9]+)/);
+      if (hm) {
+        var ic = decodeConfig(hm[1].substring(0, 2));
+        if (ic) INVITE_JUMP = ic;
+      }
+    } catch (e) {}
     // 恢复静音设置（CFG 已定义）
     try {
       var _snd = localStorage.getItem('turbo-racer-sound');
@@ -5155,6 +5323,21 @@
     applyTheme();
     applyLang();
     showHome();
+    // 邀请码直跳：#g=xx 同款配置直接开跑
+    if (INVITE_JUMP) {
+      var ij = INVITE_JUMP;
+      setTimeout(function () {
+        selectedCar = ij.car; applyCar(ij.car);
+        selectedMap = ij.map; WEATHER = ij.weather;
+        selectedLaps = ij.laps; TOTAL_LAPS = ij.laps;
+        GAME_MODE = 'solo'; DAILY_MODE = false;
+        var hb2 = document.getElementById('home');
+        if (hb2) hb2.classList.add('hide');
+        applyModeUi();
+        flashTip('🎮 邀请码对局');
+        startRace();
+      }, 400);
+    }
   }
 
   boot();
@@ -5164,6 +5347,23 @@
     view: function () { try { return { CAM_VIEW: CAM_VIEW, params: viewParams() }; } catch (e) { return { err: String(e) }; } },
     setView: function (v) { try { setView(v); return true; } catch (e) { return String(e); } },
     daily: function () { try { return { mode: DAILY_MODE, cfg: dailyConfig(), lb: loadDailyLb() }; } catch (e) { return { err: String(e) }; } },
+    submitName: function (n) {
+      try {
+        var ni = document.getElementById('nameInput');
+        if (ni && n) ni.value = n;
+        if (ni) {
+          ni.dispatchEvent(new Event('change'));
+        } else if (n) { saveName(n); }
+        return { ok: true, name: getLastName(), lb: (DAILY_MODE ? loadDailyLb() : loadLeaderboard().filter(function(e2){return e2.map===selectedMap;})).slice(0,3) };
+      } catch (e) { return { err: String(e) }; }
+    },
+    invCode: function () {
+      try {
+        var r = { code: encodeConfig(), car: selectedCar, map: selectedMap, weather: WEATHER, laps: selectedLaps };
+        try { r.decoded = decodeConfig(r.code); } catch (e2) { r.decodeErr = String(e2); }
+        return r;
+      } catch (e) { return { err: String(e) }; }
+    },
     billboardTest: function () {
       // 找前方最近的广告牌，传送过去撞
       try {
