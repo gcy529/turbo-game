@@ -451,7 +451,7 @@
       <button class="rBtn" id="homeSolo"><i>▶</i><span data-i18n="r1p">1P 单人游戏</span></button>
       <button class="rBtn" id="homeDuo"><i>▶</i><span data-i18n="r2p">2P 双人对战</span></button>
       <button class="rBtn rBtnDaily" id="homeDaily"><i>★</i><span data-i18n="rDaily">今日挑战</span><small id="dailyInfo"></small></button>
-      <a class="rBtn" href="index-3d.html"><i>▶</i><span data-i18n="r3d">逆反 3D</span></a>
+      <a class="rBtn" href="index-3d.html"><i>▶</i><span data-i18n="r3d">逆反 3D · 勇往直前</span></a>
       <button class="rBtn" id="toSettingsHome"><i>▶</i><span data-i18n="rSettings">设 置</span></button>
     </div>
     <div class="rRow">
@@ -2547,6 +2547,7 @@
     // ── 倒车（双击手刹触发）──
     if (p.reverseTimer > 0) {
       p.reverseTimer -= dt;
+      p.reverseUsed = (p.reverseUsed || 0) + dt;   // 成就：用过倒车
       p.speed = Math.max(REVERSE_MAX * 0.75, p.speed - MAX_SPEED * 1.2 * dt);
       p.drift = 0; p.driftChain = 0;
     }
@@ -2626,6 +2627,7 @@
               playCrash(); playDustSound();
               flashTip('撞树！');
               p.driftScore = Math.max(0, p.driftScore - 20);
+              p.treeHits = (p.treeHits || 0) + 1;   // 成就：撞树计数
             }
           }
         }
@@ -2690,6 +2692,7 @@
       var airTotal = p.airTotal || 1.35;
       p.airTime -= dt;
       p.airTimeTotal = (p.airTimeTotal || 0) + dt;   // 积分：累计腾空
+      p.airTimeMax = Math.max(p.airTimeMax || 0, p.airTime);   // 成就：单次最长腾空
       // 真正的抛物线：sin 曲线，起飞/落地两端为 0
       var prog = 1 - (p.airTime / airTotal);
       var airP = Math.sin(Math.max(0, Math.min(1, prog)) * Math.PI);
@@ -3643,7 +3646,7 @@
   var STR = {
     zh: {
       gameTitle: '极速狂飙', gameSub: 'TURBO GAME',
-      r1p: '1P 单人游戏', r2p: '2P 双人对战', rDaily: '今日挑战', r3d: '逆反 3D', rSettings: '设 置',
+      r1p: '1P 单人游戏', r2p: '2P 双人对战', rDaily: '今日挑战', r3d: '逆反 3D · 勇往直前', rSettings: '设 置',
       backHome: '← 返回', prevBtn: '← 上一步',
       wzT1: '① 选择你的赛车', wzT2: '② 选择赛道', wzT3: '③ 出发！',
       wzS1: '挑一辆适合你手感的车', wzS2: '4 张地图，各有各的脾气', wzS3: '调整圈数与天气，然后冲刺',
@@ -3671,7 +3674,7 @@
     },
     en: {
       gameTitle: 'TURBO', gameSub: '极速狂飙 · TURBO GAME',
-      r1p: '1P SOLO', r2p: '2P VERSUS', rDaily: 'DAILY RUN', r3d: 'INVERSE 3D', rSettings: 'SETTINGS',
+      r1p: '1P SOLO', r2p: '2P VERSUS', rDaily: 'DAILY RUN', r3d: 'INVERSE 3D · JUST GO', rSettings: 'SETTINGS',
       backHome: '← BACK', prevBtn: '← BACK',
       wzT1: '① PICK YOUR CAR', wzT2: '② CHOOSE TRACK', wzT3: '③ GO!',
       wzS1: 'Find one that fits your style', wzS2: '4 tracks, each with a temper', wzS3: 'Set laps & weather, then race',
@@ -3876,6 +3879,56 @@
     if (prev) prev.onclick = function () { if (WIZ_STEP === 0) showHome(); else gotoStep(WIZ_STEP - 1); };
     if (next) next.onclick = function () { gotoStep(WIZ_STEP + 1); };
     if (rnd) rnd.onclick = randomAll;
+  }
+
+  /* ================= 成就系统 ================= */
+  // hidden: true = 未解锁时显示 ???（解锁后才知道是什么）
+  var ACHIEVEMENTS = [
+    { id: 'first',  name: '首战告捷',   desc: '完成第一场比赛',           icon: '🏁', hidden: false },
+    { id: 'drift5', name: '漂移大师',   desc: '单局漂移得分 800+',        icon: '💨', hidden: false },
+    { id: 'smash3', name: '马路清道夫', desc: '单局撞飞 3 辆车',          icon: '💥', hidden: false },
+    { id: 'bill3',  name: '广告终结者', desc: '单局撞倒 3 块广告牌',      icon: '📋', hidden: false },
+    { id: 'air1',   name: '飞行时刻',   desc: '单次腾空 1.5 秒以上',      icon: '🛫', hidden: false },
+    { id: 'perfect',name: '完美起步',   desc: '起步喷拿到 PERFECT',       icon: '⚡', hidden: false },
+    { id: 'score2k',name: '二千分俱乐部', desc: '单局总积分 2000+',       icon: '🏅', hidden: false },
+    { id: 'score5k',name: '五连神迹',   desc: '单局总积分 5000+',         icon: '👑', hidden: true },
+    { id: 'nohit',  name: '零碰撞通关', desc: '完赛且全程没撞到任何东西',   icon: '🛡️', hidden: true },
+    { id: 'rev',    name: '倒车入库',   desc: '用双击手刹倒车并完赛',      icon: '⬇️', hidden: true },
+    { id: 'crowd',  name: '人群冲浪',   desc: '单局撞到 5 个行人',        icon: '🚶', hidden: true },
+    { id: 'night',  name: '夜行者',     desc: '夜间天气下完赛',           icon: '🌙', hidden: true }
+  ];
+  function loadAch() {
+    try { var a = JSON.parse(localStorage.getItem('turbo-racer-ach')); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  }
+  function saveAch(list) { try { localStorage.setItem('turbo-racer-ach', JSON.stringify(list)); } catch (e) {} }
+  function achUnlocked(id) { return loadAch().indexOf(id) >= 0; }
+  // 结算时判定：返回本次新解锁的数组
+  function checkAchievements(p) {
+    if (!p) return [];
+    var got = loadAch();
+    var fresh = [];
+    function unlock(id) {
+      if (got.indexOf(id) < 0) { got.push(id); fresh.push(id); }
+    }
+    if (p.finished) unlock('first');
+    if ((p.driftScore || 0) >= 800) unlock('drift5');
+    if ((p.smashCount || 0) >= 3) unlock('smash3');
+    if ((p.hitBillboards || 0) >= 3) unlock('bill3');
+    if ((p.airTimeMax || 0) >= 1.5) unlock('air1');
+    if (p.launchQuality === 'perfect') unlock('perfect');
+    var sc = calcScore(p);
+    if (sc >= 2000) unlock('score2k');
+    if (sc >= 5000) unlock('score5k');
+    if (p.finished && !(p.smashCount || 0) && !(p.hitBillboards || 0) && !(p.hitPedestrians || 0) && (p.treeHits || 0) === 0) unlock('nohit');
+    if (p.finished && (p.reverseUsed || 0) > 0) unlock('rev');
+    if ((p.hitPedestrians || 0) >= 5) unlock('crowd');
+    if (p.finished && WEATHER === 'night') unlock('night');
+    if (fresh.length) saveAch(got);
+    return fresh;
+  }
+  function achMeta(id) {
+    for (var i = 0; i < ACHIEVEMENTS.length; i++) if (ACHIEVEMENTS[i].id === id) return ACHIEVEMENTS[i];
+    return { id: id, name: id, desc: '', icon: '🏆', hidden: false };
   }
 
   /* ================= 玩家名字 ================= */
@@ -4884,6 +4937,36 @@
   function getLbSort() { try { var v = localStorage.getItem('turbo-racer-lbsort'); return (v === 'score') ? 'score' : 'time'; } catch (e) { return 'time'; } }
   function setLbSort(v) { LB_SORT = v; try { localStorage.setItem('turbo-racer-lbsort', v); } catch (e) {} }
 
+  function showAchWall() {
+    var got = loadAch();
+    var old = document.getElementById('achWall');
+    if (old) old.remove();
+    var d = document.createElement('div');
+    d.id = 'achWall';
+    d.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,6,14,.9);padding:18px;overflow:auto';
+    var rows = ACHIEVEMENTS.map(function (a) {
+      var on = got.indexOf(a.id) >= 0;
+      var mystery = !on && a.hidden;   // 只有隐藏项未解锁才显示 ???
+      var nm = on ? a.name : (mystery ? '???' : a.name);
+      var ds = on ? a.desc : (mystery ? '继续玩，自己发现' : a.desc);
+      return '<div style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:10px;background:' + (on ? 'rgba(255,209,102,.1);border:1px solid rgba(255,190,80,.35)' : 'rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)') + '">' +
+        '<span style="font-size:20px' + (on ? '' : ';filter:grayscale(1);opacity:.4') + '">' + (on ? a.icon : (mystery ? '🔒' : a.icon)) + '</span>' +
+        '<span style="flex:1"><b style="font-size:13px;color:' + (on ? '#ffd166' : '#6f8db0') + '">' + nm + '</b>' +
+        '<span style="display:block;font-size:10.5px;color:#8ba3bd;margin-top:2px">' + ds + '</span></span>' +
+        (on ? '<span style="font-size:11px;color:#8ef7c8">✓</span>' : '') +
+        '</div>';
+    }).join('');
+    d.innerHTML = '<div style="max-width:340px;width:100%;max-height:86vh;overflow:auto;padding:18px 18px 14px;border-radius:16px;background:rgba(10,18,34,.97);border:1px solid rgba(140,200,255,.3)">' +
+      '<div style="text-align:center;font-size:17px;font-weight:900;letter-spacing:3px;color:#ffd166;margin-bottom:4px">🏆 成就墙</div>' +
+      '<div style="text-align:center;font-size:11px;color:#8ba3bd;margin-bottom:14px">' + got.length + ' / ' + ACHIEVEMENTS.length + ' 已解锁</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' + rows + '</div>' +
+      '<button id="achClose" style="display:block;margin:14px auto 2px;padding:9px 34px;border-radius:10px;border:1.5px solid rgba(140,200,255,.35);background:rgba(140,200,255,.12);color:#cfe8ff;font-size:13px;font-weight:800;cursor:pointer">关闭</button></div>';
+    document.body.appendChild(d);
+    var cb = document.getElementById('achClose');
+    if (cb) cb.onclick = function () { d.remove(); };
+    d.addEventListener('click', function (e) { if (e.target === d) d.remove(); });
+  }
+
   function showResult() {
     running = false;
     LB_SORT = getLbSort();
@@ -4921,6 +5004,8 @@
       }
       renderResultLb();
     }
+    // ── 成就判定 ──
+    var freshAch = checkAchievements(P1);
     // 已提交后改名：只更新本次记录的名字（不再插新记录）
     function updateLastNameOnly() {
       try {
@@ -4968,8 +5053,19 @@
       // chips：最近用过的名字全部显示（点谁填谁），最多 3 个
       var rn = getRecentNames().filter(function (n) { return !!n; }).slice(0, 3);
       var chips0 = rn.slice(0, 3);
+      var achHtml = '';
+      if (freshAch.length) {
+        achHtml = '<div style="margin:12px 0;padding:11px 15px;border-radius:11px;background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(255,140,60,.08));border:1px solid rgba(255,190,80,.45);max-width:300px;text-align:left">' +
+          '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px">🎉 解锁成就 ×' + freshAch.length + '</div>' +
+          freshAch.map(function (aid) {
+            var am = achMeta(aid);
+            return '<div style="font-size:12.5px;line-height:2;color:#ffe9c4">' + am.icon + ' <b>' + am.name + '</b> <span style="color:#9dbdd8;font-size:11px">' + am.desc + '</span></div>';
+          }).join('') +
+          '</div>';
+      }
       panel.innerHTML = '<div class="title">完成！</div>' +
         '<div class="sub">R A C E &nbsp; F I N I S H E D</div>' +
+        achHtml +
         '<div class="res">' +
         '<div>总时间 <b>' + formatTime(P1.finishTime) + '</b></div>' +
         '<div style="margin-top:6px;font-size:14px;color:#ffd166;font-weight:900">🏅 总积分 ' + calcScore(P1) + '</div>' +
@@ -4991,7 +5087,8 @@
         '</div>' +
         '<div id="resultLb" style="font-size:12.5px;color:#cfe4f7;line-height:1.85"></div>' +
         '</div>' +
-        '<div style="display:flex;gap:9px;justify-content:center">' +
+        '<div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">' +
+        '<button class="go" id="achBtn" style="background:rgba(255,209,102,.16);color:#ffd166;box-shadow:none;border:1.5px solid rgba(255,190,80,.5)">🏆 成就</button>' +
         '<button class="go" id="againBtn">再来一局</button>' +
         '<button class="go" id="shareBtn" style="background:rgba(255,255,255,.1);color:#cfe8ff;box-shadow:none;border:1.5px solid rgba(140,200,255,.35)">分享</button>' +
         '</div>';
@@ -5022,6 +5119,9 @@
           };
         })(chips[ci2]);
       }
+      // 成就墙
+      var achB = document.getElementById('achBtn');
+      if (achB) achB.onclick = showAchWall;
       // 排序切换
       var bt2 = document.getElementById('sortTime'), bs2 = document.getElementById('sortScore');
       if (bt2) bt2.onclick = function () { setLbSort('time'); renderResultLb(); };
@@ -5409,6 +5509,18 @@
       } catch (e) { return { err: String(e) }; }
     },
     setOff: function (x, spd) { try { P1.playerX = x; P1.speed = (spd === undefined ? 10 : spd); return true; } catch (e) { return String(e); } },
+    setStats: function (o) {
+      try {
+        if (o.smashCount !== undefined) P1.smashCount = o.smashCount;
+        if (o.hitBillboards !== undefined) P1.hitBillboards = o.hitBillboards;
+        if (o.hitPedestrians !== undefined) P1.hitPedestrians = o.hitPedestrians;
+        if (o.driftScore !== undefined) P1.driftScore = o.driftScore;
+        if (o.launchQuality) P1.launchQuality = o.launchQuality;
+        if (o.treeHits !== undefined) P1.treeHits = o.treeHits;
+        if (o.reverseUsed !== undefined) P1.reverseUsed = o.reverseUsed;
+        return true;
+      } catch (e) { return String(e); }
+    },
     finishSolo: function (t) {
       try {
         P1.finished = true;
