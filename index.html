@@ -61,7 +61,7 @@
   body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent;color:#eaf2ff}
   #game{display:block;width:100vw;height:100vh}
   .hud{position:fixed;pointer-events:none;z-index:10}
-  .pbox{position:fixed;pointer-events:none;z-index:10;display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:12px;background:rgba(6,12,22,.55);border:1px solid rgba(120,190,255,.22);backdrop-filter:blur(8px)}
+  .pbox{position:fixed;pointer-events:none;z-index:10;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 12px;border-radius:12px;background:rgba(6,12,22,.55);border:1px solid rgba(120,190,255,.22);backdrop-filter:blur(8px)}
   .p1box{left:14px;top:12px;border-color:rgba(255,90,110,.45)}
   .p2box{left:14px;top:calc(50% + 12px);border-color:rgba(90,200,255,.45)}
   .tag{font-size:12px;font-weight:900;letter-spacing:2px;padding:3px 9px;border-radius:7px}
@@ -69,7 +69,8 @@
   .t2{color:#d9f0ff;background:rgba(60,170,255,.24);border:1px solid rgba(90,190,255,.5)}
   .spd{font-size:30px;font-weight:850;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-1px}
   .u{font-size:10px;color:#7fb6e8;font-weight:700;letter-spacing:1px}
-  .meta{font-size:11px;color:#9dbdd8;font-variant-numeric:tabular-nums;line-height:1.5}
+  .meta{font-size:10.5px;color:#9dbdd8;font-variant-numeric:tabular-nums;line-height:1.45}
+  .prow{display:flex;align-items:baseline;gap:6px}
   .meta b{color:#fff;font-weight:750}
   #msg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:64px;font-weight:900;letter-spacing:6px;color:#fff;text-shadow:0 0 40px rgba(120,200,255,.9);opacity:0;transition:opacity .25s;pointer-events:none;z-index:12;white-space:nowrap}
   #home{position:fixed;inset:0;z-index:25;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,rgba(20,40,80,.92),rgba(4,6,14,.98));transition:opacity .4s;padding:20px}
@@ -173,7 +174,7 @@
     #shortcut{bottom:calc(50% + 34px);font-size:12px;padding:4px 12px}
     #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
     #restartBtn{right:48px;top:8px;width:38px;height:38px;font-size:21px}
-    #viewBar{right:8px;top:46px;gap:4px}
+    #viewBar{left:8px;top:70px;gap:4px}
     .vbtn{width:29px;height:29px;font-size:11.5px;border-radius:8px}
     #autoBadge{right:8px;top:88px;font-size:9.5px;padding:4px 8px}
     #fpsBox{right:8px;bottom:8px;font-size:9.5px;padding:3px 7px}
@@ -340,19 +341,17 @@
 <canvas id="game"></canvas>
 
 <div class="pbox p1box">
-  <span class="tag t1">P1</span>
-  <span class="spd" id="spd1">0</span><span class="u">KM/H</span>
-  <span class="meta">圈 <b id="lap1">1</b>/3<br>本圈 <b id="t1">0.00</b><br><span id="gap1" style="color:#8ef7c8"></span></span>
+  <div class="prow"><span class="tag t1">P1</span><span class="spd" id="spd1">0</span><span class="u">KM/H</span></div>
+  <span class="meta">圈 <b id="lap1">1</b>/3 · 本圈 <b id="t1">0.00</b><br><span id="gap1" style="color:#8ef7c8"></span></span>
 </div>
 
 <div class="pbox p2box">
-  <span class="tag t2">P2</span>
-  <span class="spd" id="spd2">0</span><span class="u">KM/H</span>
-  <span class="meta">圈 <b id="lap2">1</b>/3<br>本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
+  <div class="prow"><span class="tag t2">P2</span><span class="spd" id="spd2">0</span><span class="u">KM/H</span></div>
+  <span class="meta">圈 <b id="lap2">1</b>/3 · 本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
 </div>
 
 <div id="autoBadge" style="position:fixed;right:14px;top:108px;z-index:14;display:none;padding:5px 10px;border-radius:9px;background:rgba(10,18,34,.78);border:1px solid rgba(60,220,160,.5);backdrop-filter:blur(8px);font-size:10.5px;font-weight:800;letter-spacing:2px;color:#8ef7c8;pointer-events:none;white-space:nowrap">智驾中</div>
-<div id="viewBar" style="position:fixed;right:14px;top:60px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="远景">1</div><div class="vbtn" data-v="1" title="中景">2</div><div class="vbtn" data-v="2" title="第一视角">3</div></div>
+<div id="viewBar" style="position:fixed;left:14px;top:82px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="驾驶舱">1</div><div class="vbtn" data-v="1" title="贴地">2</div><div class="vbtn" data-v="2" title="俯瞰">3</div></div>
 <div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:16;width:44px;height:44px;border-radius:12px;background:rgba(20,40,70,.85);border:2px solid rgba(140,200,255,.5);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:900;color:#8ef7c8;backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);transition:background .15s">↻</div>
 <a id="elGitMark" href="https://github.com/gcy529/turbo-game" target="_blank" style="position:fixed;left:12px;bottom:12px;z-index:13;font-size:9.5px;font-weight:700;color:rgba(140,180,220,.4);text-decoration:none;letter-spacing:.5px;pointer-events:auto">github.com/gcy529/turbo-game</a>
 <div id="fpsBox" style="position:fixed;right:14px;bottom:14px;z-index:14;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums;backdrop-filter:blur(6px);pointer-events:none;letter-spacing:.5px">-- FPS</div>
@@ -389,11 +388,11 @@
       </div>
 
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
-      <div class="setlabel">视角<small>1 俯瞰 / 2 贴地 / 3 驾驶舱</small></div>
+      <div class="setlabel">视角<small>1 驾驶舱 / 2 贴地 / 3 俯瞰</small></div>
       <div style="display:flex;gap:7px">
-        <button class="vmbtn" data-v="0" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">1 俯瞰</button>
+        <button class="vmbtn" data-v="0" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">1 驾驶舱</button>
         <button class="vmbtn" data-v="1" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">2 贴地</button>
-        <button class="vmbtn" data-v="2" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">3 驾驶舱</button>
+        <button class="vmbtn" data-v="2" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">3 俯瞰</button>
       </div>
     </div>
     <div class="setclose">
@@ -2277,7 +2276,7 @@
     }
 
     // ── 第一视角：驾驶舱框架 ──
-    if (CAM_VIEW === 2) {
+    if (CAM_VIEW === 0) {
       // 底部仪表台
       var dashH = V.h * 0.16;
       var dashG = ctx.createLinearGradient(0, V.h - dashH, 0, V.h);
@@ -3763,22 +3762,23 @@
 
   var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right' };  // 默认静音;  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
-  var CAM_VIEW = 0;
+  var CAM_VIEW = 1;   // 默认贴地视角
   var VIEW_LIST = [
-    { id: 0, name: '远景', nameKey: 'vFar', icon: '🎥', desc: '车在下方，视野开阔' },
-    { id: 1, name: '中景', nameKey: 'vMid', icon: '📹', desc: '车在中下，平衡' },
-    { id: 2, name: '第一视角', nameKey: 'vFirst', icon: '👁️', desc: '驾驶舱视角' }
+    { id: 0, name: '驾驶舱', nameKey: 'vFirst', icon: '👁️', desc: '第一视角，无车' },
+    { id: 1, name: '贴地', nameKey: 'vMid', icon: '📹', desc: '低机位大车，默认' },
+    { id: 2, name: '俯瞰', nameKey: 'vFar', icon: '🎥', desc: '高机位，视野开阔' }
   ];
   // 各视角的相机高度和车位置
   function viewParams() {
-    // 1 = 俯瞰（高机位、小车）  2 = 贴地（低机位、大车）  3 = 驾驶舱
-    if (CAM_VIEW === 2) {
+    // 1 = 驾驶舱（第一视角）  2 = 贴地（默认，低机位大车）  3 = 俯瞰（高机位）
+    if (CAM_VIEW === 0) {
+      // 1 驾驶舱：贴地无车
       return { camH: 360, carScale: 0, carY: 0, drawCar: false, fov: 1.30 };
     } else if (CAM_VIEW === 1) {
-      // 2 贴地视角：低机位（280，不是 0）+ 大车 + 正常透视
+      // 2 贴地：低机位 + 大车（默认）
       return { camH: 280, carScale: 1.30, carY: 0, drawCar: true, fov: 0.92 };
     }
-    // 1 俯瞰：高机位 + 小车 + 广角
+    // 3 俯瞰：高机位 + 小车 + 广角
     return { camH: 1350, carScale: 0.58, carY: 0, drawCar: true, fov: 1.15 };
   }
 
@@ -3987,7 +3987,7 @@
     CAM_VIEW = v;
     flashTip(VIEW_LIST[CAM_VIEW].name + '视角');
     updateViewBtns();
-    try { localStorage.setItem('turbo-racer-view', String(CAM_VIEW)); } catch (e) {}
+    try { localStorage.setItem('turbo-racer-view2', String(CAM_VIEW)); } catch (e) {}
   }
 
   function setBrakeSide(side) {
@@ -4860,10 +4860,17 @@
     for (var vbi = 0; vbi < vbtns2.length; vbi++) {
       (function (b) { b.addEventListener('click', function () { setView(Number(b.getAttribute('data-v'))); }); })(vbtns2[vbi]);
     }
-    // 恢复上次视角
+    // 恢复上次视角（新 key；旧 key 做 1↔3 对调迁移后清掉）
     try {
-      var savedView = parseInt(localStorage.getItem('turbo-racer-view') || '0', 10);
-      if (savedView >= 0 && savedView <= 2) CAM_VIEW = savedView;
+      var savedView2 = localStorage.getItem('turbo-racer-view2');
+      if (savedView2 === '0' || savedView2 === '1' || savedView2 === '2') {
+        CAM_VIEW = parseInt(savedView2, 10);
+      } else {
+        var oldView = parseInt(localStorage.getItem('turbo-racer-view') || 'x', 10);
+        if (oldView === 0) CAM_VIEW = 2;        // 旧1俯瞰 → 新3俯瞰
+        else if (oldView === 2) CAM_VIEW = 0;   // 旧3驾驶舱 → 新1驾驶舱
+        try { localStorage.removeItem('turbo-racer-view'); } catch (e2) {}
+      }
     } catch (e) {}
     updateViewBtns();
     render();
