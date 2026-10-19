@@ -435,7 +435,7 @@
       <div class="toggle" id="tgManual"></div>
     </div>
     <div class="setrow">
-      <div class="setlabel">幽灵车<small>显示你最佳圈速的半透明轨迹（有重影）</small></div>
+      <div class="setlabel">最佳圈速显示<small>左上角显示本图最佳成绩</small></div>
       <div class="toggle" id="tgGhost"></div>
     </div>
     <div class="setrow">
@@ -473,6 +473,7 @@
 </div>
 </div>
 <div id="trackLabel"></div>
+<div id="bestBadge" style="position:fixed;left:14px;top:84px;z-index:11;display:none;padding:5px 12px;border-radius:10px;background:rgba(6,12,22,.62);border:1px solid rgba(255,209,102,.4);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-size:12px;font-weight:900;letter-spacing:1px;color:#ffd166;pointer-events:none;font-variant-numeric:tabular-nums"></div>
 <div id="msg"></div>
 <div id="pace"><div class="ico" id="paceIco">◀</div><div class="txt" id="paceTxt"></div></div>
 <div id="drift"><div class="lbl">DRIFT</div><div class="val" id="driftVal">0</div><div class="chain" id="driftChain"></div></div>
@@ -2248,7 +2249,7 @@
     }
 
     // ── 幽灵车（最佳圈速轨迹）──
-    if (CFG.ghost && ghostPlayback && !p.finished && ghostPlayback.frames) {
+    if (false && ghostPlayback && !p.finished && ghostPlayback.frames) {   // 半透明车已移除（改徽章显示）
       var totalProg = p.totalDistance / trackLength;
       var lapProg = totalProg - Math.floor(totalProg);
       var ghost = getGhostAt(lapProg);
@@ -3615,6 +3616,18 @@
     elT1.textContent = fmt(Math.max(0, (now - P1.lapStart) / 1000));
     var scEl = document.getElementById('score1');
     if (scEl && P1) scEl.textContent = String(calcScore(P1));
+    // 最佳圈速徽章（本图最佳，明显数字显示）
+    var bb = document.getElementById('bestBadge');
+    if (bb) {
+      if (CFG.ghost) {
+        var bestEntry = getBest(selectedMap);
+        if (bestEntry && bestEntry.time > 0) {
+          var sameCfg = (bestEntry.laps === undefined || bestEntry.laps === TOTAL_LAPS) && (bestEntry.weather === undefined || bestEntry.weather === WEATHER);
+          bb.textContent = '⏱ 最佳 ' + formatTime(bestEntry.time) + (sameCfg ? '' : '*');
+          bb.style.display = 'block';
+        } else bb.style.display = 'none';
+      } else bb.style.display = 'none';
+    }
     elT2.textContent = fmt(Math.max(0, (now - P2.lapStart) / 1000));
 
     // ── 双人距离/时间差 ──
@@ -4220,7 +4233,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right', pixelArt: true };   // 默认像素风（高清在设置里）  // 默认静音;  // 幽灵车默认关（有重影）
+  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: true, brakeMode: 'brake', brakeSide: 'right', pixelArt: true };   // ghost=显示最佳圈速徽章（默认开）  // 默认静音;  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 1;   // 默认贴地视角
   var VIEW_LIST = [
@@ -5413,7 +5426,7 @@
     // 幽灵车重录
     ghostFrames = [];
     ghostRecTimer = 0;
-    ghostPlayback = CFG.ghost ? loadGhost(selectedMap) : null;
+    ghostPlayback = null;   // 幽灵车回放已移除（改用最佳圈速徽章显示）
     running = true;
     paused = false;
     pausedBySettings = false;
