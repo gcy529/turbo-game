@@ -14,18 +14,17 @@
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   /* ── 日间主题 ── */
-  body[data-theme='light']{background:#e8eef6;color:#1a2434}
-  body[data-theme='light'] .panel{background:rgba(255,255,255,.92);border-color:rgba(40,80,140,.25);box-shadow:0 24px 90px rgba(60,90,140,.25)}
+  body[data-theme='light']{background:#f4f1ea;color:#12233a}
+  body[data-theme='light'] .panel{background:#fbf9f4;border-color:rgba(40,80,140,.25);box-shadow:0 24px 90px rgba(60,90,140,.25)}
   body[data-theme='light'] .title{background:linear-gradient(180deg,#1a2434,#2f7fd0 70%,#1a5fa8);-webkit-background-clip:text;background-clip:text}
-  body[data-theme='light'] .sub{color:#44607e}
-  body[data-theme='light'] .pbox{background:rgba(255,255,255,.82);border-color:rgba(40,80,140,.25)}
+  body[data-theme='light'] .sub{color:#2a4a68}
+  body[data-theme='light'] .pbox{background:#fbf9f4;border-color:rgba(40,80,140,.3)}
   body[data-theme='light'] .spd{color:#12233a}
   body[data-theme='light'] .meta{color:#4a6484}
   body[data-theme='light'] .meta b{color:#12233a}
   body[data-theme='light'] #msg{color:#12233a;text-shadow:0 0 40px rgba(47,127,208,.5)}
   body[data-theme='light'] #settingsBtn,body[data-theme='light'] .vbtn,body[data-theme='light'] #viewBtn,body[data-theme='light'] #restartBtn{background:rgba(255,255,255,.85);border-color:rgba(40,80,140,.3);color:#2a4562}
-  body[data-theme='light'] #autoBadge{background:rgba(255,255,255,.88);border-color:rgba(42,157,143,.5);color:#1a7f6f}
-  body[data-theme='light'] #pace{background:rgba(255,255,255,.88);border-color:rgba(200,150,40,.4)}
+  body[data-theme  body[data-theme='light'] #pace{background:rgba(255,255,255,.88);border-color:rgba(200,150,40,.4)}
   body[data-theme='light'] #pace .txt{color:#1a2434}
   body[data-theme='light'] #drift .val{color:#12233a;text-shadow:none}
   body[data-theme='light'] #shortcut{color:#fff}
@@ -38,7 +37,7 @@
   body[data-theme='light'] .setbox{background:rgba(255,255,255,.97);border-color:rgba(40,80,140,.25)}
   body[data-theme='light'] .settitle,body[data-theme='light'] .setlabel{color:#12233a}
   body[data-theme='light'] .setlabel small{color:#5a7695}
-  body[data-theme='light'] #settingsPanel{background:rgba(220,230,242,.9)}
+  body[data-theme='light'] #settingsPanel{background:rgba(244,241,234,.94)}
   body[data-theme='light'] #lbPanel{background:rgba(40,80,140,.06);border-color:rgba(200,150,40,.35)}
   #trackLabel{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:12;display:none;padding:4px 14px;border-radius:9px;background:rgba(6,12,22,.6);border:1px solid rgba(140,200,255,.25);font-size:11px;font-weight:800;letter-spacing:2px;color:#9dbdd8;-webkit-backdrop-filter: backdrop-filter:blur(6px);white-space:nowrap;pointer-events:none}
   body[data-theme='light'] #trackLabel{color:rgba(40,80,140,.5);background:rgba(255,255,255,.82)}
@@ -50,9 +49,9 @@
   body[data-theme='light'] #overlay{background:radial-gradient(circle at 50% 40%,rgba(180,205,235,.92),rgba(225,235,248,.97))}
   body[data-theme='light'] .res{color:#3a5570}
   body[data-theme='light'] #homeBest{color:#44607e}
-  body[data-theme='light'] .tip{color:#3a5570}
+  body[data-theme='light'] .tip{color:#2a4a68}
   body[data-theme='light'] .secLabel{color:#3a5570}
-  body[data-theme='light'] #home{background:radial-gradient(circle at 50% 35%,rgba(180,205,235,.94),rgba(228,238,250,.99))}
+  body[data-theme='light'] #home{background:radial-gradient(circle at 50% 35%,#f7f4ec,#efe9dc)}
   body[data-theme='light'] .homeBtn{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   body[data-theme='light'] .homeBtn.primary{color:#06121e}
     .bsbtn,.vmbtn,.pxbtn{background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer;transition:all .15s}
@@ -121,6 +120,20 @@
   /* ── 复古街机首页 ── */
   #home{background:#050510}
   #home::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.24) 0 1px,transparent 1px 3px);z-index:1}
+  /* 右上撕角（画质切换）*/
+  #peelCorner{position:absolute;top:0;right:0;width:86px;height:86px;cursor:pointer;z-index:5;-webkit-tap-highlight-color:transparent}
+  #peelCorner .fold{position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 78px 78px 0;border-color:transparent rgba(140,200,255,.28) transparent transparent;transition:transform .32s cubic-bezier(.5,0,.3,1),border-color .3s;transform-origin:top right}
+  #peelCorner .fold::after{content:'';position:absolute;top:6px;right:6px;width:34px;height:34px;background:linear-gradient(135deg,rgba(20,40,70,.92),rgba(10,22,40,.95));transform:rotate(45deg);border-radius:4px}
+  #peelCorner .lbl{position:absolute;top:9px;right:11px;font-size:11px;font-weight:900;letter-spacing:2px;color:#cfe8ff;transform:rotate(0deg);z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+  #peelCorner:hover .fold{transform:scale(1.06)}
+  #peelCorner.peeling .fold{transform:rotate(-14deg) scale(1.12);border-color:transparent rgba(255,209,102,.55) transparent transparent}
+  #peelBack{position:fixed;inset:0;z-index:79;background:rgba(8,14,30,.78);opacity:0;pointer-events:none;transition:opacity .3s}
+  #peelBack.on{opacity:1}
+  body[data-theme='light'] #peelCorner .fold{border-color:transparent rgba(40,80,140,.35) transparent transparent}
+  #wheelGroup{transition:transform .5s ease}
+  #wheelGroup.spin{animation:wheelSpin 8s linear infinite}
+  @keyframes wheelSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  body[data-theme='light'] #wheelRim,body[data-theme='light'] #wheelSpokeL,body[data-theme='light'] #wheelSpokeR,body[data-theme='light'] #wheelSpokeB,body[data-theme='light'] #wheelHub{stroke:#2a4a68}
   #home .homeInner{position:relative;z-index:2}
   .rTitle{font-family:'Courier New',ui-monospace,Consolas,monospace;font-size:38px;font-weight:900;letter-spacing:8px;color:#ffe600;text-shadow:0 0 6px #ffb300,0 0 20px #ff8c00,3px 3px 0 #7a3d00;animation:neonFlicker 3.2s infinite}
   @keyframes neonFlicker{0%,86%,92%,100%{opacity:1}88%,90%,96%{opacity:.42}}
@@ -139,6 +152,11 @@
   .rRow{display:flex;gap:9px;margin-top:20px}
   .rGit{margin-top:14px;font-size:10px;letter-spacing:1px;color:rgba(140,180,220,.45);text-decoration:none;font-family:'Courier New',monospace}
   .rGit:hover{color:#67c6ff}
+  body[data-theme='light'] .rTitle{text-shadow:0 0 6px rgba(255,180,0,.3),2px 2px 0 rgba(122,61,0,.35)}
+  body[data-theme='light'] .rSub{text-shadow:0 0 8px rgba(0,180,220,.4)}
+  body[data-theme='light'] .rBtn{background:rgba(255,252,245,.85);color:#8a5a10}
+  body[data-theme='light'] .rBtn:hover{background:rgba(255,250,235,.97);color:#5a3a08}
+  body[data-theme='light'] .rBtnDaily{color:#b05a10;border-color:rgba(200,140,30,.5)}
   @media (orientation:portrait){.rTitle{font-size:30px;letter-spacing:6px}.rSub{font-size:11px;letter-spacing:9px}.rMenu{width:260px;gap:8px}.rBtn{font-size:14px;padding:11px 16px}}
   #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.9),rgba(4,6,14,.97));z-index:20;transition:opacity .35s;padding:20px}
   #overlay.hide{opacity:0;pointer-events:none}
@@ -201,8 +219,10 @@
     #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
     #restartBtn{right:48px;top:8px;width:38px;height:38px;font-size:21px}
     #viewBar{left:8px;top:70px;gap:4px}
+    #autoWheelBtn{right:8px;top:44px;width:46px;height:46px}
+    #autoWheelBtn canvas{width:38px;height:38px}
+    #autoDriveTag{right:8px;top:96px;font-size:9px}
     .vbtn{width:29px;height:29px;font-size:11.5px;border-radius:8px}
-    #autoBadge{right:8px;top:88px;font-size:9.5px;padding:4px 8px}
     #fpsBox{right:8px;bottom:8px;font-size:9.5px;padding:3px 7px}
     .tb{width:92px;height:92px;font-size:33px}
     .panel{padding:16px 14px;max-height:96vh;overflow-y:auto}
@@ -412,8 +432,20 @@
   <span class="meta">圈 <b id="lap2">1</b>/3 · 本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
 </div>
 
-<div id="autoBadge" style="position:fixed;right:14px;top:108px;z-index:14;display:none;padding:5px 10px;border-radius:9px;background:rgba(10,18,34,.78);border:1px solid rgba(60,220,160,.5);-webkit-backdrop-filter: backdrop-filter:blur(8px);font-size:10.5px;font-weight:800;letter-spacing:2px;color:#8ef7c8;pointer-events:none;white-space:nowrap">智驾中</div>
-<div id="viewBar" style="position:fixed;left:14px;top:82px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="驾驶舱">1</div><div class="vbtn" data-v="1" title="贴地">2</div><div class="vbtn" data-v="2" title="俯瞰">3</div></div>
+<div id="autoWheelBtn" title="智驾 / 手动" style="position:fixed;right:14px;top:56px;z-index:15;width:52px;height:52px;border-radius:50%;background:rgba(10,18,34,.72);border:1.5px solid rgba(140,200,255,.3);cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
+  <svg id="wheelSvg" width="44" height="44" viewBox="0 0 44 44">
+    <g id="wheelGroup" style="transform-origin:22px 22px">
+      <circle cx="22" cy="22" r="19" fill="none" stroke="#cfe4f7" stroke-width="4.6" id="wheelRim"/>
+      <line x1="3.2" y1="22" x2="15" y2="22" stroke="#cfe4f7" stroke-width="3.4" id="wheelSpokeL"/>
+      <line x1="29" y1="22" x2="40.8" y2="22" stroke="#cfe4f7" stroke-width="3.4" id="wheelSpokeR"/>
+      <line x1="22" y1="29" x2="22" y2="40.5" stroke="#cfe4f7" stroke-width="2.4" id="wheelSpokeB"/>
+      <circle cx="22" cy="22" r="7.6" fill="rgba(207,228,247,.16)" stroke="#cfe4f7" stroke-width="1.6" id="wheelHub"/>
+      <path d="M 17.5 19.5 A 5.4 5.4 0 0 1 20 17.2" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.3" stroke-linecap="round"/>
+    </g>
+  </svg>
+</div>
+<div id="autoDriveTag" style="position:fixed;right:14px;top:114px;z-index:15;display:none;padding:4px 10px;border-radius:8px;background:rgba(10,18,34,.75);border:1px solid rgba(140,200,255,.25);font-size:9.5px;font-weight:800;letter-spacing:1px;color:#8ba3bd;pointer-events:none">手动驾驶</div>
+<div id="viewBar" style="position:fixed;left:14px;top:82px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="第一人称">1</div><div class="vbtn" data-v="1" title="默认视角">2</div><div class="vbtn" data-v="2" title="俯视视角">3</div></div>
 <div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:16;width:44px;height:44px;border-radius:12px;background:rgba(20,40,70,.85);border:2px solid rgba(140,200,255,.5);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:900;color:#8ef7c8;-webkit-backdrop-filter: backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);transition:background .15s">↻</div>
 <a id="elGitMark" href="https://github.com/gcy529/turbo-game" target="_blank" style="position:fixed;left:12px;bottom:12px;z-index:13;font-size:9.5px;font-weight:700;color:rgba(140,180,220,.4);text-decoration:none;letter-spacing:.5px;pointer-events:auto">github.com/gcy529/turbo-game</a>
 <div id="fpsBox" style="position:fixed;right:14px;bottom:14px;z-index:14;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums;-webkit-backdrop-filter: backdrop-filter:blur(6px);pointer-events:none;letter-spacing:.5px">-- FPS</div>
@@ -457,11 +489,11 @@
       </div>
     </div>
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
-      <div class="setlabel">视角<small>1 驾驶舱 / 2 贴地 / 3 俯瞰</small></div>
+      <div class="setlabel">视角<small>1 第一人称 / 2 默认 / 3 俯视</small></div>
       <div style="display:flex;gap:7px">
-        <button class="vmbtn" data-v="0" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">1 驾驶舱</button>
+        <button class="vmbtn" data-v="0" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">1 第一人称</button>
         <button class="vmbtn" data-v="1" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">2 贴地</button>
-        <button class="vmbtn" data-v="2" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">3 俯瞰</button>
+        <button class="vmbtn" data-v="2" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">3 俯视视角</button>
       </div>
     </div>
     <div class="setclose">
@@ -499,6 +531,7 @@
     </div>
     <a class="rGit" href="https://github.com/gcy529/turbo-game" target="_blank">github.com/gcy529/turbo-game</a>
   </div>
+  <div id="peelCorner" title="切换画质"><div class="fold"></div><div class="lbl" id="peelLbl">像素</div></div>
 </div>
 <div id="overlay">
   <div class="panel">
@@ -2218,7 +2251,9 @@
     for (n = 0; n < DRAW_DIST; n++) {
       seg = segments[(baseSegment.index + n) % segments.length];
       seg.looped = seg.index < baseSegment.index;
-      seg.fog = fogFactor(n / DRAW_DIST, WEATHER === 'fog' ? 13 : (WEATHER === 'night' ? 8 : FOG_DENSITY));
+      var fogD = WEATHER === 'fog' ? 13 : (WEATHER === 'night' ? 8 : FOG_DENSITY);
+      if (THEME === 'light') fogD = fogD * 0.6;   // 日间：雾减薄 40%，清晰优先
+      seg.fog = fogFactor(n / DRAW_DIST, fogD);
       seg.clip = maxy;
 
       var vp = viewParams();
@@ -3810,6 +3845,70 @@
     b.textContent = on ? '🔊 声音已开' : '🔇 开启声音';
     b.className = 'homeMini' + (on ? ' on' : '');
   }
+  /* ── 粒子转场（跟天气）── */
+  var peelParticles = [];
+  var peelAnimId = 0;
+  function spawnPeelBurst() {
+    var cv = document.getElementById('game');
+    if (!cv) return;
+    var W2 = cv.clientWidth || window.innerWidth, H2 = cv.clientHeight || window.innerHeight;
+    var isSnow = (WEATHER === 'fog') || (selectedMap === 'snow');
+    var isRain = WEATHER === 'rain';
+    var n = isSnow ? 26 : 30;
+    peelParticles = [];
+    for (var i = 0; i < n; i++) {
+      if (isSnow) {
+        peelParticles.push({ x: Math.random() * W2, y: -12 - Math.random() * 60, vx: (Math.random() - 0.5) * 26, vy: 90 + Math.random() * 70, r: 1.5 + Math.random() * 2.4, life: 0.62, kind: 'snow' });
+      } else if (isRain) {
+        peelParticles.push({ x: Math.random() * (W2 + 120) - 60, y: -12 - Math.random() * 80, vx: -70, vy: 340 + Math.random() * 120, len: 9 + Math.random() * 8, life: 0.5, kind: 'rain' });
+      } else {
+        peelParticles.push({ x: -14 - Math.random() * 60, y: Math.random() * H2, vx: 340 + Math.random() * 180, vy: (Math.random() - 0.5) * 44, r: 1 + Math.random() * 2.1, life: 0.58, kind: 'sand' });
+      }
+    }
+    var t0 = performance.now();
+    var last = t0;
+    function step(ts) {
+      var dt = Math.min((ts - last) / 1000, 0.05);
+      last = ts;
+      var el = (ts - t0) / 1000;
+      // 画在主 canvas 上（render 每帧清屏，所以在渲染后叠画——用独立浮层 canvas 更稳）
+      var pc = document.getElementById('peelCanvas');
+      if (!pc) {
+        pc = document.createElement('canvas');
+        pc.id = 'peelCanvas';
+        pc.style.cssText = 'position:fixed;inset:0;z-index:78;pointer-events:none';
+        document.body.appendChild(pc);
+      }
+      pc.width = W2; pc.height = H2;
+      var c2 = pc.getContext('2d');
+      c2.clearRect(0, 0, W2, H2);
+      var alive = 0;
+      for (var j = 0; j < peelParticles.length; j++) {
+        var pt = peelParticles[j];
+        pt.life -= dt;
+        if (pt.life <= 0) continue;
+        alive++;
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        var a = Math.max(0, Math.min(1, pt.life / 0.35));
+        if (pt.kind === 'snow') {
+          c2.fillStyle = 'rgba(235,242,250,' + (a * 0.85) + ')';
+          c2.beginPath(); c2.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2); c2.fill();
+        } else if (pt.kind === 'rain') {
+          c2.strokeStyle = 'rgba(160,190,225,' + (a * 0.7) + ')';
+          c2.lineWidth = 1.4;
+          c2.beginPath(); c2.moveTo(pt.x, pt.y); c2.lineTo(pt.x + pt.vx * 0.026, pt.y + pt.vy * 0.026); c2.stroke();
+        } else {
+          c2.fillStyle = 'rgba(196,178,150,' + (a * 0.8) + ')';
+          c2.beginPath(); c2.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2); c2.fill();
+        }
+      }
+      if (alive > 0 && el < 1.4) peelAnimId = requestAnimationFrame(step);
+      else if (pc.parentNode) pc.parentNode.removeChild(pc);
+    }
+    peelAnimId = requestAnimationFrame(step);
+  }
+
   function toggleSound() {
     var on = !(CFG.sfx || CFG.bgm);
     CFG.sfx = on; CFG.bgm = on;
@@ -4237,9 +4336,9 @@
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 1;   // 默认贴地视角
   var VIEW_LIST = [
-    { id: 0, name: '驾驶舱', nameKey: 'vFirst', icon: '👁️', desc: '第一视角，无车' },
-    { id: 1, name: '贴地', nameKey: 'vMid', icon: '📹', desc: '低机位大车，默认' },
-    { id: 2, name: '俯瞰', nameKey: 'vFar', icon: '🎥', desc: '高机位，视野开阔' }
+    { id: 0, name: '第一人称', nameKey: 'vFirst', icon: '👁️', desc: '车内视角，看不到自己车' },
+    { id: 1, name: '默认视角', nameKey: 'vMid', icon: '📹', desc: '跟车视角，开局就是它' },
+    { id: 2, name: '俯视视角', nameKey: 'vFar', icon: '🎥', desc: '高空俯瞰，视野最大' }
   ];
   // 各视角的相机高度和车位置
   function viewParams() {
@@ -4513,11 +4612,40 @@
     }
   }
 
+  /* ── 方向盘智驾按钮 ── */
+  var wheelSpinning = false;
+  function setWheelVisual() {
+    var g = document.getElementById('wheelGroup');
+    if (!g) return;
+    if (wheelSpinning) g.setAttribute('class', 'spin');
+    else g.removeAttribute('class');
+    var col = CFG.auto ? '#8ef7c8' : '#cfe4f7';
+    ['wheelRim', 'wheelSpokeL', 'wheelSpokeR', 'wheelSpokeB', 'wheelHub'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.setAttribute('stroke', col);
+    });
+  }
+
   function updateAutoUI() {
-    var ab2 = document.getElementById('autoBadge');
-    var gearEl = document.querySelector ? document.querySelector('#settingsBtn .gear') : null;
-    if (ab2) ab2.style.display = CFG.auto ? 'block' : 'none';
-    if (gearEl) gearEl.className = 'gear' + (CFG.auto ? ' spin' : '');
+    // 方向盘智驾按钮（游戏中显示）
+    var wb = document.getElementById('autoWheelBtn');
+    var tag = document.getElementById('autoDriveTag');
+    if (wb && running) {
+      wb.style.display = 'flex';
+      if (tag) {
+        tag.style.display = 'block';
+        tag.textContent = CFG.auto ? '智驾中' : '手动驾驶';
+        tag.style.color = CFG.auto ? '#8ef7c8' : '#8ba3bd';
+        tag.style.borderColor = CFG.auto ? 'rgba(142,247,200,.5)' : 'rgba(140,200,255,.25)';
+      }
+      wheelSpinning = CFG.auto;
+      setWheelVisual();
+    } else {
+      if (wb) wb.style.display = 'none';
+      if (tag) tag.style.display = 'none';
+      wheelSpinning = false;
+    }
+    // 智驾状态 = 方向盘专属表达（齿轮恒静止；autoBadge 移除，避免三处重复）
   }
 
   function updateViewBtns() {
@@ -4764,21 +4892,21 @@
         pb.onclick = function () {
           var toPix = (pb.getAttribute('data-px') === '1');
           if (toPix === CFG.pixelArt) return;
-          // 转场：闪白 → 切换 → 淡入（CRT 换台感）
-          var fxD = document.createElement('div');
-          fxD.id = 'pxTransition';
-          fxD.style.cssText = 'position:fixed;inset:0;z-index:80;background:#dfeaff;opacity:0;pointer-events:none;transition:opacity .18s';
-          document.body.appendChild(fxD);
-          requestAnimationFrame(function () { fxD.style.opacity = '0.92'; });
+          // 暗场 + 粒子（与撕角同款，夜间友好）
+          var bk2 = document.createElement('div');
+          bk2.id = 'peelBack';
+          bk2.style.cssText = 'position:fixed;inset:0;z-index:79;background:rgba(8,14,30,.78);opacity:0;pointer-events:none;transition:opacity .3s';
+          document.body.appendChild(bk2);
+          requestAnimationFrame(function () { bk2.style.opacity = '1'; });
           setTimeout(function () {
             CFG.pixelArt = toPix;
             applyPixelMode();
             updatePxBtn();
-            flashTip(toPix ? '🎨 像素风' : '✨ 高清');
+            spawnPeelBurst();
+            flashTip(toPix ? '🎨 像素风' : '✨ 超清');
             try { localStorage.setItem('turbo-racer-pixel', toPix ? '1' : '0'); } catch (e) {}
-            fxD.style.opacity = '0';
-            setTimeout(function () { if (fxD.parentNode) fxD.parentNode.removeChild(fxD); }, 260);
-          }, 190);
+            setTimeout(function () { bk2.style.opacity = '0'; setTimeout(function () { if (bk2.parentNode) bk2.parentNode.removeChild(bk2); }, 320); }, 500);
+          }, 220);
         };
       })(pxbs[pxi]);
     }
@@ -5482,6 +5610,7 @@
     finishedCount = 0;
     var rbtn = document.getElementById('restartBtn');
     if (rbtn) { rbtn.classList.add('show'); rbtn.style.display = 'flex'; }
+    updateAutoUI();
     if (elTrackLabel) {
       var tname = selectedMap === 'custom' ? (TRACK_NAME || '我的赛道') :
         (MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || '';
@@ -5614,6 +5743,42 @@
     if (tb2) tb2.addEventListener('click', function () { goSetup(); setTimeout(openSettings, 60); });
     var lb2 = document.getElementById('langBtn');
     if (lb2) lb2.addEventListener('click', toggleLang);
+    // 右上撕角：两段式画质切换
+    var peel = document.getElementById('peelCorner');
+    if (peel) {
+      var peelBusy = false;
+      var syncPeelLbl = function () {
+        var lb = document.getElementById('peelLbl');
+        if (lb) lb.textContent = CFG.pixelArt ? '像素' : '超清';
+      };
+      syncPeelLbl();
+      peel.addEventListener('click', function () {
+        if (peelBusy) return;
+        peelBusy = true;
+        // 第一段：揭开（角掀起 + 全页暗场浮现）
+        peel.classList.add('peeling');
+        var bk = document.getElementById('peelBack');
+        if (!bk) { bk = document.createElement('div'); bk.id = 'peelBack'; document.body.appendChild(bk); }
+        requestAnimationFrame(function () { bk.classList.add('on'); });
+        // 停一拍 0.18s 后：粒子 + 切换
+        setTimeout(function () {
+          var toPix = !CFG.pixelArt;
+          spawnPeelBurst();
+          CFG.pixelArt = toPix;
+          applyPixelMode();
+          updatePxBtn();
+          syncPeelLbl();
+          flashTip(toPix ? '🎨 像素风' : '✨ 超清');
+          try { localStorage.setItem('turbo-racer-pixel', toPix ? '1' : '0'); } catch (e) {}
+          // 粒子 0.5s 后收场
+          setTimeout(function () {
+            bk.classList.remove('on');
+            peel.classList.remove('peeling');
+            setTimeout(function () { if (bk.parentNode) bk.parentNode.removeChild(bk); peelBusy = false; }, 320);
+          }, 500);
+        }, 450 + 180);
+      });
+    }
     var sndb = document.getElementById('soundBtn');
     if (sndb) sndb.addEventListener('click', toggleSound);
     updateSoundBtn();
@@ -5621,6 +5786,15 @@
     if (thb) thb.addEventListener('click', toggleTheme);
     var rb = document.getElementById('restartBtn');
     if (rb) rb.addEventListener('click', restartRace);
+    // 方向盘智驾按钮
+    var wb2 = document.getElementById('autoWheelBtn');
+    if (wb2) wb2.addEventListener('click', function () {
+      CFG.auto = !CFG.auto;
+      syncToggles();
+      updateAutoUI();
+      flashTip(CFG.auto ? '智驾开启' : '切回手动驾驶');
+    });
+    requestAnimationFrame(tickWheel);
     bindTabs();
     bindSwipe();
     gotoStep(0);
