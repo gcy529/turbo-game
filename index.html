@@ -2772,6 +2772,7 @@
     }
 
     // ── 漂移得分：连续漂移累加 ──
+    if (p.drift > 0.2) p.driftTime = (p.driftTime || 0) + dt;   // 成就：累计漂移时长
     if (p.drift > 0.55) {
       var prevChain = p.driftChain;
       p.driftChain = Math.min(p.driftChain + dt * 2.2, 5);
@@ -3895,16 +3896,70 @@
     { id: 'nohit',  name: '零碰撞通关', desc: '完赛且全程没撞到任何东西',   icon: '🛡️', hidden: true },
     { id: 'rev',    name: '倒车入库',   desc: '用双击手刹倒车并完赛',      icon: '⬇️', hidden: true },
     { id: 'crowd',  name: '人群冲浪',   desc: '单局撞到 5 个行人',        icon: '🚶', hidden: true },
-    { id: 'night',  name: '夜行者',     desc: '夜间天气下完赛',           icon: '🌙', hidden: true }
+    { id: 'night',  name: '夜行者',     desc: '夜间天气下完赛',           icon: '🌙', hidden: true },
+    // ── 累计型（12）──
+    { id: 'crash_10',   name: '碰瓷学徒',   desc: '累计撞飞 10 辆车',        icon: '🚗', hidden: false, quote: '第一辆是意外，第十辆是实力', cum: 'cars', cumNeed: 10 },
+    { id: 'crash_50',   name: '车流粉碎机', desc: '累计撞飞 50 辆车',        icon: '🚙', hidden: false, quote: '这条街的车看到你就掉头', cum: 'cars', cumNeed: 50 },
+    { id: 'crash_200',  name: '保险公敌',   desc: '累计撞飞 200 辆车',       icon: '💥', hidden: true,  quote: '这条街的保险公司都认识你了', cum: 'cars', cumNeed: 200 },
+    { id: 'board_10',   name: '拆牌快手',   desc: '累计撞倒 10 块广告牌',    icon: '📋', hidden: false, quote: '金主爸爸的钱白花了', cum: 'bills', cumNeed: 10 },
+    { id: 'board_100',  name: '拆牌狂魔',   desc: '累计撞倒 100 块广告牌',   icon: '🪧', hidden: true,  quote: '全城广告位为你默哀', cum: 'bills', cumNeed: 100 },
+    { id: 'ped_100',    name: '人群磁铁',   desc: '累计撞到 100 个行人',     icon: '🚶', hidden: true,  quote: '全城行人都记得你的车牌', cum: 'peds', cumNeed: 100 },
+    { id: 'tree_88',    name: '持证伐木',   desc: '累计撞树 88 棵',          icon: '🌳', hidden: true,  quote: '十年树木，撞倒只需一秒', cum: 'trees', cumNeed: 88 },
+    { id: 'race_10',    name: '十全十美',   desc: '累计完赛 10 场',          icon: '🏁', hidden: false, quote: '赛道已经记住你的胎印', cum: 'races', cumNeed: 10 },
+    { id: 'race_100',   name: '百场车神',   desc: '累计完赛 100 场',         icon: '👑', hidden: false, quote: '引擎都开始叫你老板', cum: 'races', cumNeed: 100 },
+    { id: 'drift_2k',   name: '胎痕银行',   desc: '累计漂移分 2000+',        icon: '💨', hidden: false, quote: '每道胎痕都是存款', cum: 'drift', cumNeed: 2000 },
+    { id: 'drift_50k',  name: '漂移首富',   desc: '累计漂移分 50000+',       icon: '🏎️', hidden: true,  quote: '烧的不是胎，是艺术', cum: 'drift', cumNeed: 50000 },
+    { id: 'mile_42k',   name: '马拉松车手', desc: '累计里程 42.195km',       icon: '🛣️', hidden: false, quote: '用四个轮子跑完马拉松', cum: 'dist', cumNeed: 42195 },
+    // ── 单局补充（4）──
+    { id: 'score3k',    name: '三千分俱乐部', desc: '单局总积分 3000+',      icon: '💎', hidden: false, quote: '俱乐部已为你升级VIP' },
+    { id: 'drift2k1',   name: '漂移宗师',   desc: '单局漂移分 2000+',        icon: '🎨', hidden: false, quote: '你不是在开车，是在滑冰' },
+    { id: 'sweep',      name: '寸牌不留',   desc: '单局撞倒全部 6 块牌',     icon: '🧹', hidden: true,  quote: '甲方连夜撤了预算' },
+    { id: 'straight',   name: '钢铁直男',   desc: '单局零漂移完赛',          icon: '📐', hidden: true,  quote: '方向盘：今天我是摆设' }
   ];
+  // 解锁时的通用激励语（随机轮换）
+  var ACH_CHEERS = ['全服公告：此人很猛', '教练，我想开赛车', '今日运势：宜狂飙', '车神认证，已到账', '这不是运气，是操作', '引擎正在为你欢呼', '街机厅老板馋你手感', '恭喜，肾上腺素管够', '低调，成绩会说话', '前方还有更野的，跟上'];
+  /* ── 累计统计（跨局持久）── */
+  function loadCum() {
+    try {
+      var c = JSON.parse(localStorage.getItem('turbo-racer-cum'));
+      if (!c || typeof c !== 'object') c = {};
+      return {
+        races: c.races || 0,          // 完赛场次
+        cars: c.cars || 0,            // 撞飞车辆累计
+        peds: c.peds || 0,            // 撞到行人累计
+        bills: c.bills || 0,          // 撞倒广告牌累计
+        trees: c.trees || 0,          // 撞树累计
+        drift: c.drift || 0,          // 漂移总分累计
+        dist: c.dist || 0,            // 累计里程（米）
+        air: c.air || 0               // 累计腾空秒数
+      };
+    } catch (e) { return { races: 0, cars: 0, peds: 0, bills: 0, trees: 0, drift: 0, dist: 0, air: 0 }; }
+  }
+  function saveCum(c) { try { localStorage.setItem('turbo-racer-cum', JSON.stringify(c)); } catch (e) {} }
+  // 完赛时把本局数据累加进累计
+  function accumCum(p) {
+    var c = loadCum();
+    if (p.finished) c.races++;
+    c.cars += (p.smashCount || 0);
+    c.peds += (p.hitPedestrians || 0);
+    c.bills += (p.hitBillboards || 0);
+    c.trees += (p.treeHits || 0);
+    c.drift += Math.round(p.driftScore || 0);
+    c.dist += Math.round((p.totalDistance || 0) / 10);
+    c.air += Math.round((p.airTimeTotal || 0) * 10) / 10;
+    saveCum(c);
+    return c;
+  }
+
   function loadAch() {
     try { var a = JSON.parse(localStorage.getItem('turbo-racer-ach')); return Array.isArray(a) ? a : []; } catch (e) { return []; }
   }
   function saveAch(list) { try { localStorage.setItem('turbo-racer-ach', JSON.stringify(list)); } catch (e) {} }
   function achUnlocked(id) { return loadAch().indexOf(id) >= 0; }
   // 结算时判定：返回本次新解锁的数组
-  function checkAchievements(p) {
+  function checkAchievements(p, cum) {
     if (!p) return [];
+    cum = cum || loadCum();
     var got = loadAch();
     var fresh = [];
     function unlock(id) {
@@ -3923,6 +3978,16 @@
     if (p.finished && (p.reverseUsed || 0) > 0) unlock('rev');
     if ((p.hitPedestrians || 0) >= 5) unlock('crowd');
     if (p.finished && WEATHER === 'night') unlock('night');
+    // ── 单局补充 ──
+    if (sc >= 3000) unlock('score3k');
+    if ((p.driftScore || 0) >= 2000) unlock('drift2k1');
+    if ((p.hitBillboards || 0) >= 6) unlock('sweep');
+    if (p.finished && (p.driftTime || 0) < 0.1) unlock('straight');
+    // ── 累计型 ──
+    for (var ai = 0; ai < ACHIEVEMENTS.length; ai++) {
+      var am = ACHIEVEMENTS[ai];
+      if (am.cum && cum[am.cum] >= am.cumNeed) unlock(am.id);
+    }
     if (fresh.length) saveAch(got);
     return fresh;
   }
@@ -4944,21 +5009,36 @@
     var d = document.createElement('div');
     d.id = 'achWall';
     d.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,6,14,.9);padding:18px;overflow:auto';
+    var cum = loadCum();
     var rows = ACHIEVEMENTS.map(function (a) {
       var on = got.indexOf(a.id) >= 0;
       var mystery = !on && a.hidden;   // 只有隐藏项未解锁才显示 ???
       var nm = on ? a.name : (mystery ? '???' : a.name);
       var ds = on ? a.desc : (mystery ? '继续玩，自己发现' : a.desc);
+      // 累计型未解锁：显示进度条
+      var progHtml = '';
+      if (!on && a.cum && !mystery) {
+        var cur = Math.min(cum[a.cum] || 0, a.cumNeed);
+        var pct = Math.round(cur / a.cumNeed * 100);
+        var showCur = (a.cum === 'dist' && cur >= 1000) ? (cur / 1000).toFixed(1) + 'km' : cur;
+        var showNeed = (a.cum === 'dist') ? (a.cumNeed / 1000).toFixed(1) + 'km' : a.cumNeed;
+        progHtml = '<div style="margin-top:5px;height:4px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#67c6ff,#8ef7c8);border-radius:2px"></div></div>' +
+          '<div style="font-size:9px;color:#67c6ff;margin-top:3px">' + showCur + ' / ' + showNeed + '</div>';
+      }
+      // 解锁的：显示激励语
+      var quoteHtml = (on && a.quote) ? '<div style="font-size:10px;color:#ffdf9e;margin-top:3px;font-style:italic">"' + a.quote + '"</div>' : '';
       return '<div style="display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:10px;background:' + (on ? 'rgba(255,209,102,.1);border:1px solid rgba(255,190,80,.35)' : 'rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)') + '">' +
         '<span style="font-size:20px' + (on ? '' : ';filter:grayscale(1);opacity:.4') + '">' + (on ? a.icon : (mystery ? '🔒' : a.icon)) + '</span>' +
         '<span style="flex:1"><b style="font-size:13px;color:' + (on ? '#ffd166' : '#6f8db0') + '">' + nm + '</b>' +
-        '<span style="display:block;font-size:10.5px;color:#8ba3bd;margin-top:2px">' + ds + '</span></span>' +
+        '<span style="display:block;font-size:10.5px;color:#8ba3bd;margin-top:2px">' + ds + '</span>' + progHtml + quoteHtml + '</span>' +
         (on ? '<span style="font-size:11px;color:#8ef7c8">✓</span>' : '') +
         '</div>';
     }).join('');
+    var grpSolo = rows.slice(0, 0);
     d.innerHTML = '<div style="max-width:340px;width:100%;max-height:86vh;overflow:auto;padding:18px 18px 14px;border-radius:16px;background:rgba(10,18,34,.97);border:1px solid rgba(140,200,255,.3)">' +
       '<div style="text-align:center;font-size:17px;font-weight:900;letter-spacing:3px;color:#ffd166;margin-bottom:4px">🏆 成就墙</div>' +
-      '<div style="text-align:center;font-size:11px;color:#8ba3bd;margin-bottom:14px">' + got.length + ' / ' + ACHIEVEMENTS.length + ' 已解锁</div>' +
+      '<div style="text-align:center;font-size:11px;color:#8ba3bd;margin-bottom:4px">' + got.length + ' / ' + ACHIEVEMENTS.length + ' 已解锁</div>' +
+      '<div style="text-align:center;font-size:10px;color:#5f7a95;margin-bottom:14px;line-height:1.8">🏁 ' + cum.races + ' 场 · 💥 车 ' + cum.cars + ' · 🚶 人 ' + cum.peds + ' · 📋 牌 ' + cum.bills + ' · 🌳 树 ' + cum.trees + '<br>💨 漂移 ' + cum.drift + ' 分 · 🛣 ' + (cum.dist >= 1000 ? (cum.dist / 1000).toFixed(1) + ' km' : cum.dist + ' m') + '</div>' +
       '<div style="display:flex;flex-direction:column;gap:8px">' + rows + '</div>' +
       '<button id="achClose" style="display:block;margin:14px auto 2px;padding:9px 34px;border-radius:10px;border:1.5px solid rgba(140,200,255,.35);background:rgba(140,200,255,.12);color:#cfe8ff;font-size:13px;font-weight:800;cursor:pointer">关闭</button></div>';
     document.body.appendChild(d);
@@ -5004,8 +5084,9 @@
       }
       renderResultLb();
     }
-    // ── 成就判定 ──
-    var freshAch = checkAchievements(P1);
+    // ── 成就判定（先累加本局到累计，再判定）──
+    var cumNow = accumCum(P1);
+    var freshAch = checkAchievements(P1, cumNow);
     // 已提交后改名：只更新本次记录的名字（不再插新记录）
     function updateLastNameOnly() {
       try {
@@ -5059,8 +5140,10 @@
           '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px">🎉 解锁成就 ×' + freshAch.length + '</div>' +
           freshAch.map(function (aid) {
             var am = achMeta(aid);
-            return '<div style="font-size:12.5px;line-height:2;color:#ffe9c4">' + am.icon + ' <b>' + am.name + '</b> <span style="color:#9dbdd8;font-size:11px">' + am.desc + '</span></div>';
+            return '<div style="font-size:12.5px;line-height:1.9;color:#ffe9c4">' + am.icon + ' <b>' + am.name + '</b> <span style="color:#9dbdd8;font-size:11px">' + am.desc + '</span>' +
+              (am.quote ? '<div style="font-size:11px;color:#ffdf9e;font-style:italic;padding-left:26px">"' + am.quote + '"</div>' : '') + '</div>';
           }).join('') +
+          '<div style="text-align:right;font-size:11px;color:#8ef7c8;margin-top:8px;font-weight:800;letter-spacing:1px">「 ' + ACH_CHEERS[Math.floor(Math.random() * ACH_CHEERS.length)] + ' 」</div>' +
           '</div>';
       }
       panel.innerHTML = '<div class="title">完成！</div>' +
