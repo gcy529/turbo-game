@@ -116,6 +116,28 @@
   @keyframes sndBlink{0%,100%{opacity:1;box-shadow:0 0 0 rgba(255,180,60,0)}50%{opacity:.62;box-shadow:0 0 14px rgba(255,180,60,.6)}}
   .homeMini{padding:9px 20px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.28);color:#cfe8ff;font-size:12.5px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .15s}
   .homeMini:hover{background:rgba(140,200,255,.16)}
+  /* ── 复古街机首页 ── */
+  #home{background:#050510}
+  #home::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.24) 0 1px,transparent 1px 3px);z-index:1}
+  #home .homeInner{position:relative;z-index:2}
+  .rTitle{font-family:'Courier New',ui-monospace,Consolas,monospace;font-size:38px;font-weight:900;letter-spacing:8px;color:#ffe600;text-shadow:0 0 6px #ffb300,0 0 20px #ff8c00,3px 3px 0 #7a3d00;animation:neonFlicker 3.2s infinite}
+  @keyframes neonFlicker{0%,86%,92%,100%{opacity:1}88%,90%,96%{opacity:.42}}
+  .rSub{font-family:'Courier New',ui-monospace,Consolas,monospace;font-size:13px;font-weight:900;letter-spacing:12px;color:#00e5ff;text-shadow:0 0 10px #00e5ff;margin:8px 0 4px}
+  .rBest{font-size:10.5px;letter-spacing:1.5px;color:#7fa0bd;margin:4px 0 20px;font-family:'Courier New',monospace;min-height:14px}
+  .rMenu{display:flex;flex-direction:column;gap:9px;width:280px;max-width:88vw}
+  .rBtn{display:flex;align-items:center;gap:12px;font-family:'Courier New',ui-monospace,Consolas,monospace;font-size:15px;font-weight:900;letter-spacing:3px;color:#ffd700;text-align:left;padding:12px 18px;background:rgba(2,16,36,.72);border:2px solid rgba(255,215,0,.38);box-shadow:inset 0 0 0 2px rgba(0,0,0,.55),0 4px 0 rgba(0,0,0,.55);cursor:pointer;text-decoration:none;transition:all .12s;position:relative}
+  .rBtn i{font-style:normal;font-size:12px;color:#ffd700;opacity:.35;transition:all .12s;text-shadow:0 0 6px #ffd700}
+  .rBtn:hover{color:#fff;border-color:#ffe600;background:rgba(20,40,70,.85)}
+  .rBtn:hover i{opacity:1;animation:blinkCursor .5s step-end infinite}
+  @keyframes blinkCursor{50%{opacity:0}}
+  .rBtn:active{transform:translateY(2px);box-shadow:inset 0 0 0 2px rgba(0,0,0,.55),0 1px 0 rgba(0,0,0,.55)}
+  .rBtnDaily{color:#ff9e3d;border-color:rgba(255,158,61,.45);flex-wrap:wrap}
+  .rBtnDaily i{color:#ff9e3d;text-shadow:0 0 6px #ff9e3d}
+  .rBtnDaily small{display:block;width:100%;font-size:9.5px;letter-spacing:.5px;opacity:.75;font-weight:700;margin-top:3px;color:#cfe4f7}
+  .rRow{display:flex;gap:9px;margin-top:20px}
+  .rGit{margin-top:14px;font-size:10px;letter-spacing:1px;color:rgba(140,180,220,.45);text-decoration:none;font-family:'Courier New',monospace}
+  .rGit:hover{color:#67c6ff}
+  @media (orientation:portrait){.rTitle{font-size:30px;letter-spacing:6px}.rSub{font-size:11px;letter-spacing:9px}.rMenu{width:260px;gap:8px}.rBtn{font-size:14px;padding:11px 16px}}
   #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.9),rgba(4,6,14,.97));z-index:20;transition:opacity .35s;padding:20px}
   #overlay.hide{opacity:0;pointer-events:none}
   .panel{text-align:center;padding:24px 30px;width:100%;box-sizing:border-box;border-radius:22px;background:rgba(10,18,34,.8);border:1px solid rgba(120,190,255,.22);box-shadow:0 24px 90px rgba(0,0,0,.7);backdrop-filter:blur(16px);max-width:94vw}
@@ -414,46 +436,33 @@
 
 <div id="home">
   <div class="homeInner">
-    <div class="homeLogo">🏁</div>
-    <div class="title" id="homeTitle" data-i18n="gameTitle">极速狂飙</div>
-    <div class="sub" id="homeSub" data-i18n="gameSub">TURBO GAME</div>
-    <div id="homeBest" style="font-size:11px;letter-spacing:1px;margin:-8px 0 26px;color:#7fa0bd"></div>
-    <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#5f86ad;margin-bottom:12px">选择模式</div>
-    <div style="display:flex;gap:12px">
-      <button class="homeBtn modeBtn" id="homeSolo" style="min-width:134px;padding:14px 16px;margin-top:0">
-        <span style="font-size:22px;display:block;margin-bottom:3px">🏁</span>
-        <span style="font-size:13px;font-weight:900;letter-spacing:1.5px">单人计时</span>
-        <small style="display:block;font-size:9.5px;opacity:.6;margin-top:2px">挑战自己</small>
-      </button>
-      <button class="homeBtn modeBtn" id="homeDuo" style="min-width:134px;padding:14px 16px;margin-top:0">
-        <span style="font-size:22px;display:block;margin-bottom:3px">⚔️</span>
-        <span style="font-size:13px;font-weight:900;letter-spacing:1.5px">双人对战</span>
-        <small style="display:block;font-size:9.5px;opacity:.6;margin-top:2px">同场竞技</small>
-      </button>
+    <div class="rTitle" id="homeTitle" data-i18n="gameTitle">极速狂飙</div>
+    <div class="rSub" id="homeSub" data-i18n="gameSub">TURBO GAME</div>
+    <div id="homeBest" class="rBest"></div>
+    <div class="rMenu">
+      <button class="rBtn" id="homeSolo"><i>▶</i><span data-i18n="r1p">1P 单人游戏</span></button>
+      <button class="rBtn" id="homeDuo"><i>▶</i><span data-i18n="r2p">2P 双人对战</span></button>
+      <button class="rBtn rBtnDaily" id="homeDaily"><i>★</i><span data-i18n="rDaily">今日挑战</span><small id="dailyInfo"></small></button>
+      <a class="rBtn" href="index-3d.html"><i>▶</i><span data-i18n="r3d">逆反 3D</span></a>
+      <button class="rBtn" id="toSettingsHome"><i>▶</i><span data-i18n="rSettings">设 置</span></button>
     </div>
-    <button class="homeBtn" id="homeDaily" style="margin-top:12px;padding:11px 16px;border-color:rgba(255,190,80,.45)">
-      <span style="font-size:16px;margin-right:6px">🎯</span><span style="font-size:13.5px;font-weight:900;letter-spacing:2px">今日挑战</span>
-      <small id="dailyInfo" style="display:block;font-size:9.5px;opacity:.68;margin-top:3px;letter-spacing:.5px"></small>
-    </button>
-    <button class="homeBtn" id="toSettingsHome" style="margin-top:12px"><span data-i18n="settings">设置</span></button>
-    <a class="homeGit" href="https://github.com/gcy529/turbo-game" target="_blank" style="margin-top:16px;display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(140,200,255,.25);color:#9dbdd8;font-size:11.5px;font-weight:750;letter-spacing:.5px;text-decoration:none;transition:all .15s">⭐ github.com/gcy529/turbo-game</a>
-    <div class="homeRow" style="margin-top:14px">
+    <div class="rRow">
       <button class="homeMini" id="soundBtn" title="开启声音">🔇 开启声音</button>
       <button class="homeMini" id="langBtn">中/EN</button>
       <button class="homeMini" id="themeBtn">☀️</button>
-      <a class="homeMini" href="index-3d.html" style="text-decoration:none;background:linear-gradient(180deg,#ffc078,#ff9a30);color:#231000;border-color:transparent;font-weight:900">🎮 3D 版 (Beta)</a>
     </div>
+    <a class="rGit" href="https://github.com/gcy529/turbo-game" target="_blank">github.com/gcy529/turbo-game</a>
   </div>
 </div>
 <div id="overlay">
   <div class="panel">
     <div id="wizTitle" style="text-align:center;margin-bottom:10px;min-height:38px"></div>
     <div class="stepBar">
-      <div class="stepDot on" data-step="0"><i>1</i><em>选车</em></div>
+      <div class="stepDot on" data-step="0"><i>1</i><em data-i18n="sStep1">选车</em></div>
       <div class="stepLine"></div>
-      <div class="stepDot" data-step="1"><i>2</i><em>选赛道</em></div>
+      <div class="stepDot" data-step="1"><i>2</i><em data-i18n="sStep2">选赛道</em></div>
       <div class="stepLine"></div>
-      <div class="stepDot" data-step="2"><i>3</i><em>出发</em></div>
+      <div class="stepDot" data-step="2"><i>3</i><em data-i18n="sStep3">出发</em></div>
     </div>
 
     <!-- ① 选车 -->
@@ -3522,6 +3531,11 @@
   var STR = {
     zh: {
       gameTitle: '极速狂飙', gameSub: 'TURBO GAME',
+      r1p: '1P 单人游戏', r2p: '2P 双人对战', rDaily: '今日挑战', r3d: '逆反 3D', rSettings: '设 置',
+      backHome: '← 返回', prevBtn: '← 上一步',
+      wzT1: '① 选择你的赛车', wzT2: '② 选择赛道', wzT3: '③ 出发！',
+      wzS1: '挑一辆适合你手感的车', wzS2: '4 张地图，各有各的脾气', wzS3: '调整圈数与天气，然后冲刺',
+      sStep1: '选车', sStep2: '赛道', sStep3: '出发',
       play: '开始游戏', settings: '设置', back: '返回', selectTitle: '选择你的比赛',
       cars: '赛车', maps: '地图', modes: '模式', laps: '圈数', weathers: '天气', editor: '赛道编辑器',
       start: '开始比赛', tip: '自动加速 · 倒计时按 W/↑ 起步喷 · 踩橙色加速带提速 · 高速过弯自动漂移',
@@ -3545,6 +3559,11 @@
     },
     en: {
       gameTitle: 'TURBO', gameSub: '极速狂飙 · TURBO GAME',
+      r1p: '1P SOLO', r2p: '2P VERSUS', rDaily: 'DAILY RUN', r3d: 'INVERSE 3D', rSettings: 'SETTINGS',
+      backHome: '← BACK', prevBtn: '← BACK',
+      wzT1: '① PICK YOUR CAR', wzT2: '② CHOOSE TRACK', wzT3: '③ GO!',
+      wzS1: 'Find one that fits your style', wzS2: '4 tracks, each with a temper', wzS3: 'Set laps & weather, then race',
+      sStep1: 'CAR', sStep2: 'TRACK', sStep3: 'GO',
       play: 'PLAY', settings: 'Settings', back: 'Back', selectTitle: 'Choose Your Race',
       cars: 'CARS', maps: 'MAPS', modes: 'MODE', laps: 'LAPS', weathers: 'WEATHER', editor: 'Track Editor',
       start: 'START RACE', tip: 'Auto-gas · Tap W/↑ during countdown for launch boost · Hit orange pads · Auto-drift in corners',
@@ -3582,6 +3601,8 @@
     var el2 = document.getElementById('homeSub'); if (el2) el2.textContent = t('gameSub');
     renderCarList(); renderMapList(); renderLapList(); renderWeatherList(); renderModeList();
     renderLeaderboard();
+    updateWizTitle();
+    updateSummary();
     try { localStorage.setItem('turbo-racer-lang', LANG); } catch (e) {}
   }
   function toggleLang() {
@@ -3634,6 +3655,14 @@
   var WIZ_STEP = 0, lastStep = null;
   var WIZ_MAP = ['car', 'track', 'race'];   // 三步 → 面板
 
+  function updateWizTitle() {
+    var bigTitle = document.getElementById('wizTitle');
+    if (!bigTitle) return;
+    var T = [t('wzT1'), t('wzT2'), t('wzT3')];
+    var S = [t('wzS1'), t('wzS2'), t('wzS3')];
+    bigTitle.innerHTML = '<div style="font-size:20px;font-weight:900;letter-spacing:2px;color:#fff">' + T[WIZ_STEP] + '</div><div style="font-size:11px;color:#6f8db0;margin-top:4px">' + S[WIZ_STEP] + '</div>';
+  }
+
   function gotoStep(n) {
     applyBrakeBtnVisual();
     lastStep = WIZ_STEP;
@@ -3647,12 +3676,7 @@
       var show = (pn === pane);
       panes[j].style.display = show ? '' : 'none';
     }
-    var bigTitle = document.getElementById('wizTitle');
-    if (bigTitle) {
-      var titles = ['① 选择你的赛车', '② 选择赛道', '③ 出发！'];
-      var subs = ['挑一辆适合你手感的车', '4 张地图，各有各的脾气', '调整圈数与天气，然后冲刺'];
-      bigTitle.innerHTML = '<div style="font-size:20px;font-weight:900;letter-spacing:2px;color:#fff">' + titles[WIZ_STEP] + '</div><div style="font-size:11px;color:#6f8db0;margin-top:4px">' + subs[WIZ_STEP] + '</div>';
-    }
+    updateWizTitle();
     // 步骤点
     var dots = document.querySelectorAll ? document.querySelectorAll('.stepDot') : [];
     for (var k = 0; k < dots.length; k++) {
@@ -3664,7 +3688,10 @@
     var next = document.getElementById('wizNext');
     var start = document.getElementById('startBtn');
     var rnd = document.getElementById('wizRandom');
-    if (prev) prev.disabled = (WIZ_STEP === 0);
+    if (prev) {
+      prev.disabled = false;   // 不再禁用：第 0 步 = 返回首页
+      prev.textContent = (WIZ_STEP === 0) ? t('backHome') : t('prevBtn');
+    }
     if (next) next.style.display = (WIZ_STEP < 2) ? '' : 'none';
     if (start) start.style.display = (WIZ_STEP === 2) ? '' : 'none';
     if (rnd) rnd.style.display = (WIZ_STEP === 0) ? 'block' : 'none';   // 随机按钮只在第1步
@@ -3734,7 +3761,7 @@
     var prev = document.getElementById('wizPrev');
     var next = document.getElementById('wizNext');
     var rnd = document.getElementById('wizRandom');
-    if (prev) prev.onclick = function () { gotoStep(WIZ_STEP - 1); };
+    if (prev) prev.onclick = function () { if (WIZ_STEP === 0) showHome(); else gotoStep(WIZ_STEP - 1); };
     if (next) next.onclick = function () { gotoStep(WIZ_STEP + 1); };
     if (rnd) rnd.onclick = randomAll;
   }
@@ -3779,7 +3806,8 @@
     var mapObj = MAP_LIST.find(function (x) { return x.id === c.map; }) || MAP_LIST[0];
     var wObj = WEATHER_LIST.find(function (x) { return x.id === c.weather; }) || WEATHER_LIST[0];
     var best = loadDailyLb()[0];
-    return carObj.icon + ' ' + mapObj.name + ' · ' + wObj.name + ' · 1圈' + (best ? ' ｜ 今日最佳 ' + formatTime(best.time) : ' ｜ 今日未挑战');
+    var zh = (LANG === 'zh');
+    return carObj.icon + ' ' + mapObj.name + ' · ' + wObj.name + (zh ? ' · 1圈' : ' · 1 LAP') + (best ? (' ｜ ' + (zh ? '今日最佳 ' : 'BEST ') + formatTime(best.time)) : (' ｜ ' + (zh ? '今日未挑战' : 'NOT TRIED')));
   }
   function updateDailyInfo() {
     var el = document.getElementById('dailyInfo');
@@ -4180,7 +4208,10 @@
     if (setb) setb.addEventListener('click', openSettings);
     // ── 重新绑定向导控件（innerHTML 重建后事件会丢失）──
     var prev = document.getElementById('wizPrev');
-    if (prev) prev.addEventListener('click', function () { gotoStep(WIZ_STEP - 1); });
+    if (prev) prev.addEventListener('click', function () {
+      if (WIZ_STEP === 0) showHome();
+      else gotoStep(WIZ_STEP - 1);
+    });
     var next = document.getElementById('wizNext');
     if (next) next.addEventListener('click', function () { gotoStep(WIZ_STEP + 1); });
     var rnd = document.getElementById('wizRandom');
