@@ -4762,11 +4762,23 @@
     for (var pxi = 0; pxi < pxbs.length; pxi++) {
       (function (pb) {
         pb.onclick = function () {
-          CFG.pixelArt = (pb.getAttribute('data-px') === '1');
-          applyPixelMode();
-          updatePxBtn();
-          flashTip(CFG.pixelArt ? '🎨 像素风' : '✨ 高清');
-          try { localStorage.setItem('turbo-racer-pixel', CFG.pixelArt ? '1' : '0'); } catch (e) {}
+          var toPix = (pb.getAttribute('data-px') === '1');
+          if (toPix === CFG.pixelArt) return;
+          // 转场：闪白 → 切换 → 淡入（CRT 换台感）
+          var fxD = document.createElement('div');
+          fxD.id = 'pxTransition';
+          fxD.style.cssText = 'position:fixed;inset:0;z-index:80;background:#dfeaff;opacity:0;pointer-events:none;transition:opacity .18s';
+          document.body.appendChild(fxD);
+          requestAnimationFrame(function () { fxD.style.opacity = '0.92'; });
+          setTimeout(function () {
+            CFG.pixelArt = toPix;
+            applyPixelMode();
+            updatePxBtn();
+            flashTip(toPix ? '🎨 像素风' : '✨ 高清');
+            try { localStorage.setItem('turbo-racer-pixel', toPix ? '1' : '0'); } catch (e) {}
+            fxD.style.opacity = '0';
+            setTimeout(function () { if (fxD.parentNode) fxD.parentNode.removeChild(fxD); }, 260);
+          }, 190);
         };
       })(pxbs[pxi]);
     }
