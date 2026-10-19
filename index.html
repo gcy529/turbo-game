@@ -3880,8 +3880,19 @@
 
   /* ================= 玩家名字 ================= */
   function getLastName() { try { return localStorage.getItem('turbo-racer-name') || ''; } catch (e) { return ''; } }
+  // 名字长度：汉字算 2，其他算 1，上限 16（= 8 个汉字 / 16 个字母）
+  function nameWeight(n) { var w = 0; for (var i = 0; i < n.length; i++) w += (n.charCodeAt(i) > 255 ? 2 : 1); return w; }
+  function truncateName(n) {
+    var w = 0, out = '';
+    for (var i = 0; i < n.length; i++) {
+      var cw = (n.charCodeAt(i) > 255 ? 2 : 1);
+      if (w + cw > 16) break;
+      w += cw; out += n[i];
+    }
+    return out;
+  }
   function saveName(n) {
-    n = (n || '').trim().slice(0, 12);
+    n = truncateName((n || '').trim());
     try {
       localStorage.setItem('turbo-racer-name', n);
       if (n) {
@@ -4954,11 +4965,9 @@
     if (GAME_MODE === 'solo') {
       var best = P1.bestLap > 0 ? fmt(P1.bestLap) : '--';
       var lb = DAILY_MODE ? loadDailyLb().slice(0, 5) : loadLeaderboard().filter(function(e){ return e.map === selectedMap; }).slice(0, 5);
-      var lastName0 = getLastName();
       // chips：最近用过的名字全部显示（点谁填谁），最多 3 个
-      var rn = getRecentNames();
-      if (lastName0 && rn.indexOf(lastName0) < 0) rn = [lastName0].concat(rn).slice(0, 3);
-      var chips0 = rn.filter(function (n) { return !!n; }).slice(0, 3);
+      var rn = getRecentNames().filter(function (n) { return !!n; }).slice(0, 3);
+      var chips0 = rn.slice(0, 3);
       panel.innerHTML = '<div class="title">完成！</div>' +
         '<div class="sub">R A C E &nbsp; F I N I S H E D</div>' +
         '<div class="res">' +
@@ -4971,7 +4980,8 @@
         '</div>' +
         '<div style="margin:12px 0;padding:11px 15px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.22);max-width:300px;text-align:left">' +
         '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#8ef7c8;margin-bottom:8px">✍ 你的大名（上榜用）</div>' +
-        '<input id="nameInput" maxlength="12" placeholder="玩家" value="' + lastName0 + '" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(0,0,0,.3);color:#eaf2ff;font-size:14px;font-weight:800;text-align:center;outline:none;font-family:inherit">' +
+        '<input id="nameInput" maxlength="16" placeholder="留空 = 玩家" value="" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(0,0,0,.3);color:#eaf2ff;font-size:14px;font-weight:800;text-align:center;outline:none;font-family:inherit">' +
+        '<div style="text-align:center;font-size:9.5px;color:#6f8db0;margin-top:5px;letter-spacing:.5px">最长 8 个汉字 · 16 个字符</div>' +
         (chips0.length ? '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + chips0.map(function (n) { return '<button class="chipBtn" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' : '') +
         '</div>' +
         '<div style="margin:14px 0;padding:11px 15px;border-radius:11px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28);text-align:left;max-width:300px">' +
@@ -4995,6 +5005,10 @@
       if (ni) {
         var submitName = function () { ensureSubmit(); };
         ni.addEventListener('change', submitName);
+        ni.addEventListener('input', function () {
+          var tv = truncateName(ni.value);
+          if (tv !== ni.value) ni.value = tv;   // 超长实时截断
+        });
         ni.addEventListener('keydown', function (e2) { if (e2.key === 'Enter') { ni.blur(); ensureSubmit(); } });
       }
       // 最近名字快切
