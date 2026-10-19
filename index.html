@@ -130,10 +130,23 @@
   #peelBack{position:fixed;inset:0;z-index:79;background:rgba(8,14,30,.78);opacity:0;pointer-events:none;transition:opacity .3s}
   #peelBack.on{opacity:1}
   body[data-theme='light'] #peelCorner .fold{border-color:transparent rgba(40,80,140,.35) transparent transparent}
-  #wheelGroup{transition:transform .5s ease}
-  #wheelGroup.spin{animation:wheelSpin 8s linear infinite}
+  /* 纯 CSS 方向盘 */
+  #wheelBox{position:relative;width:40px;height:40px}
+  #wheelRing{position:absolute;inset:0;border-radius:50%;border:4.5px solid #cfe4f7;box-sizing:border-box}
+  #wheelHub{position:absolute;left:50%;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;background:rgba(207,228,247,.18);border:1.6px solid #cfe4f7}
+  #wheelSpokes{position:absolute;inset:0}
+  #wheelSpokes i{position:absolute;background:#cfe4f7}
+  #wheelSpokes .sl{left:2px;top:50%;height:3.4px;width:13px;margin-top:-1.7px;border-radius:2px}
+  #wheelSpokes .sr{right:2px;top:50%;height:3.4px;width:13px;margin-top:-1.7px;border-radius:2px}
+  #wheelSpokes .sb{left:50%;bottom:2px;width:2.6px;height:12px;margin-left:-1.3px;border-radius:2px}
+  #wheelBox.spin{animation:wheelSpin 8s linear infinite}
+  #wheelBox{transition:transform .5s ease}
   @keyframes wheelSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-  body[data-theme='light'] #wheelRim,body[data-theme='light'] #wheelSpokeL,body[data-theme='light'] #wheelSpokeR,body[data-theme='light'] #wheelSpokeB,body[data-theme='light'] #wheelHub{stroke:#2a4a68}
+  body[data-theme='light'] #wheelRing{border-color:#2a4a68}
+  body[data-theme='light'] #wheelHub{border-color:#2a4a68;background:rgba(42,74,104,.12)}
+  body[data-theme='light'] #wheelSpokes i{background:#2a4a68}
+  #autoWheelBtn.on{border-color:rgba(142,247,200,.6);background:rgba(10,34,26,.8)}
+
   #home .homeInner{position:relative;z-index:2}
   .rTitle{font-family:'Courier New',ui-monospace,Consolas,monospace;font-size:38px;font-weight:900;letter-spacing:8px;color:#ffe600;text-shadow:0 0 6px #ffb300,0 0 20px #ff8c00,3px 3px 0 #7a3d00;animation:neonFlicker 3.2s infinite}
   @keyframes neonFlicker{0%,86%,92%,100%{opacity:1}88%,90%,96%{opacity:.42}}
@@ -433,16 +446,11 @@
 </div>
 
 <div id="autoWheelBtn" title="智驾 / 手动" style="position:fixed;right:14px;top:56px;z-index:15;width:52px;height:52px;border-radius:50%;background:rgba(10,18,34,.72);border:1.5px solid rgba(140,200,255,.3);cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
-  <svg id="wheelSvg" width="44" height="44" viewBox="0 0 44 44">
-    <g id="wheelGroup" style="transform-origin:22px 22px">
-      <circle cx="22" cy="22" r="19" fill="none" stroke="#cfe4f7" stroke-width="4.6" id="wheelRim"/>
-      <line x1="3.2" y1="22" x2="15" y2="22" stroke="#cfe4f7" stroke-width="3.4" id="wheelSpokeL"/>
-      <line x1="29" y1="22" x2="40.8" y2="22" stroke="#cfe4f7" stroke-width="3.4" id="wheelSpokeR"/>
-      <line x1="22" y1="29" x2="22" y2="40.5" stroke="#cfe4f7" stroke-width="2.4" id="wheelSpokeB"/>
-      <circle cx="22" cy="22" r="7.6" fill="rgba(207,228,247,.16)" stroke="#cfe4f7" stroke-width="1.6" id="wheelHub"/>
-      <path d="M 17.5 19.5 A 5.4 5.4 0 0 1 20 17.2" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.3" stroke-linecap="round"/>
-    </g>
-  </svg>
+  <div id="wheelBox">
+    <div id="wheelRing"></div>
+    <div id="wheelHub"></div>
+    <div id="wheelSpokes"><i class="sl"></i><i class="sr"></i><i class="sb"></i></div>
+  </div>
 </div>
 <div id="autoDriveTag" style="position:fixed;right:14px;top:114px;z-index:15;display:none;padding:4px 10px;border-radius:8px;background:rgba(10,18,34,.75);border:1px solid rgba(140,200,255,.25);font-size:9.5px;font-weight:800;letter-spacing:1px;color:#8ba3bd;pointer-events:none">手动驾驶</div>
 <div id="viewBar" style="position:fixed;left:14px;top:82px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="第一人称">1</div><div class="vbtn" data-v="1" title="默认视角">2</div><div class="vbtn" data-v="2" title="俯视视角">3</div></div>
@@ -4615,15 +4623,20 @@
   /* ── 方向盘智驾按钮 ── */
   var wheelSpinning = false;
   function setWheelVisual() {
-    var g = document.getElementById('wheelGroup');
-    if (!g) return;
-    if (wheelSpinning) g.setAttribute('class', 'spin');
-    else g.removeAttribute('class');
+    var box = document.getElementById('wheelBox');
+    var btn = document.getElementById('autoWheelBtn');
+    if (!box) return;
+    if (wheelSpinning) { if (box.className !== 'spin') box.className = 'spin'; }
+    else if (box.className) box.className = '';
+    // 配色：智驾=绿
     var col = CFG.auto ? '#8ef7c8' : '#cfe4f7';
-    ['wheelRim', 'wheelSpokeL', 'wheelSpokeR', 'wheelSpokeB', 'wheelHub'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.setAttribute('stroke', col);
-    });
+    var ring = document.getElementById('wheelRing');
+    var hub = document.getElementById('wheelHub');
+    var sps = document.getElementById('wheelSpokes');
+    if (ring) ring.style.borderColor = col;
+    if (hub) { hub.style.borderColor = col; hub.style.background = CFG.auto ? 'rgba(142,247,200,.18)' : 'rgba(207,228,247,.18)'; }
+    if (sps) for (var i = 0; i < sps.children.length; i++) sps.children[i].style.background = col;
+    if (btn) { if (CFG.auto) { if (btn.className !== 'on') btn.className = 'on'; } else if (btn.className) btn.className = ''; }
   }
 
   function updateAutoUI() {
