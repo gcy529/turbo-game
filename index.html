@@ -55,8 +55,10 @@
   body[data-theme='light'] #home{background:radial-gradient(circle at 50% 35%,rgba(180,205,235,.94),rgba(228,238,250,.99))}
   body[data-theme='light'] .homeBtn{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   body[data-theme='light'] .homeBtn.primary{color:#06121e}
-  body[data-theme='light'] .bsbtn,body[data-theme='light'] .vmbtn{background:rgba(40,80,140,.12);color:#14304f;border-color:rgba(40,80,140,.35)}
-  body[data-theme='light'] .bsbtn.on,body[data-theme='light'] .vmbtn.on{background:rgba(42,157,143,.25);color:#0f5a4e;border-color:rgba(42,157,143,.7)}
+    .bsbtn,.vmbtn,.pxbtn{background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer;transition:all .15s}
+  .bsbtn.on,.vmbtn.on,.pxbtn.on{background:rgba(60,220,160,.22);border-color:rgba(60,220,160,.7);color:#8ef7c8}
+  body[data-theme='light'] .bsbtn,body[data-theme='light'] .vmbtn,body[data-theme='light'] .pxbtn{background:rgba(40,80,140,.12);color:#14304f;border-color:rgba(40,80,140,.35)}
+  body[data-theme='light'] .bsbtn.on,body[data-theme='light'] .vmbtn.on,body[data-theme='light'] .pxbtn.on{background:rgba(42,157,143,.25);color:#0f5a4e;border-color:rgba(42,157,143,.7)}
   body[data-theme='light'] .homeMini{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   html,body{width:100%;height:100%;overflow:hidden;background:#05070e}
   body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent;color:#eaf2ff}
@@ -447,9 +449,12 @@
         <button class="bsbtn" data-bs="right" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">➡ 右边</button>
       </div>
 
-    <div class="setrow">
-      <div class="setlabel">像素风画质<small>复古像素渲染 · 更流畅</small></div>
-      <div class="toggle" id="tgPixel"></div>
+    <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div class="setlabel">画质<small>默认像素风 · 高清更精细</small></div>
+      <div style="display:flex;gap:7px">
+        <button class="pxbtn" data-px="1" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">🎨 像素风</button>
+        <button class="pxbtn" data-px="0" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">✨ 高清</button>
+      </div>
     </div>
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div class="setlabel">视角<small>1 驾驶舱 / 2 贴地 / 3 俯瞰</small></div>
@@ -4215,7 +4220,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right', pixelArt: false };  // 默认静音;  // 幽灵车默认关（有重影）
+  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right', pixelArt: true };   // 默认像素风（高清在设置里）  // 默认静音;  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 1;   // 默认贴地视角
   var VIEW_LIST = [
@@ -4475,6 +4480,17 @@
     el.title = '手刹';
   }
 
+  function updatePxBtn() {
+    var btns = document.querySelectorAll ? document.querySelectorAll('.pxbtn') : [];
+    for (var i = 0; i < btns.length; i++) {
+      var v = (btns[i].getAttribute('data-px') === '1');
+      if (btns[i].classList) {
+        if (v === CFG.pixelArt) btns[i].classList.add('on');
+        else btns[i].classList.remove('on');
+      }
+    }
+  }
+
   function updateVmBtn() {
     var btns = document.querySelectorAll ? document.querySelectorAll('.vmbtn') : [];
     for (var i = 0; i < btns.length; i++) {
@@ -4541,8 +4557,7 @@
     if (tm) tm.className = 'toggle' + (CFG.manualGas ? ' on' : '');
     var tgh = document.getElementById('tgGhost');
     if (tgh) tgh.className = 'toggle' + (CFG.ghost ? ' on' : '');
-    var tp = document.getElementById('tgPixel');
-    if (tp) tp.className = 'toggle' + (CFG.pixelArt ? ' on' : '');
+    updatePxBtn();
     updateAutoUI();
   }
 
@@ -4730,14 +4745,19 @@
     if (tmm) tmm.onclick = function () { CFG.manualGas = !CFG.manualGas; syncToggles(); flashTip(CFG.manualGas ? '手动挡：按住加速键才走' : '自动挡：自动加速'); };
     var tghost = document.getElementById('tgGhost');
     if (tghost) tghost.onclick = function () { CFG.ghost = !CFG.ghost; syncToggles(); };
-    var tpix = document.getElementById('tgPixel');
-    if (tpix) tpix.onclick = function () {
-      CFG.pixelArt = !CFG.pixelArt;
-      syncToggles();
-      applyPixelMode();
-      flashTip(CFG.pixelArt ? '🎨 像素风开启' : '画质已恢复高清');
-      try { localStorage.setItem('turbo-racer-pixel', CFG.pixelArt ? '1' : '0'); } catch (e) {}
-    };
+    var pxbs = document.querySelectorAll ? document.querySelectorAll('.pxbtn') : [];
+    for (var pxi = 0; pxi < pxbs.length; pxi++) {
+      (function (pb) {
+        pb.onclick = function () {
+          CFG.pixelArt = (pb.getAttribute('data-px') === '1');
+          applyPixelMode();
+          updatePxBtn();
+          flashTip(CFG.pixelArt ? '🎨 像素风' : '✨ 高清');
+          try { localStorage.setItem('turbo-racer-pixel', CFG.pixelArt ? '1' : '0'); } catch (e) {}
+        };
+      })(pxbs[pxi]);
+    }
+    updatePxBtn();
     // 视角按钮
 
     // 手刹左右选择
@@ -5495,11 +5515,14 @@
     } catch (e) {}
     // 恢复静音设置（CFG 已定义）
     try {
+      // 声音：只看声音自己的开关（修：之前错挂在像素判断上）
       var _snd = localStorage.getItem('turbo-racer-sound');
       if (_snd === '1') { CFG.sfx = true; CFG.bgm = true; }
-      var _px = localStorage.getItem('turbo-racer-pixel');
-      if (_px === '1') { CFG.pixelArt = true; setTimeout(applyPixelMode, 50); }
       else { CFG.sfx = false; CFG.bgm = false; }
+      // 画质：默认像素风；存过 '0'（高清）才关
+      var _px = localStorage.getItem('turbo-racer-pixel');
+      CFG.pixelArt = (_px !== '0');
+      setTimeout(applyPixelMode, 50);
     } catch (e) {}
     try {
       var _st = localStorage.getItem('turbo-racer-theme');
@@ -5601,6 +5624,24 @@
   // ── 调试钩子（供自动化测试/自检读取闭包内状态）──
   window.__T = {
     view: function () { try { return { CAM_VIEW: CAM_VIEW, params: viewParams() }; } catch (e) { return { err: String(e) }; } },
+    // 视角诊断：玩家所在段的投影 + 车辆屏幕位置
+    diag: function () {
+      try {
+        var vp = viewParams();
+        var W = window.innerWidth, H = window.innerHeight;
+        var seg = findSegment(P1.position + vp.camH * CAM_DEPTH);
+        var cw = Math.min(W * 0.155, 200) * vp.carScale;
+        var ch = cw * 0.86;
+        return {
+          camView: CAM_VIEW, camH: vp.camH, drawCar: vp.drawCar,
+          segP1y: Math.round(seg.p1.screen.y), segP2y: Math.round(seg.p2.screen.y),
+          segRoadW: Math.round(seg.p1.screen.w), segScale: Number(seg.p1.screen.scale.toPrecision(3)),
+          carW: Math.round(cw), carH: Math.round(ch),
+          carTop: Math.round(H * 0.66 - ch * 0.24), carBottom: Math.round(H * 0.66 + ch * 0.76),
+          roadAtCarY: Math.round((seg.p1.screen.w) * 2)
+        };
+      } catch (e) { return { err: String(e) }; }
+    },
     setView: function (v) { try { setView(v); return true; } catch (e) { return String(e); } },
     daily: function () { try { return { mode: DAILY_MODE, cfg: dailyConfig(), lb: loadDailyLb() }; } catch (e) { return { err: String(e) }; } },
     submitName: function (n) {
