@@ -363,6 +363,38 @@
   .setbtn.danger{background:rgba(255,90,110,.16);color:#ff9aa8;border:1.5px solid rgba(255,90,110,.4)}
   .setbtn.danger:hover{background:rgba(255,90,110,.28)}
   .setbtn:hover{transform:translateY(-1px)}
+  /* ═══ 老浏览器布局兜底（iOS 9：无 CSS grid、无 flex gap）═══ */
+  /* grid → flex-wrap（现代浏览器由 @supports 恢复 grid）*/
+  #carList{display:flex !important;flex-wrap:wrap;justify-content:center}
+  #carList > *{width:calc(25% - 10px);margin:5px}
+  .maps{display:flex !important;flex-wrap:wrap;justify-content:center}
+  .maps > *{width:calc(50% - 9px);margin:4px 4.5px}
+  @supports (display:grid){
+    #carList{display:grid !important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+    #carList > *{width:auto;margin:0}
+    .maps{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .maps > *{width:auto;margin:0}
+  }
+  @media (orientation:portrait){
+    #carList > *{width:calc(50% - 10px)}
+    @supports (display:grid){ #carList > *{width:auto} }
+  }
+  /* flex gap → margin（Safari 14.1 前无 flex gap）*/
+  @supports not (gap: 1px){
+    .rMenu > * + *{margin-top:9px}
+    .rRow > * + *, .homeRow > * + *{margin-left:9px}
+    .prow > * + *{margin-left:6px}
+    .stepBar > * + *{margin-left:6px}
+    .wizNav > * + *{margin-top:10px}
+    .wizNav > div > * + *{margin-left:10px}
+    .setrow > * + *{margin-left:14px}
+    .cols > * + *{margin-left:34px}
+    .laps > * + *{margin-left:7px}
+    .chipRow > * + *{margin-left:6px}
+    .btnRow > * + *{margin-left:9px}
+    .sbtnRow > * + *{margin-left:5px}
+    .rBtnDaily small{margin-top:4px}
+  }
 </style>
 </head>
 <body data-theme="dark">
@@ -559,6 +591,23 @@
 
   var canvas = document.getElementById('game');
   var ctx = canvas.getContext('2d');
+
+  /* ── 老浏览器 polyfill（iOS 9 / Safari 9-10）── */
+  // canvas.ellipse：Safari 9 没有 → 用 arc+scale 模拟
+  if (!CanvasRenderingContext2D.prototype.ellipse) {
+    CanvasRenderingContext2D.prototype.ellipse = function (x, y, rx, ry, rot, a0, a1, ccw) {
+      this.save();
+      this.translate(x, y);
+      this.rotate(rot || 0);
+      this.scale((rx || 1), (ry || 1));
+      this.arc(0, 0, 1, a0 || 0, a1 === undefined ? Math.PI * 2 : a1, !!ccw);
+      this.restore();
+    };
+  }
+  // Element.remove()：Safari 10 才有
+  if (!Element.prototype.remove) {
+    Element.prototype.remove = function () { if (this.parentNode) this.parentNode.removeChild(this); };
+  }
   var W = 0, H = 0, DPR = 1;
 
   function resize() {
@@ -3630,7 +3679,7 @@
     if (old) old.remove();
     var d = document.createElement('div');
     d.id = 'shareBox';
-    d.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,6,14,.88);padding:20px';
+    d.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,6,14,.88);padding:20px;-webkit-overflow-scrolling:touch';
     d.innerHTML = '<div style="max-width:340px;width:100%;padding:18px 20px;border-radius:14px;background:rgba(10,18,34,.95);border:1px solid rgba(140,200,255,.3);font-size:12.5px;line-height:2;color:#eaf2ff;white-space:pre-wrap;word-break:break-all">' + text.replace(/</g, '&lt;') + '</div>';
     d.addEventListener('click', function () { d.remove(); });
     document.body.appendChild(d);
@@ -5035,7 +5084,7 @@
         '</div>';
     }).join('');
     var grpSolo = rows.slice(0, 0);
-    d.innerHTML = '<div style="max-width:340px;width:100%;max-height:86vh;overflow:auto;padding:18px 18px 14px;border-radius:16px;background:rgba(10,18,34,.97);border:1px solid rgba(140,200,255,.3)">' +
+    d.innerHTML = '<div style="max-width:340px;width:100%;max-height:86vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:18px 18px 14px;border-radius:16px;background:rgba(10,18,34,.97);border:1px solid rgba(140,200,255,.3)">' +
       '<div style="text-align:center;font-size:17px;font-weight:900;letter-spacing:3px;color:#ffd166;margin-bottom:4px">🏆 成就墙</div>' +
       '<div style="text-align:center;font-size:11px;color:#8ba3bd;margin-bottom:4px">' + got.length + ' / ' + ACHIEVEMENTS.length + ' 已解锁</div>' +
       '<div style="text-align:center;font-size:10px;color:#5f7a95;margin-bottom:14px;line-height:1.8">🏁 ' + cum.races + ' 场 · 💥 车 ' + cum.cars + ' · 🚶 人 ' + cum.peds + ' · 📋 牌 ' + cum.bills + ' · 🌳 树 ' + cum.trees + '<br>💨 漂移 ' + cum.drift + ' 分 · 🛣 ' + (cum.dist >= 1000 ? (cum.dist / 1000).toFixed(1) + ' km' : cum.dist + ' m') + '</div>' +
@@ -5161,16 +5210,16 @@
         '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#8ef7c8;margin-bottom:8px">✍ 你的大名（上榜用）</div>' +
         '<input id="nameInput" maxlength="16" placeholder="留空 = 玩家" value="" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(0,0,0,.3);color:#eaf2ff;font-size:14px;font-weight:800;text-align:center;outline:none;font-family:inherit">' +
         '<div style="text-align:center;font-size:9.5px;color:#6f8db0;margin-top:5px;letter-spacing:.5px">最长 8 个汉字 · 16 个字符</div>' +
-        (chips0.length ? '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + chips0.map(function (n) { return '<button class="chipBtn" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' : '') +
+        (chips0.length ? '<div class="chipRow" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + chips0.map(function (n) { return '<button class="chipBtn" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' : '') +
         '</div>' +
         '<div style="margin:14px 0;padding:11px 15px;border-radius:11px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28);text-align:left;max-width:300px">' +
         '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center">' +
         '<span>' + (DAILY_MODE ? '🎯 今日挑战排行' : '🏆 本图排行榜') + '</span>' +
-        '<span style="display:flex;gap:5px"><button id="sortTime" class="sbtn on">⏱时间</button><button id="sortScore" class="sbtn">🏅积分</button></span>' +
+        '<span class="sbtnRow" style="display:flex;gap:5px"><button id="sortTime" class="sbtn on">⏱时间</button><button id="sortScore" class="sbtn">🏅积分</button></span>' +
         '</div>' +
         '<div id="resultLb" style="font-size:12.5px;color:#cfe4f7;line-height:1.85"></div>' +
         '</div>' +
-        '<div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">' +
+        '<div class="btnRow" style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">' +
         '<button class="go" id="achBtn" style="background:rgba(255,209,102,.16);color:#ffd166;box-shadow:none;border:1.5px solid rgba(255,190,80,.5)">🏆 成就</button>' +
         '<button class="go" id="againBtn">再来一局</button>' +
         '<button class="go" id="shareBtn" style="background:rgba(255,255,255,.1);color:#cfe8ff;box-shadow:none;border:1.5px solid rgba(140,200,255,.35)">分享</button>' +
