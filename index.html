@@ -366,7 +366,7 @@
 
 <div class="pbox p1box">
   <div class="prow"><span class="tag t1">P1</span><span class="spd" id="spd1">0</span><span class="u">KM/H</span></div>
-  <span class="meta">圈 <b id="lap1">1</b>/3 · 本圈 <b id="t1">0.00</b><br><span id="gap1" style="color:#8ef7c8"></span></span>
+  <span class="meta">圈 <b id="lap1">1</b>/3 · 本圈 <b id="t1">0.00</b> · <b id="score1" style="color:#ffd166">0</b>分<br><span id="gap1" style="color:#8ef7c8"></span></span>
 </div>
 
 <div class="pbox p2box">
@@ -1051,7 +1051,7 @@
       // 草丛/灌木（小装饰）
       if (n % 3 === 0) seg.sprites.push({ type: 'bush', offset: side * rnd(1.6, 2.4), w: rnd(260, 420), h: rnd(180, 300), tint: pick(TH.tree) });
       // 广告牌（每隔一段）
-      if (n % 67 === 0) seg.sprites.push({ type: 'billboard', offset: side * rnd(2.2, 3.0), w: rnd(700, 900), h: rnd(500, 660), tint: pick(['#e63946', '#2a7fd4', '#f4a261', '#2a9d8f', '#e76f51']) });
+      if (n % 67 === 0) seg.sprites.push({ type: 'billboard', offset: side * rnd(1.38, 1.66), w: rnd(700, 900), h: rnd(500, 660), tint: pick(['#e63946', '#2a7fd4', '#f4a261', '#2a9d8f', '#e76f51']) });
       // ── 弯道：护栏 + 两侧观众 ──
       if (Math.abs(seg.curve) > 1.5) {
         // 弯道内侧（弯心侧）加护栏
@@ -1731,6 +1731,16 @@
     } else if (sprite.type === 'billboard') {
       // 广告牌：支柱 + 面板 + 文字线
       var bbX = destX, bbY = destY, bbW = destW, bbH = destH;
+      if (sprite.fallen) {
+        // ── 被撞倒的广告牌：绕柱脚旋转躺平 ──
+        var bfp = sprite.fallProgress || 0;
+        var bAng = (sprite.fallDir || 1) * (Math.PI / 2) * bfp;
+        var bPivX = bbX + bbW * 0.5, bPivY = bbY + bbH;
+        ctx.save();
+        ctx.translate(bPivX, bPivY);
+        ctx.rotate(bAng);
+        ctx.translate(-bPivX, -bPivY);
+      }
       // 支柱
       ctx.fillStyle = '#5a6270';
       ctx.fillRect(bbX + bbW * 0.44, bbY + bbH * 0.52, bbW * 0.12, bbH * 0.48);
@@ -1752,6 +1762,7 @@
       ctx.fillRect(bbX + bbW * 0.1, bbY + bbH * 0.25, bbW * 0.44, bbH * 0.06);
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.fillRect(bbX + bbW * 0.1, bbY + bbH * 0.37, bbW * 0.3, bbH * 0.05);
+      if (sprite.fallen) ctx.restore();   // 倒下渲染结束
     } else if (sprite.type === 'crowd') {
       var cX = destX + destW / 2, cY = destY + destH;
       var cH = destH, cW = destW;
@@ -2590,17 +2601,28 @@
       if (treeSeg && treeSeg.sprites) {
         for (var tsi = 0; tsi < treeSeg.sprites.length; tsi++) {
           var tsp = treeSeg.sprites[tsi];
-          if (tsp.type === 'tree' && !tsp.fallen && Math.abs(tsp.offset - p.playerX) < 0.40) {
+          if ((tsp.type === 'tree' || tsp.type === 'billboard') && !tsp.fallen && Math.abs(tsp.offset - p.playerX) < 0.40) {
             tsp.fallen = 1;              // 倒下
             tsp.fallDir = (tsp.offset > p.playerX ? 1 : -1);
             tsp.fallProgress = 0;
-            p.speed *= 0.55;             // 撞树明显减速
-            p.shake = Math.max(p.shake, 0.85);
-            p.dustTimer = 0.8; p.dustIntensity = 0.7;
-            playCrash();
-            playDustSound();
-            flashTip('撞树！');
-            p.driftScore = Math.max(0, p.driftScore - 20);
+            if (tsp.type === 'billboard') {
+              // ── 撞广告牌：牌子拍倒 + 加分 ──
+              p.speed *= 0.72;
+              p.shake = Math.max(p.shake, 0.8);
+              p.dustTimer = 0.7; p.dustIntensity = 0.6;
+              p.hitBillboards = (p.hitBillboards || 0) + 1;
+              p.driftScore += 60;
+              playCrash(); playDustSound();
+              flashTip('💥 撞飞广告牌 +60');
+            } else {
+              // ── 撞树 ──
+              p.speed *= 0.55;
+              p.shake = Math.max(p.shake, 0.85);
+              p.dustTimer = 0.8; p.dustIntensity = 0.7;
+              playCrash(); playDustSound();
+              flashTip('撞树！');
+              p.driftScore = Math.max(0, p.driftScore - 20);
+            }
           }
         }
       }
@@ -2663,6 +2685,7 @@
     if (p.airTime > 0) {
       var airTotal = p.airTotal || 1.35;
       p.airTime -= dt;
+      p.airTimeTotal = (p.airTimeTotal || 0) + dt;   // 积分：累计腾空
       // 真正的抛物线：sin 曲线，起飞/落地两端为 0
       var prog = 1 - (p.airTime / airTotal);
       var airP = Math.sin(Math.max(0, Math.min(1, prog)) * Math.PI);
@@ -2722,6 +2745,25 @@
     }
     p.playerX = clamp(p.playerX, -2.2, 2.2);
 
+    // ── 自动回正：出界 >4s，或出界且卡住（速度<15）>1.2s → 平滑拉回主赛道 ──
+    if (p.recovering > 0) {
+      p.recovering -= dt;
+      p.playerX += (0.35 - p.playerX) * Math.min(1, dt * 4.2);   // 平滑回右车道
+      p.drift = 0; p.driftChain = 0;
+      if (p.recovering <= 0) { p.recovering = 0; p.offTimer = 0; p.stuckTimer = 0; }
+    } else if (off) {
+      p.offTimer = (p.offTimer || 0) + dt;
+      p.stuckTimer = (p.speed < 25) ? ((p.stuckTimer || 0) + dt) : 0;
+      if (p.offTimer > 4 || p.stuckTimer > 2.5) {
+        p.recovering = 1.0;
+        p.speed = Math.min(p.speed, carMaxSpeed() * 0.4);   // 回正限速（防滥用）
+        p.dustTimer = 0.6; p.dustIntensity = 0.5;
+        flashTip('↩ 自动回正');
+      }
+    } else {
+      p.offTimer = 0; p.stuckTimer = 0;
+    }
+
     // ── 漂移得分：连续漂移累加 ──
     if (p.drift > 0.55) {
       var prevChain = p.driftChain;
@@ -2777,6 +2819,7 @@
           car.wreckSide = (car.offset >= p.playerX ? 1 : -1) * (1.6 + Math.random() * 0.9);
           car.wreckSpin = (Math.random() > 0.5 ? 1 : -1) * 5;
           car.speed *= 0.05;
+          p.smashCount = (p.smashCount || 0) + 1;   // 积分：冲撞计数
           p.speed *= 0.93;                    // 冲撞代价极小
           p.padShake = Math.max(p.padShake, 0.7);
           p.shake = Math.max(p.shake, 0.6);
@@ -2798,12 +2841,14 @@
           flashTip('逆行撞击！');
           // 对向车也被撞飞
           car.wreck = 1.8;
+          p.smashCount = (p.smashCount || 0) + 1;   // 积分：撞飞计数
           car.wreckVel = impactSpeed * 0.9;
           car.wreckSide = (car.offset >= p.playerX ? 1 : -1) * 1.6;
           car.speed *= 0.1;
         } else if (isOncoming) {
           // 玩家在正确车道撞到对向车，或重卡逆行 → NPC 被撞飞
           car.wreck = 1.8;
+          p.smashCount = (p.smashCount || 0) + 1;   // 积分：撞飞计数
           car.wreckVel = impactSpeed * 1.4 + MAX_SPEED * 0.35;
           car.wreckSide = (car.offset >= p.playerX ? 1 : -1) * (1.3 + Math.random() * 0.8);
           car.wreckSpin = (Math.random() > 0.5 ? 1 : -1) * 4;
@@ -2820,6 +2865,7 @@
           if (mySpeedPct > 0.55) {
             // 高速追尾：NPC 被撞飞
             car.wreck = 1.8;
+            p.smashCount = (p.smashCount || 0) + 1;   // 积分：撞飞计数
             car.wreckVel = impactSpeed * 1.3 + MAX_SPEED * 0.3;
             car.wreckSide = (car.offset >= p.playerX ? 1 : -1) * (1.2 + Math.random() * 0.9);
             car.wreckSpin = (Math.random() > 0.5 ? 1 : -1) * 3.5;
@@ -3505,6 +3551,8 @@
     elLap2.textContent = String(Math.min(P2.lap, TOTAL_LAPS));
     var now = performance.now();
     elT1.textContent = fmt(Math.max(0, (now - P1.lapStart) / 1000));
+    var scEl = document.getElementById('score1');
+    if (scEl && P1) scEl.textContent = String(calcScore(P1));
     elT2.textContent = fmt(Math.max(0, (now - P2.lapStart) / 1000));
 
     // ── 双人距离/时间差 ──
@@ -3795,6 +3843,29 @@
     if (prev) prev.onclick = function () { if (WIZ_STEP === 0) showHome(); else gotoStep(WIZ_STEP - 1); };
     if (next) next.onclick = function () { gotoStep(WIZ_STEP + 1); };
     if (rnd) rnd.onclick = randomAll;
+  }
+
+  /* ================= 积分系统 ================= */
+  function calcScore(p) {
+    if (!p) return 0;
+    var drift = Math.round(p.driftScore || 0);
+    var smash = (p.smashCount || 0) * 200;
+    var bill = (p.hitBillboards || 0) * 60;
+    var ped = (p.hitPedestrians || 0) * 50;
+    var air = Math.round((p.airTimeTotal || 0) * 40);
+    var finish = p.finished ? Math.max(0, Math.round(2000 - (p.finishTime || 0) * 12)) : 0;
+    return drift + smash + bill + ped + air + finish;
+  }
+  function scoreBreakdown(p) {
+    if (!p) return [];
+    return [
+      ['漂移', Math.round(p.driftScore || 0)],
+      ['撞飞车辆 ×' + (p.smashCount || 0), (p.smashCount || 0) * 200],
+      ['广告牌 ×' + (p.hitBillboards || 0), (p.hitBillboards || 0) * 60],
+      ['行人 ×' + (p.hitPedestrians || 0), (p.hitPedestrians || 0) * 50],
+      ['腾空 ' + (p.airTimeTotal || 0).toFixed(1) + 's', Math.round((p.airTimeTotal || 0) * 40)],
+      ['完赛', p.finished ? Math.max(0, Math.round(2000 - (p.finishTime || 0) * 12)) : 0]
+    ];
   }
 
   /* ================= 每日挑战 ================= */
@@ -4738,7 +4809,7 @@
       submitScore(entry);
       if (DAILY_MODE) {
         var dl = loadDailyLb();
-        dl.push({ time: P1.finishTime, bestLap: P1.bestLap, drift: Math.round(P1.driftScore), ts: Date.now() });
+        dl.push({ time: P1.finishTime, bestLap: P1.bestLap, drift: Math.round(P1.driftScore), score: calcScore(P1), ts: Date.now() });
         dl.sort(function (a, b) { return a.time - b.time; });
         saveDailyLb(dl);
       }
@@ -4756,7 +4827,7 @@
         var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '  ';
         var isMe = Math.abs(e.time - P1.finishTime) < 0.01;
         var line = DAILY_MODE
-          ? (formatTime(e.time) + ' · 漂移 ' + (e.drift || 0))
+          ? (formatTime(e.time) + ' · ' + (e.score || 0) + '分')
           : (formatTime(e.time) + ' · ' + e.laps + '圈' + (e.weather && e.weather !== 'clear' ? ' · ' + e.weather : ''));
         return '<div style="' + (isMe ? 'color:#8ef7c8;font-weight:800;' : '') + '">' + medal + ' ' + line + '</div>';
       }).join('') || '<div style="color:#6f8db0">暂无记录</div>';
@@ -4764,7 +4835,11 @@
         '<div class="sub">R A C E &nbsp; F I N I S H E D</div>' +
         '<div class="res">' +
         '<div>总时间 <b>' + formatTime(P1.finishTime) + '</b></div>' +
-        '<div style="margin-top:6px;font-size:14px;color:#9dbdd8">最快单圈 ' + best + ' 秒 · 漂移 ' + Math.round(P1.driftScore) + '</div>' +
+        '<div style="margin-top:6px;font-size:14px;color:#ffd166;font-weight:900">🏅 总积分 ' + calcScore(P1) + '</div>' +
+        '<div style="margin-top:6px;font-size:12.5px;color:#9dbdd8">最快单圈 ' + best + ' 秒</div>' +
+        '</div>' +
+        '<div style="margin:12px 0;padding:10px 14px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.2);text-align:left;max-width:300px;font-size:12px;line-height:2;color:#cfe4f7">' +
+        scoreBreakdown(P1).map(function (r) { return '<div style="display:flex;justify-content:space-between"><span>' + r[0] + '</span><b style="color:#ffd166">+' + r[1] + '</b></div>'; }).join('') +
         '</div>' +
         '<div style="margin:14px 0;padding:11px 15px;border-radius:11px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28);text-align:left;max-width:300px">' +
         '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px">' + (DAILY_MODE ? '🎯 今日挑战排行 · 0 点重置' : '🏆 本图排行榜') + '</div>' +
@@ -5089,6 +5164,37 @@
     view: function () { try { return { CAM_VIEW: CAM_VIEW, params: viewParams() }; } catch (e) { return { err: String(e) }; } },
     setView: function (v) { try { setView(v); return true; } catch (e) { return String(e); } },
     daily: function () { try { return { mode: DAILY_MODE, cfg: dailyConfig(), lb: loadDailyLb() }; } catch (e) { return { err: String(e) }; } },
+    billboardTest: function () {
+      // 找前方最近的广告牌，传送过去撞
+      try {
+        var base = findSegment(P1.position);
+        for (var i = 1; i < segments.length; i++) {
+          var seg = segments[(base.index + i) % segments.length];
+          for (var j = 0; j < seg.sprites.length; j++) {
+            var s2 = seg.sprites[j];
+            if (s2.type === 'billboard' && !s2.fallen) {
+              P1.position = (seg.index * SEG_LEN - PLAYER_Z - SEG_LEN + trackLength) % trackLength;
+              P1.playerX = s2.offset * 0.92;   // 对准牌子
+              P1.speed = carMaxSpeed() * 0.42;   // 测试用低速：避免一帧跳过检测段
+              return { segIdx: seg.index, offset: s2.offset };
+            }
+          }
+        }
+        return { none: true };
+      } catch (e) { return { err: String(e) }; }
+    },
+    billboardFallen: function () {
+      try {
+        for (var i = 0; i < segments.length; i++) {
+          var ss = segments[i].sprites;
+          for (var j = 0; j < ss.length; j++) {
+            if (ss[j].type === 'billboard' && ss[j].fallen) return { fallen: true, progress: Number((ss[j].fallProgress || 0).toFixed(2)), hit: P1.hitBillboards || 0, score: calcScore(P1) };
+          }
+        }
+        return { fallen: false };
+      } catch (e) { return { err: String(e) }; }
+    },
+    setOff: function (x, spd) { try { P1.playerX = x; P1.speed = (spd === undefined ? 10 : spd); return true; } catch (e) { return String(e); } },
     finishSolo: function (t) {
       try {
         P1.finished = true;
@@ -5115,6 +5221,11 @@
           fps: document.getElementById('fpsBox') ? document.getElementById('fpsBox').textContent : '',
           zoomPunch: P1 ? Number((P1.zoomPunch || 0).toFixed(3)) : 0,
           reverseTimer: P1 ? Number((P1.reverseTimer || 0).toFixed(2)) : 0,
+          score: P1 ? calcScore(P1) : 0,
+          smashCount: P1 ? (P1.smashCount || 0) : 0,
+          hitBillboards: P1 ? (P1.hitBillboards || 0) : 0,
+          offTimer: P1 ? Number((P1.offTimer || 0).toFixed(2)) : 0,
+          recovering: P1 ? Number((P1.recovering || 0).toFixed(2)) : 0,
           padBoost: P1 ? Number((P1.padBoost || 0).toFixed(2)) : 0,
           pixelArt: !!CFG.pixelArt,
           smoothing: ctx.imageSmoothingEnabled,
