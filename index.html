@@ -25,7 +25,7 @@
   body[data-theme='light'] .meta b{color:#12233a}
   body[data-theme='light'] #msg{color:#12233a;text-shadow:0 0 40px rgba(47,127,208,.5)}
   body[data-theme='light'] #settingsBtn,body[data-theme='light'] .vbtn,body[data-theme='light'] #viewBtn,body[data-theme='light'] #restartBtn{background:rgba(255,255,255,.85);border-color:rgba(40,80,140,.3);color:#2a4562}
-  body[data-theme  body[data-theme='light'] #pace{background:rgba(255,255,255,.88);border-color:rgba(200,150,40,.4)}
+  body[data-theme='light'] #pace{background:rgba(255,255,255,.88);border-color:rgba(200,150,40,.4)}
   body[data-theme='light'] #pace .txt{color:#1a2434}
   body[data-theme='light'] #drift .val{color:#12233a;text-shadow:none}
   body[data-theme='light'] #shortcut{color:#fff}
@@ -160,8 +160,7 @@
   body[data-theme='light'] .rBtn{background:rgba(255,252,245,.85);color:#8a5a10}
   body[data-theme='light'] .rBtn:hover{background:rgba(255,250,235,.97);color:#5a3a08}
   body[data-theme='light'] .rBtnDaily{color:#b05a10;border-color:rgba(200,140,30,.5)}
-  @media (orientation:portrait){.rTitle{font-size:30px;letter-spacing:6px}.rSub{font-size:11px;letter-spacing:9px}.rMenu{width:260px;gap:8px}.rBtn{font-size:14px;padding:11px 16px}}
-  #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.9),rgba(4,6,14,.97));z-index:20;transition:opacity .35s;padding:20px}
+    #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.9),rgba(4,6,14,.97));z-index:20;transition:opacity .35s;padding:20px}
   #overlay.hide{opacity:0;pointer-events:none}
   .panel{text-align:center;padding:24px 30px;width:100%;box-sizing:border-box;border-radius:22px;background:rgba(10,18,34,.8);border:1px solid rgba(120,190,255,.22);box-shadow:0 24px 90px rgba(0,0,0,.7);-webkit-backdrop-filter: backdrop-filter:blur(16px);max-width:94vw}
   .title{font-size:34px;font-weight:900;letter-spacing:4px;background:linear-gradient(180deg,#fff,#67c6ff 70%,#2f7fd0);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
@@ -420,6 +419,7 @@
     .sbtnRow > * + *{margin-left:5px}
     .rBtnDaily small{margin-top:4px}
   }
+@media (orientation:portrait){.rTitle{font-size:30px;letter-spacing:6px}.rSub{font-size:11px;letter-spacing:9px}.rMenu{width:260px;gap:8px}.rBtn{font-size:14px;padding:11px 16px}}
 </style>
 </head>
 <body data-theme="dark">
