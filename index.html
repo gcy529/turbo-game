@@ -1926,7 +1926,8 @@
     var airH = p.airH || 0;
     var airLift = airH * 0.95;
     var airScale = 1 - Math.min(0.42, airH / 2400);   // 飞得越高车越小
-    var cy = V.h - h * 1.24 + bounce - airLift;
+    // 中下角显示：不挡起步键（按键区在底部 114px）
+    var cy = V.h * 0.66 - h * 0.24 + bounce - airLift;
 
     ctx.save();
     // 腾空缩放（以车底中心为锚点）
@@ -2097,6 +2098,15 @@
   }
 
   function renderView(p) {
+    // 冲一下：踩加速带的瞬间轻微放大（zoom punch）
+    var zp = p.zoomPunch || 0;
+    if (zp > 0.01) {
+      var zs = 1 + zp * 0.06;
+      ctx.save();
+      ctx.translate(V.w / 2, V.h / 2);
+      ctx.scale(zs, zs);
+      ctx.translate(-V.w / 2, -V.h / 2);
+    }
     var baseSegment = findSegment(p.position);
     var basePercent = percentRemaining(p.position, SEG_LEN);
     var vpZ = viewParams();
@@ -2170,7 +2180,7 @@
     // 车轮扬尘/尾气粒子
     if (vpDraw.drawCar) {
       var carW = Math.min(V.w * 0.155, 200) * vpDraw.carScale;
-      var baseY = V.h - carW * 0.86 * 1.24 + carW * 0.86;
+      var baseY = V.h * 0.66 + carW * 0.86 * 0.62;
       var drifting = p.drift > 0.25;
       var fast = p.speed > carMaxSpeed() * 0.5;
       if ((drifting || fast || p.onPad) && Math.random() < (drifting ? 0.85 : 0.4)) {
@@ -2215,7 +2225,7 @@
       ctx.globalAlpha = boosting ? 0.62 : (sp - 0.55) * 0.55;
       ctx.strokeStyle = '#bfe6ff';
       ctx.lineWidth = 2;
-      var lineCount = boosting ? 30 : (airborne ? 24 : 14);
+      var lineCount = (boosting || (p.padBoost > 0.3)) ? 30 : (airborne ? 24 : 14);
       for (var k = 0; k < lineCount; k++) {
         var ang = (k / lineCount) * Math.PI * 2 + clock * 3;
         var rr = V.h * (0.30 + (k % 4) * 0.07) * (boosting ? 1.25 : 1);
@@ -2340,6 +2350,7 @@
     if (GAME_MODE === 'solo') {
       V = { x: 0, y: 0, w: W, h: H };
       renderView(P1);
+      if (P1.zoomPunch > 0.01) ctx.restore();
       return;
     }
 
@@ -2350,6 +2361,7 @@
     ctx.beginPath(); ctx.rect(0, 0, W, halfH); ctx.clip();
     V = { x: 0, y: 0, w: W, h: halfH };
     renderView(P1);
+    if (P1.zoomPunch > 0.01) ctx.restore();
     ctx.restore();
 
     // P2 下半屏
@@ -2358,6 +2370,7 @@
     ctx.beginPath(); ctx.rect(0, 0, W, H - halfH); ctx.clip();
     V = { x: 0, y: halfH, w: W, h: H - halfH };
     renderView(P2);
+    if (P2.zoomPunch > 0.01) ctx.restore();
     ctx.restore();
 
     // 分隔线
@@ -2515,6 +2528,7 @@
       if (p.boostTimer <= 0) { p.boostTimer = 0; p.boostPower = 0; }
     }
     if (p.boostShown > 0) p.boostShown -= dt;
+    if (p.zoomPunch > 0.01) p.zoomPunch = Math.max(0, p.zoomPunch - dt * 2.4);   // 冲击衰减（60fps 下约 410ms）
     if (p.drift > 0.2) p.speed *= Math.pow(DRIFT_SPEED_LOSS, dt * 60);
     p.speed = clamp(p.speed, 0, carMaxSpeed());
 
@@ -2647,10 +2661,12 @@
     p.onPad = onPad;
     if (onPad) {
       // 强提速：瞬间 +25% 速度，并进入 1.2s 加速状态
-      p.speed = Math.min(carMaxSpeed() * 1.32, p.speed + carMaxSpeed() * 2.4 * dt * carBoost());
+      // 冲一下：瞬间跳速（+30%）而不是渐进
+      p.speed = Math.min(carMaxSpeed() * 1.22, Math.max(p.speed, p.speed + carMaxSpeed() * 0.30));
       p.padBoost = 1.2;
-      p.padGlow = Math.min(1, (p.padGlow || 0) + dt * 14);
-      p.padShake = 0.6;                 // 屏幕震动
+      p.padGlow = 1;
+      p.padShake = 0.55;
+      p.zoomPunch = 1;                  // FOV/缩放冲击
       if (!p.padSoundCd || performance.now() - p.padSoundCd > 300) {
         p.padSoundCd = performance.now();
         playPadSound();
@@ -4898,7 +4914,14 @@
           color: CAR ? CAR.color : null,
           map: selectedMap, weather: WEATHER, laps: TOTAL_LAPS,
           cfx: { sfx: CFG.sfx, bgm: CFG.bgm, brakeMode: CFG.brakeMode, brakeSide: CFG.brakeSide },
-          fps: document.getElementById('fpsBox') ? document.getElementById('fpsBox').textContent : ''
+          fps: document.getElementById('fpsBox') ? document.getElementById('fpsBox').textContent : '',
+          zoomPunch: P1 ? Number((P1.zoomPunch || 0).toFixed(3)) : 0,
+          padBoost: P1 ? Number((P1.padBoost || 0).toFixed(2)) : 0,
+          padShake: P1 ? Number((P1.padShake || 0).toFixed(2)) : 0,
+          drift: P1 ? Number((P1.drift || 0).toFixed(2)) : 0,
+          driftScore: P1 ? Math.round(P1.driftScore || 0) : 0,
+          airH: P1 ? Math.round(P1.airH || 0) : 0,
+          carTop: (function () { try { var vp = viewParams(); if (!vp.drawCar) return null; var w = Math.min(V.w * 0.155, 200) * vp.carScale; var hh = w * 0.86; return Math.round(V.h * 0.66 - hh * 0.24); } catch (e) { return null; } })()
         };
       } catch (e) { return { err: String(e) }; }
     },
