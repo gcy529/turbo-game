@@ -44,7 +44,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05070e;
 <body>
 <canvas id="game"></canvas>
 <div id="hud"><span id="spd">0</span><span class="u">KM/H</span>
-  <span id="meta">圈 <b id="lap">1</b>/2<br>本圈 <b id="t1">0.00</b></span></div>
+  <span id="meta">圈 <b id="lap">1</b>/2 · <b id="score3d" style="color:#ffd166">0</b>分<br>本圈 <b id="t1">0.00</b> · <b id="who3d" style="color:#8ef7c8"></b></span></div>
 <div id="msg"></div>
 <div id="fpsBox">-- FPS</div>
 <div id="touch">
@@ -54,7 +54,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05070e;
 </div>
 <div id="overlay">
   <div class="panel">
-    <div class="tag3d">WEBGL · BETA</div>
+    <div class="tag3d" id="d3tag">WEBGL · BETA</div>
+    <div id="d3lock" style="display:none;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:900;letter-spacing:3px;color:#ff9e3d">🔒 尚未开放</div>
+      <div id="d3cd" style="font-family:'Courier New',monospace;font-size:26px;font-weight:900;letter-spacing:2px;color:#ffe600;text-shadow:0 0 12px rgba(255,230,0,.6)"></div>
+      <div style="font-size:10px;letter-spacing:2px;color:#6f8db0">2026.11.11 全量解锁</div>
+    </div>
     <div class="title">逆反 3D</div>
     <div class="sub">T U R B O &nbsp; I N V E R S E</div>
     <div id="invBadge" style="display:none">↔ 逆反模式 开启</div>
@@ -78,6 +83,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05070e;
     <div class="tip">勇往直前 · 敬请期待</div>
     <div class="tip" style="font-size:9.5px;color:#4e6b88">需 iOS 10+ / 较新浏览器 · 老设备请玩 2D 版</div>
     <div class="tip" style="margin-top:10px"><a href="index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>
+    <div class="tip" style="margin-top:6px;font-size:9px;color:#3d5570">内测通道：链接加 #beta</div>
   </div>
 </div>
 <script src="three.min.js"></script>
@@ -324,7 +330,9 @@ function update(dt) {
   var steer = 0;
   if (input.left) steer -= 1;
   if (input.right) steer += 1;
-  if (INVERT) steer = -steer;   // 逆反模式：左右互换
+  if (INVERT) steer = -steer;
+  // 漂移分：高速转向累计
+  if (Math.abs(steer) > 0.5 && player.speed > player.MAX_SPEED * 0.5) player.driftScore = (player.driftScore || 0) + dt * 60;   // 逆反模式：左右互换
   var steerRate = 1.35 * (0.35 + Math.abs(player.speed) / player.MAX_SPEED);
   player.lateral += steer * steerRate * dt;
   var cur = curvatureAt(player.t);
@@ -359,10 +367,22 @@ function update(dt) {
   if (msgTimer > 0) { msgTimer -= dt; if (msgTimer <= 0) elMsg.style.opacity = "0"; }
   updateHud();
 }
-function updateHud() {
+// 名字（与 2D 共享 turbo-racer-name）
+  function getLastName3d() { try { return (localStorage.getItem('turbo-racer-name') || '玩家').slice(0, 12); } catch (e) { return '玩家'; } }
+  // 3D 积分：速度+漂移简化版
+  function calcScore3d(p) {
+    if (!p) return 0;
+    var finish = p.finished ? Math.max(0, Math.round(2000 - (p.finishTime || 0) * 12)) : 0;
+    return Math.round((p.driftScore || 0)) + (p.smashCount || 0) * 200 + finish;
+  }
+  function updateHud() {
   elSpd.textContent = String(Math.round(Math.abs(player.speed) * 3.6 * 1.15));
   elLap.textContent = String(Math.min(player.lap, player.totalLaps));
   elT1.textContent = (Math.max(0, (performance.now() - lapStart) / 1000)).toFixed(2);
+  var sc3 = document.getElementById('score3d');
+  if (sc3) sc3.textContent = String(calcScore3d(player));
+  var who3 = document.getElementById('who3d');
+  if (who3) who3.textContent = getLastName3d();
 }
 var lastTs = 0, fpsAcc = 0, fpsN = 0;
 function frame(ts) {
@@ -502,9 +522,41 @@ function syncInv() {
   applyUnlockUi();
 })();
 
-document.getElementById("startBtn").addEventListener("click", startRace);
+// ── 定时开放：2026-11-11 00:00 前锁住（内测可玩：URL 带 #beta）──
+  var OPEN_AT = new Date(2026, 10, 11, 0, 0, 0).getTime();   // 月份 10 = 11月
+  var BETA_UNLOCK = /[#&]beta/.test(location.hash || '');
+  function updateD3Lock() {
+    var lock = document.getElementById('d3lock');
+    var btn = document.getElementById('startBtn');
+    var tag = document.getElementById('d3tag');
+    if (!lock || !btn) return;
+    if (Date.now() >= OPEN_AT || BETA_UNLOCK) {
+      lock.style.display = 'none';
+      if (tag) tag.textContent = Date.now() >= OPEN_AT ? 'WEBGL · 正式版' : 'WEBGL · 内测';
+      return;
+    }
+    lock.style.display = 'flex';
+    btn.style.display = 'none';
+    var keys = document.querySelector('.keys');
+    if (keys) keys.style.display = 'none';
+    setInterval(function () {
+      var ms = OPEN_AT - Date.now();
+      if (ms <= 0) { location.reload(); return; }
+      var d = Math.floor(ms / 86400000);
+      var hh = Math.floor(ms % 86400000 / 3600000);
+      var mm = Math.floor(ms % 3600000 / 60000);
+      var ss = Math.floor(ms % 60000 / 1000);
+      var cd = document.getElementById('d3cd');
+      if (cd) cd.textContent = d + '天 ' + (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+    }, 1000);
+  }
+
+  document.getElementById("startBtn").addEventListener("click", startRace);
 window.addEventListener("resize", function () { W = window.innerWidth; H = window.innerHeight; camera.aspect = W / H; camera.updateProjectionMatrix(); renderer.setSize(W, H); });
 updateHud();
+var whoInit = document.getElementById('who3d');
+if (whoInit) whoInit.textContent = getLastName3d();
+updateD3Lock();
 requestAnimationFrame(frame);
 })();
 </script>
