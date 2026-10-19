@@ -2048,6 +2048,7 @@
     var airH = p.airH || 0;
     var airLift = airH * 0.95;
     var airScale = 1 - Math.min(0.42, airH / 2400);   // 飞得越高车越小
+    // 中下角显示：不挡起步键（按键区在底部 114px）
     var cy = V.h * 0.66 - h * 0.24 + bounce - airLift;
 
     ctx.save();
@@ -2056,7 +2057,6 @@
     ctx.translate(anchorX, anchorY);
     ctx.scale(airScale, airScale);
     ctx.translate(-anchorX, -anchorY);
-    // 转向/翻滚旋转
     ctx.translate(cx + w / 2, cy + h / 2);
     ctx.rotate(p.steerVisual * 0.055 + (p.airTime > 0 ? (p.jumpSpin || 0) : 0) + (p.tumble > 0 ? p.tumble * 1.8 : 0));
     ctx.translate(-(cx + w / 2), -(cy + h / 2));
@@ -2072,100 +2072,149 @@
     ctx.ellipse(midX, B + h * 0.045 + (airH > 0 ? airLift : 0), w * 0.56 * shadowScale, h * 0.085 * shadowScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    ctx.fillStyle = '#15171e';
+    roundRect(L + w * 0.05, T + h * 0.02, w * 0.9, h * 0.075, h * 0.03); ctx.fill();
+    ctx.fillStyle = '#2a2d38';
+    roundRect(L + w * 0.09, T + h * 0.055, w * 0.82, h * 0.035, h * 0.015); ctx.fill();
+
     var mainColor = p.hue;
-
-    // ── 追尾视角（看车屁股）：后保险杠 + 尾灯 + 后挡风 + 车顶 + 后轮 ──
-    var carW = w, carH = h;
-    var bodyL = L + carW * 0.05, bodyT = T + carH * 0.04;
-    var bodyW = carW * 0.90, bodyH = carH * 0.92;
-    var rr = Math.min(bodyW, bodyH) * 0.18;
-
-    // 1) 两侧后轮（黑色，从车身两侧突出，只露上半）
-    var wheelR = Math.min(bodyW, bodyH) * 0.155;
-    ctx.fillStyle = '#171a22';
-    ctx.beginPath(); ctx.arc(bodyL - carW * 0.01, bodyT + bodyH * 0.78, wheelR, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(bodyL + bodyW + carW * 0.01, bodyT + bodyH * 0.78, wheelR, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(200,210,225,.25)';
-    ctx.beginPath(); ctx.arc(bodyL - carW * 0.01, bodyT + bodyH * 0.78, wheelR * 0.45, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(bodyL + bodyW + carW * 0.01, bodyT + bodyH * 0.78, wheelR * 0.45, 0, Math.PI * 2); ctx.fill();
-
-    // 2) 车身主体（后宽前窄的梯形感：底部宽=保险杠，向上略收=引擎盖远去）
     ctx.fillStyle = mainColor;
     ctx.beginPath();
-    ctx.moveTo(bodyL, bodyT + bodyH * 0.18);
-    ctx.lineTo(bodyL + bodyW * 0.055, bodyT);          // 左肩
-    ctx.lineTo(bodyL + bodyW * 0.945, bodyT);          // 右肩（顶部窄）
-    ctx.lineTo(bodyL + bodyW, bodyT + bodyH * 0.18);
-    ctx.lineTo(bodyL + bodyW, bodyT + bodyH);          // 右底
-    ctx.lineTo(bodyL, bodyT + bodyH);                  // 左底（底部宽=后保险杠）
-    ctx.closePath();
-    ctx.fill();
-    // 勾边
-    ctx.strokeStyle = 'rgba(0,0,0,.32)';
-    ctx.lineWidth = Math.max(1, carW * 0.012);
-    ctx.stroke();
+    ctx.moveTo(L + w * 0.235, T + h * 0.10);
+    ctx.lineTo(R - w * 0.235, T + h * 0.10);
+    ctx.lineTo(R - w * 0.16, T + h * 0.40);
+    ctx.lineTo(L + w * 0.16, T + h * 0.40);
+    ctx.closePath(); ctx.fill();
 
-    // 3) 后保险杠（底部深色横条）
-    ctx.fillStyle = 'rgba(0,0,0,.28)';
-    roundRectPath(ctx, bodyL + bodyW * 0.03, bodyT + bodyH * 0.80, bodyW * 0.94, bodyH * 0.185, rr * 0.5);
-    ctx.fill();
-
-    // 4) 红色双尾灯（横贯式，追尾视角的灵魂）
-    ctx.fillStyle = '#ff3344';
-    roundRectPath(ctx, bodyL + bodyW * 0.08, bodyT + bodyH * 0.72, bodyW * 0.84, bodyH * 0.085, rr * 0.4);
-    ctx.fill();
-    // 尾灯发光（夜间加强）
-    var tailGlow = WEATHER === 'night' ? 0.55 : 0.22;
-    var tg = ctx.createLinearGradient(0, bodyT + bodyH * 0.60, 0, bodyT + bodyH * 0.85);
-    tg.addColorStop(0, 'rgba(255,51,68,0)');
-    tg.addColorStop(1, 'rgba(255,51,68,' + tailGlow + ')');
-    ctx.fillStyle = tg;
-    ctx.fillRect(bodyL, bodyT + bodyH * 0.60, bodyW, bodyH * 0.25);
-
-    // 5) 后挡风玻璃（中上部，梯形，略反光）
-    ctx.fillStyle = 'rgba(150,205,245,.82)';
+    var roofGrad = ctx.createLinearGradient(0, T + h * 0.10, 0, T + h * 0.40);
+    roofGrad.addColorStop(0, 'rgba(255,255,255,.28)');
+    roofGrad.addColorStop(0.5, 'rgba(255,255,255,.06)');
+    roofGrad.addColorStop(1, 'rgba(0,0,0,.18)');
+    ctx.fillStyle = roofGrad;
     ctx.beginPath();
-    ctx.moveTo(bodyL + bodyW * 0.14, bodyT + bodyH * 0.40);
-    ctx.lineTo(bodyL + bodyW * 0.86, bodyT + bodyH * 0.40);
-    ctx.lineTo(bodyL + bodyW * 0.80, bodyT + bodyH * 0.66);
-    ctx.lineTo(bodyL + bodyW * 0.20, bodyT + bodyH * 0.66);
-    ctx.closePath();
-    ctx.fill();
-    // 玻璃反光斜条
-    ctx.fillStyle = 'rgba(255,255,255,.30)';
+    ctx.moveTo(L + w * 0.235, T + h * 0.10);
+    ctx.lineTo(R - w * 0.235, T + h * 0.10);
+    ctx.lineTo(R - w * 0.16, T + h * 0.40);
+    ctx.lineTo(L + w * 0.16, T + h * 0.40);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = '#12253d';
     ctx.beginPath();
-    ctx.moveTo(bodyL + bodyW * 0.22, bodyT + bodyH * 0.40);
-    ctx.lineTo(bodyL + bodyW * 0.36, bodyT + bodyH * 0.40);
-    ctx.lineTo(bodyL + bodyW * 0.30, bodyT + bodyH * 0.66);
-    ctx.lineTo(bodyL + bodyW * 0.18, bodyT + bodyH * 0.66);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(L + w * 0.275, T + h * 0.145);
+    ctx.lineTo(R - w * 0.275, T + h * 0.145);
+    ctx.lineTo(R - w * 0.215, T + h * 0.355);
+    ctx.lineTo(L + w * 0.215, T + h * 0.355);
+    ctx.closePath(); ctx.fill();
 
-    // 6) 车顶（最上部，车色加深）
-    ctx.fillStyle = 'rgba(0,0,0,.18)';
-    roundRectPath(ctx, bodyL + bodyW * 0.10, bodyT + bodyH * 0.02, bodyW * 0.80, bodyH * 0.30, rr * 0.6);
-    ctx.fill();
-
-    // 7) 车顶渐变高光（上亮下暗，立体感）
-    var roofG = ctx.createLinearGradient(0, bodyT, 0, bodyT + bodyH);
-    roofG.addColorStop(0, 'rgba(255,255,255,.30)');
-    roofG.addColorStop(0.6, 'rgba(255,255,255,.02)');
-    roofG.addColorStop(1, 'rgba(0,0,0,.22)');
-    ctx.fillStyle = roofG;
+    var winGrad = ctx.createLinearGradient(L + w * 0.2, T + h * 0.14, R - w * 0.2, T + h * 0.37);
+    winGrad.addColorStop(0, 'rgba(150,215,255,.52)');
+    winGrad.addColorStop(0.34, 'rgba(110,175,235,.22)');
+    winGrad.addColorStop(0.62, 'rgba(70,120,180,.12)');
+    winGrad.addColorStop(1, 'rgba(175,225,255,.40)');
+    ctx.fillStyle = winGrad;
     ctx.beginPath();
-    ctx.moveTo(bodyL, bodyT + bodyH * 0.18);
-    ctx.lineTo(bodyL + bodyW * 0.055, bodyT);
-    ctx.lineTo(bodyL + bodyW * 0.945, bodyT);
-    ctx.lineTo(bodyL + bodyW, bodyT + bodyH * 0.18);
-    ctx.lineTo(bodyL + bodyW, bodyT + bodyH);
-    ctx.lineTo(bodyL, bodyT + bodyH);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(L + w * 0.275, T + h * 0.145);
+    ctx.lineTo(R - w * 0.275, T + h * 0.145);
+    ctx.lineTo(R - w * 0.215, T + h * 0.355);
+    ctx.lineTo(L + w * 0.215, T + h * 0.355);
+    ctx.closePath(); ctx.fill();
 
-    // 8) 排气管（底部两小圆，深灰）
-    ctx.fillStyle = '#3a3f4a';
-    ctx.beginPath(); ctx.arc(bodyL + bodyW * 0.30, bodyT + bodyH * 0.965, Math.max(1.5, carW * 0.018), 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(bodyL + bodyW * 0.70, bodyT + bodyH * 0.965, Math.max(1.5, carW * 0.018), 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(200,235,255,.16)';
+    ctx.beginPath();
+    ctx.moveTo(L + w * 0.26, T + h * 0.20);
+    ctx.lineTo(R - w * 0.26, T + h * 0.20);
+    ctx.lineTo(R - w * 0.245, T + h * 0.245);
+    ctx.lineTo(L + w * 0.245, T + h * 0.245);
+    ctx.closePath(); ctx.fill();
+
+    var bodyGrad = ctx.createLinearGradient(0, T + h * 0.36, 0, B);
+    bodyGrad.addColorStop(0, mainColor);
+    bodyGrad.addColorStop(0.42, mainColor);
+    bodyGrad.addColorStop(1, 'rgba(0,0,0,.55)');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.moveTo(L + w * 0.145, T + h * 0.375);
+    ctx.lineTo(R - w * 0.145, T + h * 0.375);
+    ctx.lineTo(R - w * 0.035, T + h * 0.845);
+    ctx.lineTo(L + w * 0.035, T + h * 0.845);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,.13)';
+    ctx.beginPath();
+    ctx.moveTo(L + w * 0.145, T + h * 0.375);
+    ctx.lineTo(L + w * 0.205, T + h * 0.375);
+    ctx.lineTo(L + w * 0.10, T + h * 0.845);
+    ctx.lineTo(L + w * 0.035, T + h * 0.845);
+    ctx.closePath(); ctx.fill();
+
+    var tailY = T + h * 0.545, tailH = h * 0.105, tlW = w * 0.30;
+    ctx.fillStyle = 'rgba(255,50,60,.35)';
+    roundRect(L + w * 0.085, tailY - h * 0.028, tlW + w * 0.02, tailH + h * 0.056, h * 0.05); ctx.fill();
+    roundRect(R - w * 0.085 - tlW - w * 0.02, tailY - h * 0.028, tlW + w * 0.02, tailH + h * 0.056, h * 0.05); ctx.fill();
+    var tailGrad = ctx.createLinearGradient(0, tailY, 0, tailY + tailH);
+    tailGrad.addColorStop(0, '#ff8a8a');
+    tailGrad.addColorStop(0.35, '#ff2b3a');
+    tailGrad.addColorStop(1, '#b80f1c');
+    ctx.fillStyle = tailGrad;
+    roundRect(L + w * 0.09, tailY, tlW, tailH, tailH * 0.42); ctx.fill();
+    roundRect(R - w * 0.09 - tlW, tailY, tlW, tailH, tailH * 0.42); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.fillRect(L + w * 0.105, tailY + tailH * 0.16, tlW * 0.72, tailH * 0.2);
+    ctx.fillRect(R - w * 0.09 - tlW + w * 0.015, tailY + tailH * 0.16, tlW * 0.72, tailH * 0.2);
+
+    ctx.fillStyle = '#e9eef7';
+    roundRect(midX - w * 0.105, T + h * 0.685, w * 0.21, h * 0.085, h * 0.014); ctx.fill();
+    ctx.fillStyle = '#1d2330';
+    ctx.fillRect(midX - w * 0.075, T + h * 0.712, w * 0.15, h * 0.032);
+
+    ctx.fillStyle = '#171a22';
+    roundRect(L + w * 0.045, T + h * 0.80, w * 0.91, h * 0.145, h * 0.03); ctx.fill();
+    ctx.fillStyle = '#0b0d12';
+    for (var di = 0; di < 5; di++) ctx.fillRect(L + w * 0.115 + di * w * 0.155, T + h * 0.845, w * 0.075, h * 0.085);
+
+    ctx.fillStyle = '#5a606c';
+    ctx.beginPath(); ctx.ellipse(L + w * 0.235, T + h * 0.925, w * 0.055, h * 0.026, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(R - w * 0.235, T + h * 0.925, w * 0.055, h * 0.026, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#0a0c11';
+    roundRect(L - w * 0.015, T + h * 0.62, w * 0.115, h * 0.32, w * 0.04); ctx.fill();
+    roundRect(R - w * 0.10, T + h * 0.62, w * 0.115, h * 0.32, w * 0.04); ctx.fill();
+    ctx.fillStyle = 'rgba(180,195,215,.22)';
+    roundRect(L + w * 0.012, T + h * 0.665, w * 0.06, h * 0.06, w * 0.02); ctx.fill();
+    roundRect(R - w * 0.073, T + h * 0.665, w * 0.06, h * 0.06, w * 0.02); ctx.fill();
+
+    ctx.fillStyle = mainColor;
+    roundRect(L + w * 0.075, T + h * 0.40, w * 0.085, h * 0.055, h * 0.02); ctx.fill();
+    roundRect(R - w * 0.16, T + h * 0.40, w * 0.085, h * 0.055, h * 0.02); ctx.fill();
+
+    // ── 起步喷尾焰 ──
+    if (p.boostTimer > 0) {
+      var flameLen = h * (0.28 + Math.random() * 0.16) * (p.boostPower > 1.3 ? 1.35 : 1);
+      var flameW = w * 0.19;
+      var fx = midX - flameW / 2;
+      var fy = B - h * 0.06;
+      var flameGrad = ctx.createLinearGradient(0, fy, 0, fy + flameLen);
+      var hot = p.boostPower > 1.3;
+      flameGrad.addColorStop(0, hot ? 'rgba(255,255,255,.95)' : 'rgba(255,240,200,.9)');
+      flameGrad.addColorStop(0.22, hot ? 'rgba(255,220,120,.9)' : 'rgba(255,180,90,.85)');
+      flameGrad.addColorStop(0.55, 'rgba(255,120,50,.6)');
+      flameGrad.addColorStop(1, 'rgba(255,60,20,0)');
+      ctx.fillStyle = flameGrad;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy);
+      ctx.quadraticCurveTo(fx + flameW * 0.2, fy + flameLen * 0.55, fx + flameW / 2, fy + flameLen);
+      ctx.quadraticCurveTo(fx + flameW * 0.8, fy + flameLen * 0.55, fx + flameW, fy);
+      ctx.closePath();
+      ctx.fill();
+      // 侧排气管火焰
+      ctx.fillStyle = hot ? 'rgba(160,220,255,.55)' : 'rgba(255,170,80,.45)';
+      ctx.beginPath();
+      ctx.ellipse(L + w * 0.235, T + h * 0.94, w * 0.06, h * (0.05 + Math.random() * 0.03), 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(R - w * 0.235, T + h * 0.94, w * 0.06, h * (0.05 + Math.random() * 0.03), 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.restore();
   }
