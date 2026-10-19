@@ -40,7 +40,8 @@
   body[data-theme='light'] .setlabel small{color:#5a7695}
   body[data-theme='light'] #settingsPanel{background:rgba(220,230,242,.9)}
   body[data-theme='light'] #lbPanel{background:rgba(40,80,140,.06);border-color:rgba(200,150,40,.35)}
-  body[data-theme='light'] #trackLabel{color:rgba(40,80,140,.5)}
+  #trackLabel{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:12;display:none;padding:4px 14px;border-radius:9px;background:rgba(6,12,22,.6);border:1px solid rgba(140,200,255,.25);font-size:11px;font-weight:800;letter-spacing:2px;color:#9dbdd8;backdrop-filter:blur(6px);white-space:nowrap;pointer-events:none}
+  body[data-theme='light'] #trackLabel{color:rgba(40,80,140,.5);background:rgba(255,255,255,.82)}
   body[data-theme='light'] .keys{color:#3a5570}
   body[data-theme='light'] .keys b{background:rgba(40,80,140,.1);border-color:rgba(40,80,140,.25);color:#12233a}
   body[data-theme='light'] .tip{color:#5a7695}
@@ -164,6 +165,7 @@
     .u{font-size:9px}
     .meta{font-size:10px}
     #pace{top:4px;padding:4px 12px}
+    #trackLabel{top:44px;font-size:10px;padding:3px 11px}
     #pace .ico{font-size:16px}
     #pace .txt{font-size:11.5px;letter-spacing:1px}
     #drift{right:8px;top:calc(50% - 34px)}
@@ -403,6 +405,7 @@
 </div>
 </div>
 </div>
+<div id="trackLabel"></div>
 <div id="msg"></div>
 <div id="pace"><div class="ico" id="paceIco">◀</div><div class="txt" id="paceTxt"></div></div>
 <div id="drift"><div class="lbl">DRIFT</div><div class="val" id="driftVal">0</div><div class="chain" id="driftChain"></div></div>
@@ -428,7 +431,11 @@
         <small style="display:block;font-size:9.5px;opacity:.6;margin-top:2px">同场竞技</small>
       </button>
     </div>
-    <button class="homeBtn" id="toSettingsHome" style="margin-top:14px"><span data-i18n="settings">设置</span></button>
+    <button class="homeBtn" id="homeDaily" style="margin-top:12px;padding:11px 16px;border-color:rgba(255,190,80,.45)">
+      <span style="font-size:16px;margin-right:6px">🎯</span><span style="font-size:13.5px;font-weight:900;letter-spacing:2px">今日挑战</span>
+      <small id="dailyInfo" style="display:block;font-size:9.5px;opacity:.68;margin-top:3px;letter-spacing:.5px"></small>
+    </button>
+    <button class="homeBtn" id="toSettingsHome" style="margin-top:12px"><span data-i18n="settings">设置</span></button>
     <a class="homeGit" href="https://github.com/gcy529/turbo-game" target="_blank" style="margin-top:16px;display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(140,200,255,.25);color:#9dbdd8;font-size:11.5px;font-weight:750;letter-spacing:.5px;text-decoration:none;transition:all .15s">⭐ github.com/gcy529/turbo-game</a>
     <div class="homeRow" style="margin-top:14px">
       <button class="homeMini" id="soundBtn" title="开启声音">🔇 开启声音</button>
@@ -3621,6 +3628,7 @@
     if (ov) ov.classList.add('hide');
     if (hb) hb.classList.remove('hide');
     updateHomeBest();
+    updateDailyInfo();
   }
   /* ================= 三步向导 ================= */
   var WIZ_STEP = 0, lastStep = null;
@@ -3678,6 +3686,7 @@
   }
 
   function randomAll() {
+    DAILY_MODE = false;
     // 随机车
     applyCar(CARS[Math.floor(Math.random() * CARS.length)].id);
     renderCarList();
@@ -3730,7 +3739,68 @@
     if (rnd) rnd.onclick = randomAll;
   }
 
+  /* ================= 每日挑战 ================= */
+  var DAILY_MODE = false;
+  function dailyKey() {
+    var d = new Date();
+    return 'turbo-daily-' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+  function dailySeed() {
+    var d = new Date();
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  }
+  function dailyRand(seed) {          // mulberry32：确定性随机
+    var t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  function dailyConfig() {
+    var s = dailySeed();
+    var carIds = ['street', 'beast', 'drift', 'tank'];
+    var mapIds = ['dusk', 'night', 'snow', 'desert'];
+    var wIds = ['clear', 'rain', 'fog', 'night'];
+    return {
+      car: carIds[Math.floor(dailyRand(s) * 4) % 4],
+      map: mapIds[Math.floor(dailyRand(s + 101) * 4) % 4],
+      weather: wIds[Math.floor(dailyRand(s + 202) * 4) % 4],
+      laps: 1
+    };
+  }
+  function loadDailyLb() {
+    try { var a = JSON.parse(localStorage.getItem(dailyKey())); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  }
+  function saveDailyLb(list) {
+    try { localStorage.setItem(dailyKey(), JSON.stringify(list.slice(0, 10))); } catch (e) {}
+  }
+  function dailyInfoText() {
+    var c = dailyConfig();
+    var carObj = CARS.find(function (x) { return x.id === c.car; }) || CARS[0];
+    var mapObj = MAP_LIST.find(function (x) { return x.id === c.map; }) || MAP_LIST[0];
+    var wObj = WEATHER_LIST.find(function (x) { return x.id === c.weather; }) || WEATHER_LIST[0];
+    var best = loadDailyLb()[0];
+    return carObj.icon + ' ' + mapObj.name + ' · ' + wObj.name + ' · 1圈' + (best ? ' ｜ 今日最佳 ' + formatTime(best.time) : ' ｜ 今日未挑战');
+  }
+  function updateDailyInfo() {
+    var el = document.getElementById('dailyInfo');
+    if (el) el.textContent = dailyInfoText();
+  }
+  function startDaily() {
+    var c = dailyConfig();
+    GAME_MODE = 'solo';
+    DAILY_MODE = true;
+    selectedCar = c.car;
+    applyCar(c.car);
+    selectedMap = c.map;
+    WEATHER = c.weather;
+    selectedLaps = 1; TOTAL_LAPS = 1;
+    applyModeUi();
+    renderModeList();
+    startRace();
+  }
+
   function startMode(mode) {
+    DAILY_MODE = false;
     GAME_MODE = mode;
     applyModeUi();
     renderModeList();
@@ -4287,6 +4357,7 @@
   }
 
   function quitToMenu() {
+    DAILY_MODE = false;
     running = false;
     paused = false;
     countdown = 0;
@@ -4593,6 +4664,12 @@
         date: Date.now()
       };
       submitScore(entry);
+      if (DAILY_MODE) {
+        var dl = loadDailyLb();
+        dl.push({ time: P1.finishTime, bestLap: P1.bestLap, drift: Math.round(P1.driftScore), ts: Date.now() });
+        dl.sort(function (a, b) { return a.time - b.time; });
+        saveDailyLb(dl);
+      }
       // 幽灵车：只有刷新最佳成绩才保存
       var prevBest = getBest(selectedMap);
       if (ghostFrames.length > 10 && (!prevBest || P1.finishTime <= prevBest.time)) {
@@ -4602,11 +4679,14 @@
     var panel = overlay.querySelector('.panel');
     if (GAME_MODE === 'solo') {
       var best = P1.bestLap > 0 ? fmt(P1.bestLap) : '--';
-      var lb = loadLeaderboard().filter(function(e){ return e.map === selectedMap; }).slice(0, 5);
+      var lb = DAILY_MODE ? loadDailyLb().slice(0, 5) : loadLeaderboard().filter(function(e){ return e.map === selectedMap; }).slice(0, 5);
       var lbHtml = lb.map(function(e, i) {
         var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '  ';
         var isMe = Math.abs(e.time - P1.finishTime) < 0.01;
-        return '<div style="' + (isMe ? 'color:#8ef7c8;font-weight:800;' : '') + '">' + medal + ' ' + formatTime(e.time) + ' · ' + e.laps + '圈' + (e.weather && e.weather !== 'clear' ? ' · ' + e.weather : '') + '</div>';
+        var line = DAILY_MODE
+          ? (formatTime(e.time) + ' · 漂移 ' + (e.drift || 0))
+          : (formatTime(e.time) + ' · ' + e.laps + '圈' + (e.weather && e.weather !== 'clear' ? ' · ' + e.weather : ''));
+        return '<div style="' + (isMe ? 'color:#8ef7c8;font-weight:800;' : '') + '">' + medal + ' ' + line + '</div>';
       }).join('') || '<div style="color:#6f8db0">暂无记录</div>';
       panel.innerHTML = '<div class="title">完成！</div>' +
         '<div class="sub">R A C E &nbsp; F I N I S H E D</div>' +
@@ -4615,7 +4695,7 @@
         '<div style="margin-top:6px;font-size:14px;color:#9dbdd8">最快单圈 ' + best + ' 秒 · 漂移 ' + Math.round(P1.driftScore) + '</div>' +
         '</div>' +
         '<div style="margin:14px 0;padding:11px 15px;border-radius:11px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28);text-align:left;max-width:300px">' +
-        '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px">🏆 本图排行榜</div>' +
+        '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px">' + (DAILY_MODE ? '🎯 今日挑战排行 · 0 点重置' : '🏆 本图排行榜') + '</div>' +
         '<div style="font-size:12.5px;color:#cfe4f7;line-height:1.85">' + lbHtml + '</div>' +
         '</div>' +
         '<div style="display:flex;gap:9px;justify-content:center">' +
@@ -4774,7 +4854,7 @@
     if (elTrackLabel) {
       var tname = selectedMap === 'custom' ? (TRACK_NAME || '我的赛道') :
         (MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || '';
-      elTrackLabel.textContent = tname;
+      elTrackLabel.textContent = DAILY_MODE ? ('🎯 今日挑战 · ' + tname) : tname;
       elTrackLabel.style.display = 'block';
     }
   }
@@ -4878,6 +4958,9 @@
     // 首页按钮 + 语言 + 主题（只绑定一次）
     var tb1 = document.getElementById('toSetup');
     if (tb1) tb1.addEventListener('click', goSetup);
+    var hdly = document.getElementById('homeDaily');
+    if (hdly) hdly.addEventListener('click', startDaily);
+    updateDailyInfo();
     var hs = document.getElementById('homeSolo');
     if (hs) hs.addEventListener('click', function () { startMode('solo'); });
     var hd = document.getElementById('homeDuo');
@@ -4907,6 +4990,16 @@
   window.__T = {
     view: function () { try { return { CAM_VIEW: CAM_VIEW, params: viewParams() }; } catch (e) { return { err: String(e) }; } },
     setView: function (v) { try { setView(v); return true; } catch (e) { return String(e); } },
+    daily: function () { try { return { mode: DAILY_MODE, cfg: dailyConfig(), lb: loadDailyLb() }; } catch (e) { return { err: String(e) }; } },
+    finishSolo: function (t) {
+      try {
+        P1.finished = true;
+        P1.finishTime = t || 42.5;
+        P1.bestLap = P1.finishTime;
+        onPlayerFinish(P1);
+        return true;
+      } catch (e) { return String(e); }
+    },
     state: function () {
       try {
         return {
