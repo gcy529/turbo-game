@@ -411,6 +411,10 @@
         <button class="bsbtn" data-bs="right" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">➡ 右边</button>
       </div>
 
+    <div class="setrow">
+      <div class="setlabel">像素风画质<small>复古像素渲染 · 更流畅</small></div>
+      <div class="toggle" id="tgPixel"></div>
+    </div>
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div class="setlabel">视角<small>1 驾驶舱 / 2 贴地 / 3 俯瞰</small></div>
       <div style="display:flex;gap:7px">
@@ -555,11 +559,17 @@
 
   function resize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
+    if (CFG.pixelArt) DPR = Math.max(0.32, DPR / 3.2);   // 像素风：低分辨率渲染
     W = canvas.clientWidth || window.innerWidth;
     H = canvas.clientHeight || window.innerHeight;
     canvas.width = Math.round(W * DPR);
     canvas.height = Math.round(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.imageSmoothingEnabled = !CFG.pixelArt;            // 像素风：硬边放大
+  }
+  function applyPixelMode() {
+    ctx.imageSmoothingEnabled = !CFG.pixelArt;
+    resize();
   }
 
   var SEG_LEN = 200;
@@ -2519,6 +2529,13 @@
     var targetAngle = p.drift * p.driftDir * 0.30;
     p.driftAngle += (targetAngle - p.driftAngle) * Math.min(1, dt * 7);
 
+    // ── 倒车（双击手刹触发）──
+    if (p.reverseTimer > 0) {
+      p.reverseTimer -= dt;
+      p.speed = Math.max(REVERSE_MAX * 0.75, p.speed - MAX_SPEED * 1.2 * dt);
+      p.drift = 0; p.driftChain = 0;
+    }
+
     // ── 速度：自动加速 / 手动刹车 / 后退 ──
     if (inp.brake) {
       // 刹车：先减速，速度归零后开始后退
@@ -2573,7 +2590,7 @@
       if (treeSeg && treeSeg.sprites) {
         for (var tsi = 0; tsi < treeSeg.sprites.length; tsi++) {
           var tsp = treeSeg.sprites[tsi];
-          if (tsp.type === 'tree' && !tsp.fallen && Math.abs(tsp.offset - p.playerX) < 0.55) {
+          if (tsp.type === 'tree' && !tsp.fallen && Math.abs(tsp.offset - p.playerX) < 0.40) {
             tsp.fallen = 1;              // 倒下
             tsp.fallDir = (tsp.offset > p.playerX ? 1 : -1);
             tsp.fallProgress = 0;
@@ -2595,8 +2612,8 @@
       if (pedSeg && pedSeg.sprites) {
         for (var psi = 0; psi < pedSeg.sprites.length; psi++) {
           var sp = pedSeg.sprites[psi];
-          if (sp.type === 'crowd' && sp.standing && Math.abs(sp.offset - p.playerX) < 0.72) {
-            // 撞到行人：倒地 + 番茄汁
+          if (sp.type === 'crowd' && sp.standing && Math.abs(sp.offset - p.playerX) < 0.46) {
+            // 撞到行人：倒地 + 番茄汁（判定收窄）
             sp.standing = false;
             sp.knocked = 1.0;       // 倒地动画计时
             sp.knockDir = (sp.offset > p.playerX ? 1 : -1);
@@ -2604,7 +2621,7 @@
             p.hitPedestrians++;
             p.speed *= 0.86;        // 轻微减速
             p.shake = Math.max(p.shake, 0.5);
-            playSplatSound();
+            if (typeof playSplatSound === 'function') playSplatSound();
             flashTip('撞到行人！');
           }
         }
@@ -2746,13 +2763,27 @@
       var dz = car.z - playerWorldZ;
       if (dz > trackLength / 2) dz -= trackLength;
       if (dz < -trackLength / 2) dz += trackLength;
-      if (Math.abs(dz) < 280 && Math.abs(car.offset - p.playerX) < 0.27) {
+      if (Math.abs(dz) < 280 && Math.abs(car.offset - p.playerX) < 0.19) {   // 收窄：贴边并行不再误判
         var impactSpeed = Math.abs(p.speed - car.speed);
         var isOncoming = car.oncoming === true;
 
         // ── 对向车撞击：只有玩家逆行（走左侧车道）才被撞飞 ──
         var playerOnWrongSide = p.playerX < -0.05;   // 玩家在左侧 = 逆行
-        if (isOncoming && playerOnWrongSide && CAR.id !== 'tank') {
+        var padRampage = (p.padBoost > 0.15);          // 加速带冲撞状态：无敌撞飞
+        if (padRampage && car.speed !== undefined) {
+          // ── 加速带冲撞：任何车（含对向）都被撞飞，自己只轻微减速 ──
+          car.wreck = 1.8;
+          car.wreckVel = Math.max(impactSpeed, MAX_SPEED * 0.8) * 1.5;
+          car.wreckSide = (car.offset >= p.playerX ? 1 : -1) * (1.6 + Math.random() * 0.9);
+          car.wreckSpin = (Math.random() > 0.5 ? 1 : -1) * 5;
+          car.speed *= 0.05;
+          p.speed *= 0.93;                    // 冲撞代价极小
+          p.padShake = Math.max(p.padShake, 0.7);
+          p.shake = Math.max(p.shake, 0.6);
+          p.driftScore += 200;                // 冲撞奖励
+          playCrash();
+          flashTip('💥 冲撞！');
+        } else if (isOncoming && playerOnWrongSide && CAR.id !== 'tank') {
           p.launchVel = Math.min(MAX_SPEED * 0.95, impactSpeed * 1.1);
           p.launchSide = (p.playerX >= car.offset ? 1 : -1) * (0.8 + Math.random() * 0.7);
           p.tumble = 1.5;
@@ -3858,7 +3889,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right' };  // 默认静音;  // 幽灵车默认关（有重影）
+  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: false, brakeMode: 'brake', brakeSide: 'right', pixelArt: false };  // 默认静音;  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 1;   // 默认贴地视角
   var VIEW_LIST = [
@@ -4184,6 +4215,8 @@
     if (tm) tm.className = 'toggle' + (CFG.manualGas ? ' on' : '');
     var tgh = document.getElementById('tgGhost');
     if (tgh) tgh.className = 'toggle' + (CFG.ghost ? ' on' : '');
+    var tp = document.getElementById('tgPixel');
+    if (tp) tp.className = 'toggle' + (CFG.pixelArt ? ' on' : '');
     updateAutoUI();
   }
 
@@ -4371,6 +4404,14 @@
     if (tmm) tmm.onclick = function () { CFG.manualGas = !CFG.manualGas; syncToggles(); flashTip(CFG.manualGas ? '手动挡：按住加速键才走' : '自动挡：自动加速'); };
     var tghost = document.getElementById('tgGhost');
     if (tghost) tghost.onclick = function () { CFG.ghost = !CFG.ghost; syncToggles(); };
+    var tpix = document.getElementById('tgPixel');
+    if (tpix) tpix.onclick = function () {
+      CFG.pixelArt = !CFG.pixelArt;
+      syncToggles();
+      applyPixelMode();
+      flashTip(CFG.pixelArt ? '🎨 像素风开启' : '画质已恢复高清');
+      try { localStorage.setItem('turbo-racer-pixel', CFG.pixelArt ? '1' : '0'); } catch (e) {}
+    };
     // 视角按钮
 
     // 手刹左右选择
@@ -4771,6 +4812,7 @@
     };
   }
 
+  var lastKeyBrake = 0;
   function onKeyDown(e) {
     // 设置面板打开时：Esc 关闭
     if (e.code === 'Escape' && elSetPanel.classList.contains('on')) { closeSettings(); e.preventDefault(); return; }
@@ -4779,6 +4821,11 @@
     if (CFG.auto && m && m[1] !== 'launch') { e.preventDefault(); return; }
     if (m) {
       var side = m[0], action = m[1];
+      if (action === 'brake') {
+        var nb = performance.now();
+        if (nb - lastKeyBrake < 300) { var kp = side === 'p1' ? P1 : P2; if (kp && !kp.finished) { kp.reverseTimer = 1.1; flashTip('⬇ 倒车！'); } lastKeyBrake = 0; }
+        else lastKeyBrake = nb;
+      }
       if (action === 'launch') {
         // 起步键：倒计时期间触发起步喷
         pressLaunch(side === 'p1' ? P1 : P2);
@@ -4806,10 +4853,28 @@
     }
   }
 
+  // 双击手刹 = 倒车（300ms 内两次）
+  var lastBrakeTap = { p1: 0, p2: 0 };
+  function handleBrakeTap(side) {
+    var now = performance.now();
+    if (now - (lastBrakeTap[side] || 0) < 300) {
+      var p = side === 'p1' ? P1 : P2;
+      if (p && !p.finished) {
+        p.reverseTimer = 1.1;              // 倒车 1.1 秒
+        flashTip('⬇ 倒车！');
+      }
+      lastBrakeTap[side] = 0;
+    } else lastBrakeTap[side] = now;
+  }
+
   function bindTouch(id, side, key) {
     var el = document.getElementById(id);
     if (!el) return;
-    var set = function (v) { return function (ev) { input[side][key] = v; ev.preventDefault(); }; };
+    var set = function (v) { return function (ev) {
+      input[side][key] = v;
+      if (key === 'brake' && v) handleBrakeTap(side);   // 手刹按下时检测双击
+      ev.preventDefault();
+    }; };
     el.addEventListener('pointerdown', set(true), { passive: false });
     el.addEventListener('pointerup', set(false), { passive: false });
     el.addEventListener('pointercancel', set(false), { passive: false });
@@ -4933,6 +4998,8 @@
     try {
       var _snd = localStorage.getItem('turbo-racer-sound');
       if (_snd === '1') { CFG.sfx = true; CFG.bgm = true; }
+      var _px = localStorage.getItem('turbo-racer-pixel');
+      if (_px === '1') { CFG.pixelArt = true; setTimeout(applyPixelMode, 50); }
       else { CFG.sfx = false; CFG.bgm = false; }
     } catch (e) {}
     try {
@@ -5047,6 +5114,11 @@
           cfx: { sfx: CFG.sfx, bgm: CFG.bgm, brakeMode: CFG.brakeMode, brakeSide: CFG.brakeSide },
           fps: document.getElementById('fpsBox') ? document.getElementById('fpsBox').textContent : '',
           zoomPunch: P1 ? Number((P1.zoomPunch || 0).toFixed(3)) : 0,
+          reverseTimer: P1 ? Number((P1.reverseTimer || 0).toFixed(2)) : 0,
+          padBoost: P1 ? Number((P1.padBoost || 0).toFixed(2)) : 0,
+          pixelArt: !!CFG.pixelArt,
+          smoothing: ctx.imageSmoothingEnabled,
+          canvasW: canvas.width,
           padBoost: P1 ? Number((P1.padBoost || 0).toFixed(2)) : 0,
           padShake: P1 ? Number((P1.padShake || 0).toFixed(2)) : 0,
           drift: P1 ? Number((P1.drift || 0).toFixed(2)) : 0,
