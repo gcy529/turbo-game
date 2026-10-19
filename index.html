@@ -2074,95 +2074,98 @@
 
     var mainColor = p.hue;
 
-    // ── 俯视小车（截图风格）：4 突出黑轮 + 圆角车身 + 挡风玻璃 + 车顶 + 尾灯 ──
+    // ── 追尾视角（看车屁股）：后保险杠 + 尾灯 + 后挡风 + 车顶 + 后轮 ──
     var carW = w, carH = h;
-    var bodyL = L + carW * 0.06, bodyT = T + carH * 0.06;
-    var bodyW = carW * 0.88, bodyH = carH * 0.88;
-    var rr = Math.min(bodyW, bodyH) * 0.24;   // 圆角半径
+    var bodyL = L + carW * 0.05, bodyT = T + carH * 0.04;
+    var bodyW = carW * 0.90, bodyH = carH * 0.92;
+    var rr = Math.min(bodyW, bodyH) * 0.18;
 
-    // 1) 四个轮子（黑色，突出于车身四角）
-    var wheelR = Math.min(bodyW, bodyH) * 0.16;
-    var wOff = bodyW * 0.44, hOff = bodyH * 0.40;
-    var wcx = bodyL + bodyW / 2, wcy = bodyT + bodyH / 2;
+    // 1) 两侧后轮（黑色，从车身两侧突出，只露上半）
+    var wheelR = Math.min(bodyW, bodyH) * 0.155;
     ctx.fillStyle = '#171a22';
-    var wheels = [[wcx - wOff, wcy - hOff], [wcx + wOff, wcy - hOff], [wcx - wOff, wcy + hOff], [wcx + wOff, wcy + hOff]];
-    for (var wi = 0; wi < 4; wi++) {
-      ctx.beginPath();
-      ctx.arc(wheels[wi][0], wheels[wi][1], wheelR, 0, Math.PI * 2);
-      ctx.fill();
-      // 轮毂高光
-      ctx.fillStyle = 'rgba(200,210,225,.28)';
-      ctx.beginPath();
-      ctx.arc(wheels[wi][0], wheels[wi][1], wheelR * 0.42, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#171a22';
-    }
+    ctx.beginPath(); ctx.arc(bodyL - carW * 0.01, bodyT + bodyH * 0.78, wheelR, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bodyL + bodyW + carW * 0.01, bodyT + bodyH * 0.78, wheelR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(200,210,225,.25)';
+    ctx.beginPath(); ctx.arc(bodyL - carW * 0.01, bodyT + bodyH * 0.78, wheelR * 0.45, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bodyL + bodyW + carW * 0.01, bodyT + bodyH * 0.78, wheelR * 0.45, 0, Math.PI * 2); ctx.fill();
 
-    // 2) 车身（圆角矩形，车色）
-    roundRectPath(ctx, bodyL, bodyT, bodyW, bodyH, rr);
+    // 2) 车身主体（后宽前窄的梯形感：底部宽=保险杠，向上略收=引擎盖远去）
     ctx.fillStyle = mainColor;
+    ctx.beginPath();
+    ctx.moveTo(bodyL, bodyT + bodyH * 0.18);
+    ctx.lineTo(bodyL + bodyW * 0.055, bodyT);          // 左肩
+    ctx.lineTo(bodyL + bodyW * 0.945, bodyT);          // 右肩（顶部窄）
+    ctx.lineTo(bodyL + bodyW, bodyT + bodyH * 0.18);
+    ctx.lineTo(bodyL + bodyW, bodyT + bodyH);          // 右底
+    ctx.lineTo(bodyL, bodyT + bodyH);                  // 左底（底部宽=后保险杠）
+    ctx.closePath();
     ctx.fill();
-    // 车身描边（深色勾边，像素图感）
-    ctx.strokeStyle = 'rgba(0,0,0,.35)';
+    // 勾边
+    ctx.strokeStyle = 'rgba(0,0,0,.32)';
     ctx.lineWidth = Math.max(1, carW * 0.012);
     ctx.stroke();
 
-    // 3) 车身渐变高光（上浅下深，立体感）
-    var bodyGrad = ctx.createLinearGradient(0, bodyT, 0, bodyT + bodyH);
-    bodyGrad.addColorStop(0, 'rgba(255,255,255,.30)');
-    bodyGrad.addColorStop(0.5, 'rgba(255,255,255,.04)');
-    bodyGrad.addColorStop(1, 'rgba(0,0,0,.20)');
-    roundRectPath(ctx, bodyL, bodyT, bodyW, bodyH, rr);
-    ctx.fillStyle = bodyGrad;
+    // 3) 后保险杠（底部深色横条）
+    ctx.fillStyle = 'rgba(0,0,0,.28)';
+    roundRectPath(ctx, bodyL + bodyW * 0.03, bodyT + bodyH * 0.80, bodyW * 0.94, bodyH * 0.185, rr * 0.5);
     ctx.fill();
 
-    // 4) 挡风玻璃（前部，浅蓝梯形）
-    var glassT = bodyT + bodyH * 0.13;
-    var glassB = bodyT + bodyH * 0.42;
-    var glassL = bodyL + bodyW * 0.16, glassR = bodyL + bodyW * 0.84;
-    ctx.fillStyle = 'rgba(165,215,250,.88)';
-    roundRectPath(ctx, glassL, glassT, glassR - glassL, glassB - glassT, rr * 0.35);
+    // 4) 红色双尾灯（横贯式，追尾视角的灵魂）
+    ctx.fillStyle = '#ff3344';
+    roundRectPath(ctx, bodyL + bodyW * 0.08, bodyT + bodyH * 0.72, bodyW * 0.84, bodyH * 0.085, rr * 0.4);
+    ctx.fill();
+    // 尾灯发光（夜间加强）
+    var tailGlow = WEATHER === 'night' ? 0.55 : 0.22;
+    var tg = ctx.createLinearGradient(0, bodyT + bodyH * 0.60, 0, bodyT + bodyH * 0.85);
+    tg.addColorStop(0, 'rgba(255,51,68,0)');
+    tg.addColorStop(1, 'rgba(255,51,68,' + tailGlow + ')');
+    ctx.fillStyle = tg;
+    ctx.fillRect(bodyL, bodyT + bodyH * 0.60, bodyW, bodyH * 0.25);
+
+    // 5) 后挡风玻璃（中上部，梯形，略反光）
+    ctx.fillStyle = 'rgba(150,205,245,.82)';
+    ctx.beginPath();
+    ctx.moveTo(bodyL + bodyW * 0.14, bodyT + bodyH * 0.40);
+    ctx.lineTo(bodyL + bodyW * 0.86, bodyT + bodyH * 0.40);
+    ctx.lineTo(bodyL + bodyW * 0.80, bodyT + bodyH * 0.66);
+    ctx.lineTo(bodyL + bodyW * 0.20, bodyT + bodyH * 0.66);
+    ctx.closePath();
+    ctx.fill();
+    // 玻璃反光斜条
+    ctx.fillStyle = 'rgba(255,255,255,.30)';
+    ctx.beginPath();
+    ctx.moveTo(bodyL + bodyW * 0.22, bodyT + bodyH * 0.40);
+    ctx.lineTo(bodyL + bodyW * 0.36, bodyT + bodyH * 0.40);
+    ctx.lineTo(bodyL + bodyW * 0.30, bodyT + bodyH * 0.66);
+    ctx.lineTo(bodyL + bodyW * 0.18, bodyT + bodyH * 0.66);
+    ctx.closePath();
     ctx.fill();
 
-    // 5) 车顶（中后部，同色加深）
-    var roofT = glassB + bodyH * 0.05;
-    var roofB = bodyT + bodyH * 0.82;
-    ctx.fillStyle = 'rgba(0,0,0,.20)';
-    roundRectPath(ctx, glassL + bodyW * 0.02, roofT, glassR - glassL - bodyW * 0.04, roofB - roofT, rr * 0.4);
-    ctx.fill();
-    // 车顶反光条
-    ctx.fillStyle = 'rgba(255,255,255,.14)';
-    roundRectPath(ctx, glassL + bodyW * 0.10, roofT + (roofB - roofT) * 0.18, glassR - glassL - bodyW * 0.20, (roofB - roofT) * 0.30, rr * 0.2);
+    // 6) 车顶（最上部，车色加深）
+    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    roundRectPath(ctx, bodyL + bodyW * 0.10, bodyT + bodyH * 0.02, bodyW * 0.80, bodyH * 0.30, rr * 0.6);
     ctx.fill();
 
-    // 6) 尾灯（两点红）
-    ctx.fillStyle = '#ff4d5e';
-    ctx.fillRect(bodyL + bodyW * 0.04, bodyT + bodyH * 0.30, bodyW * 0.05, bodyH * 0.13);
-    ctx.fillRect(bodyL + bodyW * 0.04, bodyT + bodyH * 0.57, bodyW * 0.05, bodyH * 0.13);
-    // 尾灯光晕（夜间亮）
-    if (WEATHER === 'night') {
-      ctx.fillStyle = 'rgba(255,77,94,.35)';
-      ctx.fillRect(bodyL - bodyW * 0.03, bodyT + bodyH * 0.26, bodyW * 0.10, bodyH * 0.48);
-    }
+    // 7) 车顶渐变高光（上亮下暗，立体感）
+    var roofG = ctx.createLinearGradient(0, bodyT, 0, bodyT + bodyH);
+    roofG.addColorStop(0, 'rgba(255,255,255,.30)');
+    roofG.addColorStop(0.6, 'rgba(255,255,255,.02)');
+    roofG.addColorStop(1, 'rgba(0,0,0,.22)');
+    ctx.fillStyle = roofG;
+    ctx.beginPath();
+    ctx.moveTo(bodyL, bodyT + bodyH * 0.18);
+    ctx.lineTo(bodyL + bodyW * 0.055, bodyT);
+    ctx.lineTo(bodyL + bodyW * 0.945, bodyT);
+    ctx.lineTo(bodyL + bodyW, bodyT + bodyH * 0.18);
+    ctx.lineTo(bodyL + bodyW, bodyT + bodyH);
+    ctx.lineTo(bodyL, bodyT + bodyH);
+    ctx.closePath();
+    ctx.fill();
 
-    // 7) 车头灯（前缘两小条，浅黄）
-    ctx.fillStyle = '#fff3c4';
-    ctx.fillRect(bodyL + bodyW * 0.10, bodyT + bodyH * 0.015, bodyW * 0.28, bodyH * 0.035);
-    ctx.fillRect(bodyL + bodyW * 0.62, bodyT + bodyH * 0.015, bodyW * 0.28, bodyH * 0.035);
-    // 夜间车灯光锥
-    if (WEATHER === 'night') {
-      var beam = ctx.createLinearGradient(bodyL, bodyT, bodyL, bodyT - bodyH * 0.55);
-      beam.addColorStop(0, 'rgba(255,240,190,.30)');
-      beam.addColorStop(1, 'rgba(255,240,190,0)');
-      ctx.fillStyle = beam;
-      ctx.beginPath();
-      ctx.moveTo(bodyL + bodyW * 0.14, bodyT);
-      ctx.lineTo(bodyL + bodyW * 0.86, bodyT);
-      ctx.lineTo(bodyL + bodyW * 1.05, bodyT - bodyH * 0.55);
-      ctx.lineTo(bodyL - bodyW * 0.05, bodyT - bodyH * 0.55);
-      ctx.closePath();
-      ctx.fill();
-    }
+    // 8) 排气管（底部两小圆，深灰）
+    ctx.fillStyle = '#3a3f4a';
+    ctx.beginPath(); ctx.arc(bodyL + bodyW * 0.30, bodyT + bodyH * 0.965, Math.max(1.5, carW * 0.018), 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bodyL + bodyW * 0.70, bodyT + bodyH * 0.965, Math.max(1.5, carW * 0.018), 0, Math.PI * 2); ctx.fill();
 
     ctx.restore();
   }
