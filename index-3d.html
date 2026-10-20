@@ -240,10 +240,16 @@ function makeCar(color) {
   var wMat = new THREE.MeshStandardMaterial({ color: 0x0c0e13, roughness: 0.9 });
   var wheels = [];
   for (var wx = -1; wx <= 1; wx += 2) for (var wz = -1; wz <= 1; wz += 2) {
+    var wg = new THREE.Group();
+    wg.position.set(wx * 0.98, 0.48, wz * 1.42);
     var w = new THREE.Mesh(wGeo, wMat);
-    w.rotation.z = Math.PI / 2; w.position.set(wx * 0.98, 0.48, wz * 1.42);
-    w.castShadow = true; g.add(w); wheels.push(w);
+    w.rotation.z = Math.PI / 2;
+    wg.add(w);
+    wg.castShadow = true;
+    g.add(wg);
+    wheels.push(w);
   }
+  g.userData.wheelGroups = wheels.map(function (m) { return m.parent; });
   g.userData.wheels = wheels;
   return g;
 }
@@ -259,7 +265,7 @@ function spawnNpcs() {
   }
 }
 spawnNpcs();
-var player = { t: 0, lateral: 0.15, speed: 0, MAX_SPEED: 96, lap: 1, totalLaps: 2, lastT: 0, finished: false, finishTime: 0 };
+var player = { t: 0, lateral: 0.15, speed: 0, MAX_SPEED: 96, lap: 1, totalLaps: 2, lastT: 0, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0 };
 var running = false, paused = false, camMode = 0, raceStart = 0, lapStart = 0, shake = 0, clock = 0;
 var AUTO_GAS = true;    // 自动加速（和 2D 一致）
 var INVERT = true;      // 模式开关（默认 A）
@@ -352,14 +358,22 @@ function update(dt) {
     } else setMsg("第 " + (player.lap - 1) + " 圈 " + lapT.toFixed(2) + "s", 1.6);
   }
   player.lastT = tp;
+  // 碰撞冷却（防连续砍速）
+  if (player.hitCooldown > 0) player.hitCooldown -= dt;
   for (var i = 0; i < npcs.length; i++) {
     var n = npcs[i];
     n.t += (n.speed * dt) / trackLen;
     if (n.t > 1) n.t -= 1; if (n.t < 0) n.t += 1;
     var dtl = Math.abs(((n.t - player.t + 0.5 + 1) % 1) - 0.5);
-    if (dtl < 0.006 && Math.abs(n.lateral - player.lateral) < 0.62) {
-      player.speed *= 0.45;
-      n.lateral += (n.lateral > player.lateral ? 1 : -1) * 0.5;
+    if (player.hitCooldown <= 0 && dtl < 0.006 && Math.abs(n.lateral - player.lateral) < 0.62) {
+      // 温和减速（不砍比例，不被卡死）
+      player.speed = Math.max(0, player.speed - 40);
+      // 把玩家和 NPC 都弹开一点，NPC 不会继续压着
+      var pushDir = n.lateral > player.lateral ? -1 : 1;
+      n.lateral += pushDir * 0.5;
+      player.lateral -= pushDir * 0.35;
+      player.smashCount = (player.smashCount || 0) + 1;
+      player.hitCooldown = 0.8;
       setMsg("碰撞！", 0.8); shake = Math.max(shake, 0.6);
     }
   }
@@ -398,7 +412,10 @@ function frame(ts) {
   playerCar.lookAt(look.x, pp.pos.y + 0.05, look.z);
   playerCar.rotation.z = ((input.left ? 0.05 : 0) + (input.right ? -0.05 : 0)) * (INVERT ? -1 : 1);
   var ws2 = playerCar.userData.wheels || [];
-  for (var w = 0; w < ws2.length; w++) ws2[w].rotation.x += player.speed * dt * 1.6;
+  for (var w = 0; w < ws2.length; w++) {
+    var wg2 = ws2[w].parent;
+    if (wg2) wg2.rotation.y += player.speed * dt * 1.6;
+  }
   var camH, camDist;
   if (camMode === 1) { camH = 1.7; camDist = 1.2; }
   else if (camMode === 2) { camH = 8.5; camDist = 15; }
@@ -418,7 +435,10 @@ function frame(ts) {
     var dir = n.oncoming ? np.tan.clone().multiplyScalar(-1) : np.tan;
     n.mesh.lookAt(np.pos.x + dir.x, np.pos.y, np.pos.z + dir.z);
     var nw = n.mesh.userData.wheels || [];
-    for (var k = 0; k < nw.length; k++) nw[k].rotation.x += n.speed * dt * 1.6;
+    for (var k = 0; k < nw.length; k++) {
+      var ng = nw[k].parent;
+      if (ng) ng.rotation.y += n.speed * dt * 1.6;
+    }
   }
   sun.position.set(pp.pos.x + 90, pp.pos.y + 140, pp.pos.z + 60);
   sun.target.position.copy(pp.pos);

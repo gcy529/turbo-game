@@ -468,6 +468,10 @@
       <div class="setlabel">智驾<small>AI 跑完美路线，供学习参考</small></div>
       <div class="toggle" id="tgAuto"></div>
     </div>
+    <div class="setrow">
+      <div class="setlabel">倾斜转向<small>手机陀螺仪：倾斜车身左右转向</small></div>
+      <div class="toggle" id="tgGyro"></div>
+    </div>
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div class="setlabel">手刹位置<small>刹车/漂移键放哪边</small></div>
       <div style="display:flex;gap:7px;margin-bottom:9px">
@@ -547,6 +551,28 @@
     <!-- ② 选赛道 -->
     <div class="tabPane" data-pane="track" style="display:none">
       <div class="maps" id="mapList"></div>
+      <!-- 赛道编辑器（选中"自定义赛道"时显示） -->
+      <div id="customPanel" style="display:none;margin:12px auto 0;width:100%;max-width:440px;padding:12px;border-radius:12px;background:rgba(140,200,255,.05);border:1px solid rgba(140,200,255,.18)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:850;letter-spacing:1px;color:#8fd8ff">⚙ 赛道编辑器</span>
+          <span style="font-size:10.5px;color:#6f8db0" id="planCount">0</span><span style="font-size:10.5px;color:#6f8db0">/16</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px">
+          <button class="planbtn" data-t="straight">─ 直道</button>
+          <button class="planbtn" data-t="left">◀ 左弯</button>
+          <button class="planbtn" data-t="right">▶ 右弯</button>
+          <button class="planbtn" data-t="hill">▲ 坡道</button>
+          <button class="planbtn" data-t="s_curve">〜 S弯</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="cdbtn" id="btnUndo" style="flex:1;padding:7px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.25);color:#9dbdd8;font-size:11px;font-weight:800;cursor:pointer">↩ 撤销</button>
+          <button class="cdbtn" id="btnClear" style="flex:1;padding:7px;border-radius:8px;background:rgba(255,90,110,.1);border:1px solid rgba(255,110,130,.35);color:#ffc8d0;font-size:11px;font-weight:800;cursor:pointer">🗑 清空</button>
+          <button class="cdbtn" id="btnRandom" style="flex:1;padding:7px;border-radius:8px;background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.4);color:#ffd166;font-size:11px;font-weight:800;cursor:pointer">🎲 随机</button>
+        </div>
+        <div id="planList" style="max-height:110px;overflow-y:auto;padding:6px;border-radius:8px;background:rgba(10,18,34,.45);margin-bottom:8px"></div>
+        <input id="trackName" type="text" maxlength="12" value="我的赛道"
+          style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;background:rgba(10,18,34,.6);border:1px solid rgba(140,200,255,.25);color:#cfe4f7;font-size:12px;font-weight:700;outline:none" />
+      </div>
     </div>
 
     <!-- ③ 出发 -->
@@ -2567,6 +2593,69 @@
     return out;
   }
 
+  /* ================= 陀螺仪倾斜转向 ================= */
+  // GYRO.steer = 平滑后的转向量 [-1,1]；base = 开启瞬间的手机姿态零点
+  var GYRO = { steer: 0, raw: 0, base: null, armed: false, heard: 0 };
+
+  function gyroAxisValue(e) {
+    // 竖屏用 gamma（左右倾斜），横屏用 beta（前后倾斜映射到左右）
+    var landscape = false;
+    try { landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches; } catch (err) {}
+    if (landscape) return e.beta !== null ? e.beta : 0;
+    return e.gamma !== null ? e.gamma : 0;
+  }
+
+  function onGyroEvent(e) {
+    if (e.gamma === null && e.beta === null) return;
+    GYRO.heard++;
+    var v = gyroAxisValue(e);
+    if (GYRO.base === null) GYRO.base = v;          // 首帧定零点
+    GYRO.raw = v - GYRO.base;
+  }
+
+  function gyroTick(dt) {
+    if (!CFG.gyro || !GYRO.armed) { GYRO.steer *= Math.max(0, 1 - dt * 8); return; }
+    // 低通滤波：手感顺滑不抖
+    GYRO.steer += (GYRO.raw - GYRO.steer) * Math.min(1, dt * 9);
+    if (Math.abs(GYRO.steer) < 0.04) GYRO.steer = 0;
+  }
+  // 满偏角：倾斜 28° = 打满方向盘
+  function gyroSteerInput() {
+    if (!CFG.gyro || !GYRO.armed) return 0;
+    return Math.max(-1, Math.min(1, GYRO.steer / 28));
+  }
+
+  function gyroAvailable() {
+    return typeof window.DeviceOrientationEvent !== 'undefined';
+  }
+
+  // 开启陀螺仪：iOS 13+ 需要用户手势里请求权限
+  function enableGyro() {
+    if (!gyroAvailable()) { flashTip('此设备不支持陀螺仪'); return false; }
+    var arm = function () {
+      GYRO.armed = true; GYRO.base = null; GYRO.raw = 0; GYRO.steer = 0;
+      window.removeEventListener('deviceorientation', onGyroEvent, true);
+      window.addEventListener('deviceorientation', onGyroEvent, true);
+      flashTip('倾斜手机转向（当前姿态=中点）');
+    };
+    if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+      // iOS 13+：必须在用户手势内同步调用
+      var p = window.DeviceOrientationEvent.requestPermission();
+      if (p && p.then) p.then(function (res) {
+        if (res === 'granted') arm();
+        else { CFG.gyro = false; syncToggles(); flashTip('未授权，陀螺仪没开成'); }
+      }).catch(function () { CFG.gyro = false; syncToggles(); flashTip('授权失败，陀螺仪没开成'); });
+      return true;
+    }
+    arm();
+    return true;
+  }
+  function disableGyro() {
+    GYRO.armed = false;
+    window.removeEventListener('deviceorientation', onGyroEvent, true);
+    GYRO.steer = 0; GYRO.raw = 0; GYRO.base = null;
+  }
+
   function updatePlayer(p, dt, inp) {
     if (p.finished) { p.speed = Math.max(0, p.speed + DECEL * dt * 2); return; }
 
@@ -2574,8 +2663,10 @@
     var speedPercent = p.speed / MAX_SPEED;
     var now = performance.now();
 
-    // ── 输入方向 ──
+    // ── 输入方向 ──（陀螺仪倾斜转向计入，漂移判定数值同步）
+    var gyroIn = p === P1 ? gyroSteerInput() : 0;
     var steerInput = (inp.left ? -1 : 0) + (inp.right ? 1 : 0);
+    if (Math.abs(gyroIn) > 0.35) steerInput = gyroIn > 0 ? 1 : -1;
 
     // ── 漂移判定：高速 + 转向 + 弯道 ──
     var inCurve = Math.abs(playerSeg.curve) > 1.2;
@@ -2612,6 +2703,8 @@
 
     if (inp.left) p.playerX -= steerAmount;
     if (inp.right) p.playerX += steerAmount;
+    // 陀螺仪：模拟量转向（与方向键同速度/同漂移增益），键优先不叠加
+    if (!inp.left && !inp.right) p.playerX += gyroIn * steerAmount;
 
     // ── 离心力：漂移时大幅降低（因为你在滑）──
     var gripFactor = 1;
@@ -2702,7 +2795,7 @@
               p.hitBillboards = (p.hitBillboards || 0) + 1;
               p.driftScore += 60;
               playCrash(); playDustSound();
-              flashTip('💥 撞飞广告牌 +60');
+              flashTip('撞飞广告牌 +60');
             } else {
               // ── 撞树 ──
               p.speed *= 0.55;
@@ -4326,7 +4419,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: true, brakeMode: 'brake', brakeSide: 'right', pixelArt: true };   // ghost=显示最佳圈速徽章（默认开）  // 默认静音;  // 幽灵车默认关（有重影）
+  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: true, brakeMode: 'brake', brakeSide: 'right', pixelArt: true, gyro: false };   // ghost=显示最佳圈速徽章（默认开）  // 默认静音;  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = 1;   // 默认贴地视角
   var VIEW_LIST = [
@@ -4552,7 +4645,7 @@
 
   function setView(v) {
     CAM_VIEW = v;
-    flashTip(VIEW_LIST[CAM_VIEW].name + '视角');
+    flashTip(VIEW_LIST[CAM_VIEW].name);
     updateViewBtns();
     try { localStorage.setItem('turbo-racer-view2', String(CAM_VIEW)); } catch (e) {}
   }
@@ -4689,6 +4782,8 @@
     if (tm) tm.className = 'toggle' + (CFG.manualGas ? ' on' : '');
     var tgh = document.getElementById('tgGhost');
     if (tgh) tgh.className = 'toggle' + (CFG.ghost ? ' on' : '');
+    var tgg = document.getElementById('tgGyro');
+    if (tgg) tgg.className = 'toggle' + (CFG.gyro ? ' on' : '');
     updatePxBtn();
     updateAutoUI();
   }
@@ -4877,6 +4972,21 @@
     if (tmm) tmm.onclick = function () { CFG.manualGas = !CFG.manualGas; syncToggles(); flashTip(CFG.manualGas ? '手动挡：按住加速键才走' : '自动挡：自动加速'); };
     var tghost = document.getElementById('tgGhost');
     if (tghost) tghost.onclick = function () { CFG.ghost = !CFG.ghost; syncToggles(); };
+    var tgg = document.getElementById('tgGyro');
+    if (tgg) tgg.onclick = function () {
+      if (!CFG.gyro) {
+        var ok = enableGyro();
+        CFG.gyro = ok;
+        if (!ok) { syncToggles(); return; }
+        try { localStorage.setItem('turbo-racer-gyro', '1'); } catch (e) {}
+      } else {
+        disableGyro();
+        CFG.gyro = false;
+        try { localStorage.setItem('turbo-racer-gyro', '0'); } catch (e) {}
+      }
+      syncToggles();
+      flashTip(CFG.gyro ? '陀螺仪转向已开' : '陀螺仪转向已关');
+    };
     var pxbs = document.querySelectorAll ? document.querySelectorAll('.pxbtn') : [];
     for (var pxi = 0; pxi < pxbs.length; pxi++) {
       (function (pb) {
@@ -4954,6 +5064,7 @@
     { id: 'night', name: '午夜都市', nameKey: 'mNight', desc: '霓虹 · 冷调 · 高速' },
     { id: 'snow', name: '雪原山口', nameKey: 'mSnow', desc: '雪地 · 打滑 · 高难' },
     { id: 'desert', name: '荒漠公路', nameKey: 'mDesert', desc: '沙丘 · 长直道 · 极速' },
+    { id: 'custom', name: '自定义赛道', nameKey: 'mCustom', desc: '自己拼弯道 · 编辑器' },
   ];
   var selectedMap = 'dusk';
   // 自定义赛道参数
@@ -5053,7 +5164,10 @@
       d.addEventListener('click', function () {
         selectedMap = m.id;
         renderMapList();
-    renderLapList();
+        renderLapList();
+        // 自定义赛道 → 展开编辑器面板
+        var cp = document.getElementById('customPanel');
+        if (cp) cp.style.display = (m.id === 'custom') ? 'block' : 'none';
       });
       el.appendChild(d);
     });
@@ -5641,6 +5755,7 @@
     }
     lastTs = ts;
     clock += dt;
+    gyroTick(dt);
     update(dt);
     // 每帧为两个视角分别分配车流
     assignCars(P1);
@@ -5667,6 +5782,16 @@
       // 画质：默认像素风；存过 '0'（高清）才关
       var _px = localStorage.getItem('turbo-racer-pixel');
       CFG.pixelArt = (_px !== '0');
+      // 陀螺仪：存过 '1' 才开（iOS 需用户手势授权，启动时不自动挂监听）
+      try { CFG.gyro = (localStorage.getItem('turbo-racer-gyro') === '1'); } catch (e) {}
+      // 无需手势授权的设备（Android 等）：直接恢复监听；iOS 等下次开设置时授权
+      if (CFG.gyro && typeof window.DeviceOrientationEvent !== 'undefined'
+          && typeof window.DeviceOrientationEvent.requestPermission !== 'function') {
+        GYRO.armed = true;
+        window.addEventListener('deviceorientation', onGyroEvent, true);
+      } else if (CFG.gyro) {
+        GYRO.armed = false;   // 等用户下次点开关时授权
+      }
       setTimeout(applyPixelMode, 50);
     } catch (e) {}
     try {
@@ -5787,6 +5912,7 @@
     });
     bindTabs();
     bindSwipe();
+    bindCustomUi();
     gotoStep(0);
     applyTheme();
     applyLang();
