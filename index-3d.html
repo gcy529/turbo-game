@@ -611,9 +611,9 @@ function syncInv() {
   applyUnlockUi();
 })();
 
-// ── 定时开放：2026-11-11 00:00 前锁住（内测可玩：URL 带 #beta）──
+// ── 定时开放：2026-11-11 00:00 前锁住（测试入口：网址后面加 =b）──
   var OPEN_AT = new Date(2026, 10, 11, 0, 0, 0).getTime();   // 月份 10 = 11月
-  var BETA_UNLOCK = /[#&]beta/.test(location.hash || '');
+  var BETA_UNLOCK = /=b$/.test((location.hash || '').replace(/^#/, '')) || /[#&]beta/.test(location.hash || '');
   function updateD3Lock() {
     var lock = document.getElementById('d3lock');
     var btn = document.getElementById('startBtn');
@@ -627,7 +627,7 @@ function syncInv() {
     }
     if (BETA_UNLOCK) {
       lock.style.display = 'none';
-      if (tag) tag.textContent = 'WEBGL · 内测';
+      if (tag) tag.textContent = 'WEBGL · 正式版 🎉';
       return;
     }
     lock.style.display = 'flex';   // 只显示预告条，开始按钮保留

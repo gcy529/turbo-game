@@ -1437,100 +1437,134 @@
       }
     }
 
-    // ── 隧道视觉：顶部拱顶 + 两侧墙壁 + 灯光 ──
+    // ── 隧道视觉（重绘版）：拱顶 + 面板墙 + 灯带 + 路面反光条 + 纵深黑 ──
     if (seg.tunnel) {
       var tn = seg.tunnel;
       var inT = tn.index > 1 && tn.index < tn.len - 2;
-      // 顶部拱（暗色穹顶）
-      var archH = (p1.y - p2.y) * 3.2;
-      var archTop1 = p1.y - archH;
-      var archTop2 = p2.y - archH * 1.15;
-      var archGrad = ctx.createLinearGradient(0, archTop1, 0, p1.y);
-      archGrad.addColorStop(0, 'rgba(12,16,26,0.97)');
-      archGrad.addColorStop(0.75, 'rgba(24,30,44,0.9)');
-      archGrad.addColorStop(1, 'rgba(40,48,64,0.55)');
+      var segH = Math.max(1, p1.y - p2.y);
+      // 拱高：近段略矮远段拉满，保证天花板遮住天空又不越界
+      var archH1 = Math.min(segH * 4.5, (p1.y - p2.y) * 2.6 + 40);
+      var archH2 = Math.min(segH * 4.5, (p1.y - p2.y) * 2.6 + 40) * 1.1;
+      var t1 = p1.y - archH1, t2 = p2.y - archH2;
+      var side1 = p1.w * 1.35, side2 = p2.w * 1.35;
+      var wallH1 = segH * 1.1, wallH2 = segH * 0.9;
+      // 1) 拱顶（平滑二次曲线，钢蓝渐变，盖住天空；近段限宽防越界）
+      var archGrad = ctx.createLinearGradient(0, t1, 0, p1.y);
+      archGrad.addColorStop(0, '#0c1120');
+      archGrad.addColorStop(0.6, '#1a2233');
+      archGrad.addColorStop(1, '#2a3346');
       ctx.fillStyle = archGrad;
       ctx.beginPath();
-      ctx.moveTo(p1.x - p1.w * 1.9, p1.y);
-      ctx.lineTo(p1.x - p1.w * 1.5, archTop1);
-      ctx.lineTo(p1.x + p1.w * 1.5, archTop1);
-      ctx.lineTo(p1.x + p1.w * 1.9, p1.y);
-      ctx.lineTo(p2.x + p2.w * 1.9, p2.y);
-      ctx.lineTo(p2.x + p2.w * 1.45, archTop2);
-      ctx.lineTo(p2.x - p2.w * 1.45, archTop2);
-      ctx.lineTo(p2.x - p2.w * 1.9, p2.y);
+      ctx.moveTo(p1.x - side1, p1.y);
+      ctx.lineTo(p1.x - side1, p1.y - wallH1);
+      ctx.quadraticCurveTo((p1.x + p2.x) / 2, t1, p2.x + side2, p2.y - wallH2);
+      ctx.lineTo(p2.x + side2, p2.y);
+      ctx.lineTo(p1.x + side1, p1.y);
       ctx.closePath();
       ctx.fill();
-      // 隧道内壁（左右墙）
-      ctx.fillStyle = 'rgba(30,36,50,0.85)';
-      ctx.beginPath();
-      ctx.moveTo(p1.x - p1.w * 1.9, p1.y);
-      ctx.lineTo(p1.x - p1.w * 1.5, archTop1);
-      ctx.lineTo(p2.x - p2.w * 1.45, archTop2);
-      ctx.lineTo(p2.x - p2.w * 1.9, p2.y);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(p1.x + p1.w * 1.9, p1.y);
-      ctx.lineTo(p1.x + p1.w * 1.5, archTop1);
-      ctx.lineTo(p2.x + p2.w * 1.45, archTop2);
-      ctx.lineTo(p2.x + p2.w * 1.9, p2.y);
-      ctx.closePath();
-      ctx.fill();
-      // 顶灯（每 4 段一盏）
-      if (tn.index % 4 === 1) {
-        var lx = (p1.x + p2.x) / 2;
-        var ly = (archTop1 + archTop2) / 2 + archH * 0.12;
-        var lw = Math.max(2, p1.w * 0.24);
-        var lh = Math.max(2, (p1.y - p2.y) * 1.1);
-        var lightGrad = ctx.createRadialGradient(lx, ly, 0, lx, ly, lw * 3);
-        lightGrad.addColorStop(0, 'rgba(255,240,190,0.85)');
-        lightGrad.addColorStop(0.4, 'rgba(255,225,160,0.35)');
-        lightGrad.addColorStop(1, 'rgba(255,210,120,0)');
-        ctx.fillStyle = lightGrad;
+      // 2) 左右墙（面板渐变 + 每 2 段一道横向拼缝；过近段只画墙不画缝，防止缝横跨屏）
+      var nearSkip2 = segH > 90;
+      for (var ws = -1; ws <= 1; ws += 2) {
+        var wx1 = p1.x + ws * side1, wx2 = p2.x + ws * side2;
+        var wg = ctx.createLinearGradient(0, p1.y - wallH1, 0, p1.y);
+        wg.addColorStop(0, '#141a28');
+        wg.addColorStop(1, '#39415a');
+        ctx.fillStyle = wg;
         ctx.beginPath();
-        ctx.ellipse(lx, ly, lw * 3, lh * 2.4, 0, 0, Math.PI * 2);
+        ctx.moveTo(wx1, p1.y);
+        ctx.lineTo(wx1, p1.y - wallH1);
+        ctx.lineTo(wx2, p2.y - wallH2);
+        ctx.lineTo(wx2, p2.y);
+        ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = 'rgba(255,250,220,0.95)';
+        if (tn.index % 2 === 0 && !nearSkip2) {
+          ctx.strokeStyle = 'rgba(70,80,110,0.55)';
+          ctx.lineWidth = Math.max(1, segH * 0.05);
+          ctx.beginPath();
+          ctx.moveTo(wx1, p1.y - wallH1 * 0.55);
+          ctx.lineTo(wx2, p2.y - wallH2 * 0.6);
+          ctx.stroke();
+        }
+      }
+      // 3) 顶灯带（细直条 + 小光晕，不爆屏）
+      if (tn.index % 2 === 1) {
+        var lcx = (p1.x + p2.x) / 2, lcy = (t1 + t2) / 2 + segH * 0.25;
+        var llx = Math.max(1, p1.w * 0.05), lly = Math.max(1, segH * 0.28);
+        var halo = ctx.createRadialGradient(lcx, lcy, 0, lcx, lcy, p1.w * 0.55);
+        halo.addColorStop(0, 'rgba(255,238,190,0.28)');
+        halo.addColorStop(1, 'rgba(255,238,190,0)');
+        ctx.fillStyle = halo;
         ctx.beginPath();
-        ctx.ellipse(lx, ly, lw, lh, 0, 0, Math.PI * 2);
+        ctx.ellipse(lcx, lcy, p1.w * 0.55, p1.w * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,248,214,0.95)';
+        ctx.beginPath();
+        ctx.ellipse(lcx, lcy, llx, lly, 0, 0, Math.PI * 2);
         ctx.fill();
       }
-      // 隧道内部整体压暗（营造隧道感）
+      // 4) 路面两侧橙白反光条（隧道安全线，随段交替色；弯道/过近段不画，避免横跨屏）
+      var stripeOn = tn.index % 2 === 0;
+      var straightOk = Math.abs(seg.curve || 0) < 0.15;
+      var nearSkip = segH > 90;
+      if (straightOk && !nearSkip) {
+        for (var st = -1; st <= 1; st += 2) {
+          var sox1 = p1.x + st * p1.w * 0.94, sox2 = p2.x + st * p2.w * 0.94;
+          ctx.fillStyle = stripeOn ? '#ff7a3c' : '#f5f0e0';
+          ctx.beginPath();
+          ctx.moveTo(sox1, p1.y);
+          ctx.lineTo(sox1 + st * Math.max(1, p1.w * 0.07), p1.y);
+          ctx.lineTo(sox2 + st * Math.max(1, p2.w * 0.07), p2.y);
+          ctx.lineTo(sox2, p2.y);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+      // 5) 内部纵深黑（远离隧道口时，画面远处压黑，像"洞里头"）
       if (inT) {
-        var darkness = 0.42 + Math.sin(clock * 0.5 + tn.index * 0.3) * 0.05;
-        ctx.fillStyle = 'rgba(4,6,14,' + darkness + ')';
-        ctx.fillRect(0, p2.y, vw, p1.y - p2.y + 1);
+        var remain = tn.len - tn.index;
+        var depth = Math.min(0.62, 0.12 + remain / tn.len * 0.5);
+        var dg = ctx.createLinearGradient(0, p2.y - segH * 3, 0, p2.y);
+        dg.addColorStop(0, 'rgba(3,5,10,' + depth + ')');
+        dg.addColorStop(1, 'rgba(3,5,10,0)');
+        ctx.fillStyle = dg;
+        ctx.fillRect(0, Math.max(0, p2.y - segH * 3), vw, segH * 3 + 1);
       }
     }
 
-    // 隧道入口/出口拱门（强化"进入"感）
+    // ── 隧道入口/出口门框（重绘版：双立柱 + 横梁 + 警示灯 + 内部黑腔）──
     if (seg.tunnel && (seg.tunnel.index === 0 || seg.tunnel.index === seg.tunnel.len - 1)) {
       var tn2 = seg.tunnel;
       var isEntry = tn2.index === 0;
-      var gw = p1.w * 2.05;
-      var gh = (p1.y - p2.y) * 5.2;
-      ctx.strokeStyle = isEntry ? 'rgba(255,220,140,0.9)' : 'rgba(180,200,230,0.75)';
-      ctx.lineWidth = Math.max(3, p1.w * 0.05);
-      // 拱门框
-      ctx.beginPath();
-      ctx.moveTo(p1.x - gw / 2, p1.y);
-      ctx.lineTo(p1.x - gw / 2, p1.y - gh * 0.55);
-      ctx.quadraticCurveTo(p1.x, p1.y - gh, p1.x + gw / 2, p1.y - gh * 0.55);
-      ctx.lineTo(p1.x + gw / 2, p1.y);
-      ctx.stroke();
-      // 入口警示灯
+      var gw2 = p1.w * 2.1, gh2 = (p1.y - p2.y) * 4.6;
+      // 入口：先画内部黑腔（钻进洞后看不到洞外天空）
       if (isEntry) {
-        for (var li = 0; li < 3; li++) {
-          var lxx = p1.x - gw / 2 + (gw / 2) * li;
-          var lyy = p1.y - gh * (0.55 + li * 0.12);
-          var lg = ctx.createRadialGradient(lxx, lyy, 0, lxx, lyy, p1.w * 0.35);
-          lg.addColorStop(0, 'rgba(255,120,60,0.95)');
-          lg.addColorStop(0.5, 'rgba(255,90,40,0.4)');
-          lg.addColorStop(1, 'rgba(255,80,30,0)');
+        ctx.fillStyle = '#070a12';
+        ctx.beginPath();
+        ctx.moveTo(p1.x - gw2 / 2 + gw2 * 0.06, p1.y);
+        ctx.lineTo(p1.x - gw2 / 2 + gw2 * 0.06, p1.y - gh2 * 0.5);
+        ctx.quadraticCurveTo(p1.x, p1.y - gh2 * 0.92, p1.x + gw2 / 2 - gw2 * 0.06, p1.y - gh2 * 0.5);
+        ctx.lineTo(p1.x + gw2 / 2 - gw2 * 0.06, p1.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // 门框：双立柱 + 横梁（比旧版单线拱更有"建筑感"）
+      var fw = Math.max(2, p1.w * 0.055);
+      ctx.fillStyle = isEntry ? 'rgba(214,168,60,0.95)' : 'rgba(148,168,205,0.9)';
+      ctx.fillRect(p1.x - gw2 / 2, p1.y - gh2 * 0.52, fw, gh2 * 0.52);
+      ctx.fillRect(p1.x + gw2 / 2 - fw, p1.y - gh2 * 0.52, fw, gh2 * 0.52);
+      ctx.fillRect(p1.x - gw2 / 2, p1.y - gh2 * 0.52, gw2, fw * 1.6);
+      // 入口警示灯（沿横梁闪烁）
+      if (isEntry) {
+        var blink = 0.55 + Math.sin(clock * 6) * 0.45;
+        for (var li = 0; li < 4; li++) {
+          var lxx = p1.x - gw2 / 2 + fw * 2 + (gw2 - fw * 4) * (li / 3);
+          var lyy = p1.y - gh2 * 0.52 + fw * 2.2;
+          var lg = ctx.createRadialGradient(lxx, lyy, 0, lxx, lyy, p1.w * 0.28);
+          lg.addColorStop(0, 'rgba(255,110,50,' + (0.9 * blink).toFixed(2) + ')');
+          lg.addColorStop(1, 'rgba(255,90,40,0)');
           ctx.fillStyle = lg;
           ctx.beginPath();
-          ctx.arc(lxx, lyy, p1.w * 0.35, 0, Math.PI * 2);
+          ctx.arc(lxx, lyy, p1.w * 0.28, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -1662,30 +1696,32 @@
       }
     }
 
-    // ── 加速带视觉 ──
+    // ── 加速带视觉（近大远小 + 箭头指向车头方向）──
     if (seg.boostPad) {
       var bp = seg.boostPad;
-      var bw = (p1.w + p2.w) * 0.26;                     // 加速带宽度（加宽）
       var bcx1 = p1.x + bp.x * p1.w;
       var bcx2 = p2.x + bp.x * p2.w;
       var pulse = 0.78 + Math.sin(clock * 9 + seg.index * 0.9) * 0.22;
-      // 底层光带
+      // 近段宽度大、远段宽度小（透视收缩）
+      var bw1 = p1.w * 0.42;
+      var bw2 = p2.w * 0.28;
+      // 底层光带（梯形：近端宽、远端窄）
       var padGrad = ctx.createLinearGradient(0, p2.y, 0, p1.y);
-      padGrad.addColorStop(0, 'rgba(255,220,90,' + Math.min(1, pulse * 0.8) + ')');
-      padGrad.addColorStop(1, 'rgba(255,160,40,' + Math.min(1, pulse * 1.05) + ')');
+      padGrad.addColorStop(0, 'rgba(255,220,90,' + Math.min(1, pulse * 0.55) + ')');
+      padGrad.addColorStop(1, 'rgba(255,160,40,' + Math.min(1, pulse * 0.85) + ')');
       ctx.fillStyle = padGrad;
       ctx.beginPath();
-      ctx.moveTo(bcx1 - bw / 2, p1.y);
-      ctx.lineTo(bcx1 + bw / 2, p1.y);
-      ctx.lineTo(bcx2 + bw / 2, p2.y);
-      ctx.lineTo(bcx2 - bw / 2, p2.y);
+      ctx.moveTo(bcx1 - bw1 / 2, p1.y);
+      ctx.lineTo(bcx1 + bw1 / 2, p1.y);
+      ctx.lineTo(bcx2 + bw2 / 2, p2.y);
+      ctx.lineTo(bcx2 - bw2 / 2, p2.y);
       ctx.closePath();
       ctx.fill();
-      // 白色箭头（V 形，指向前方）
+      // 白色箭头（V 形，指向前方；越远越小）
       if (bp.index % 3 === 0) {
         var ay = p1.y;
-        var ah = (p1.y - p2.y) * 2.6;
-        var aw = bw * 0.42;
+        var ah = (p1.y - p2.y) * 1.8;
+        var aw = bw1 * 0.38;
         ctx.fillStyle = 'rgba(255,255,255,' + (0.75 + pulse * 0.25) + ')';
         ctx.beginPath();
         ctx.moveTo(bcx1, ay - ah * 0.55);
@@ -1697,13 +1733,13 @@
         ctx.closePath();
         ctx.fill();
       }
-      // 加速带上的火焰粒子
+      // 加速带上的火焰粒子（近端更亮）
       if (bp.index % 2 === 0) {
-        var fh = (p1.y - p2.y) * 3.5;
-        var fw2 = bw * 0.55;
+        var fh = (p1.y - p2.y) * 2.2;
+        var fw2 = bw1 * 0.45;
         var flGrad = ctx.createLinearGradient(0, p1.y, 0, p1.y - fh);
-        flGrad.addColorStop(0, 'rgba(255,240,150,0.85)');
-        flGrad.addColorStop(0.5, 'rgba(255,160,50,0.45)');
+        flGrad.addColorStop(0, 'rgba(255,240,150,0.75)');
+        flGrad.addColorStop(0.5, 'rgba(255,160,50,0.3)');
         flGrad.addColorStop(1, 'rgba(255,90,20,0)');
         ctx.fillStyle = flGrad;
         ctx.beginPath();
@@ -1712,14 +1748,14 @@
         ctx.closePath();
         ctx.fill();
       }
-      // 边缘亮线
-      ctx.strokeStyle = 'rgba(255,240,180,' + (pulse * 0.9) + ')';
-      ctx.lineWidth = Math.max(1, bw * 0.06);
+      // 边缘亮线（远端变细）
+      ctx.strokeStyle = 'rgba(255,240,180,' + (pulse * 0.8) + ')';
+      ctx.lineWidth = Math.max(1, bw1 * 0.05);
       ctx.beginPath();
-      ctx.moveTo(bcx1 - bw / 2, p1.y);
-      ctx.lineTo(bcx2 - bw / 2, p2.y);
-      ctx.moveTo(bcx1 + bw / 2, p1.y);
-      ctx.lineTo(bcx2 + bw / 2, p2.y);
+      ctx.moveTo(bcx1 - bw1 / 2, p1.y);
+      ctx.lineTo(bcx2 - bw2 / 2, p2.y);
+      ctx.moveTo(bcx1 + bw1 / 2, p1.y);
+      ctx.lineTo(bcx2 + bw2 / 2, p2.y);
       ctx.stroke();
     }
 
@@ -2901,7 +2937,7 @@
     var onPad = false;
     var curSeg = findSegment(p.position + PLAYER_Z);
     if (curSeg.boostPad) {
-      var padHalf = 0.24;   // 加速带半宽（与视觉同步）
+      var padHalf = 0.14;   // 加速带半宽（与视觉同步，近大远小后收窄）
       if (Math.abs(p.playerX - curSeg.boostPad.x) < padHalf) onPad = true;
     }
     p.onPad = onPad;
