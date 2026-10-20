@@ -4421,19 +4421,6 @@
     list.innerHTML = html;
   }
 
-  function roundRectPath(c, x, y, w2, h2, r) {
-    c.beginPath();
-    c.moveTo(x + r, y);
-    c.lineTo(x + w2 - r, y);
-    c.arcTo(x + w2, y, x + w2, y + r, r);
-    c.lineTo(x + w2, y + h2 - r);
-    c.arcTo(x + w2, y + h2, x + w2 - r, y + h2, r);
-    c.lineTo(x + r, y + h2);
-    c.arcTo(x, y + h2, x, y + h2 - r, r);
-    c.lineTo(x, y + r);
-    c.arcTo(x, y, x + r, y, r);
-    c.closePath();
-  }
 
   function renderCarList() {
     var el = document.getElementById('carList');
@@ -4451,57 +4438,13 @@
         var kMap = { 速度: 'stSpeed', 加速: 'stAccel', 操控: 'stSteer', 抓地: 'stGrip' };
         statsHtml += '<div class="cstat">' + (kMap[k] ? t(kMap[k]) : k) + '<span class="dots">' + dots + '</span></div>';
       });
-      // 迷你俯视小车预览（每车专属色）
-      var carPrev = '<canvas class="carPrev" width="52" height="40" data-color="' + c.color + '" style="width:52px;height:40px"></canvas>';
-      d.innerHTML = '<div class="ci">' + carPrev + '</div><div class="cn">' + (c.nameKey ? t(c.nameKey) : c.name) + '</div><div class="cstats">' + statsHtml + '</div>';
+      d.innerHTML = '<div class="ci">' + c.icon + '</div><div class="cn">' + (c.nameKey ? t(c.nameKey) : c.name) + '</div><div class="cstats">' + statsHtml + '</div>';
       d.addEventListener('click', function () {
         applyCar(c.id);
         renderCarList();
       });
       el.appendChild(d);
     });
-    // 画所有迷你车预览
-    var pvs = el.querySelectorAll ? el.querySelectorAll('.carPrev') : [];
-    for (var pi = 0; pi < pvs.length; pi++) {
-      (function (cv) {
-        var c2 = cv.getContext('2d');
-        if (!c2) return;
-        var col = cv.getAttribute('data-color') || '#e63946';
-        var w2 = cv.width, h3 = cv.height;
-        c2.clearRect(0, 0, w2, h3);
-        // 四个轮子（黑色，突出车身）
-        c2.fillStyle = '#1a1d26';
-        var wheelPos = [[10, 6], [42, 6], [10, 30], [42, 30]];
-        for (var wi = 0; wi < 4; wi++) {
-          c2.beginPath();
-          c2.arc(wheelPos[wi][0], wheelPos[wi][1], 5, 0, Math.PI * 2);
-          c2.fill();
-        }
-        // 车身（圆角矩形，专属色）
-        c2.fillStyle = col;
-        roundRectPath(c2, 8, 8, 36, 24, 7);
-        c2.fill();
-        // 车身高光
-        var g = c2.createLinearGradient(0, 8, 0, 32);
-        g.addColorStop(0, 'rgba(255,255,255,.35)');
-        g.addColorStop(1, 'rgba(0,0,0,.15)');
-        c2.fillStyle = g;
-        roundRectPath(c2, 8, 8, 36, 24, 7);
-        c2.fill();
-        // 挡风玻璃（前部浅蓝）
-        c2.fillStyle = 'rgba(160,210,250,.85)';
-        roundRectPath(c2, 12, 10, 10, 20, 3);
-        c2.fill();
-        // 车顶（深一点的同色）
-        c2.fillStyle = 'rgba(0,0,0,.22)';
-        roundRectPath(c2, 24, 11, 14, 18, 4);
-        c2.fill();
-        // 尾灯两点（红）
-        c2.fillStyle = '#ff5566';
-        c2.fillRect(9, 12, 2, 3);
-        c2.fillRect(9, 25, 2, 3);
-      })(pvs[pi]);
-    }
   }
 
   function renderWeatherList() {
