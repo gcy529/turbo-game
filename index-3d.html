@@ -268,39 +268,52 @@ function addScenery() {
   }
 }
 addScenery();
+// 车辆重做（3D_VEHICLE）：+Z = 车头，轮子贴地、轴朝左右（不趴车顶）
 function makeCar(color) {
   var g = new THREE.Group();
   var bodyMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.35, metalness: 0.5 });
   var glassMat = new THREE.MeshStandardMaterial({ color: 0x9fd0ff, roughness: 0.15, metalness: 0.8, transparent: true, opacity: 0.75 });
   var lightMat = new THREE.MeshStandardMaterial({ color: 0xff3344, emissive: 0xff2233, emissiveIntensity: 0.9 });
-  var body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.62, 4.2), bodyMat);
-  body.position.y = 0.62; body.castShadow = true; g.add(body);
-  var cabin = new THREE.Mesh(new THREE.BoxGeometry(1.66, 0.52, 2.0), glassMat);
-  cabin.position.set(0, 1.14, -0.15); cabin.castShadow = true; g.add(cabin);
-  var roof = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.14, 2.1), bodyMat);
-  roof.position.set(0, 1.4, -0.15); g.add(roof);
   var hlMat = new THREE.MeshStandardMaterial({ color: 0xfff6dd, emissive: 0xfff0c0, emissiveIntensity: 1.2 });
+  // 底盘 + 车身（整体抬高，让轮子完全在车身下面）
+  var body = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.55, 3.9), bodyMat);
+  body.position.y = 0.75; body.castShadow = true; g.add(body);
+  // 引擎盖斜坡（车头在 +Z 端，加斜面前脸更顺）
+  var hood = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.2, 0.9), bodyMat);
+  hood.position.set(0, 1.02, 1.45); hood.rotation.x = -0.18; g.add(hood);
+  // 座舱
+  var cabin = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.55, 1.9), glassMat);
+  cabin.position.set(0, 1.12, -0.25); cabin.castShadow = true; g.add(cabin);
+  var roof = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.12, 2.0), bodyMat);
+  roof.position.set(0, 1.42, -0.25); g.add(roof);
+  // 前灯（车头 +Z）/ 尾灯（车尾 -Z）
   for (var s = -1; s <= 1; s += 2) {
-    var hl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.2, 0.12), hlMat);
-    hl.position.set(s * 0.62, 0.66, 2.12); g.add(hl);
-    var tl = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.18, 0.1), lightMat);
-    tl.position.set(s * 0.62, 0.68, -2.12); g.add(tl);
+    var hl = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.2, 0.1), hlMat);
+    hl.position.set(s * 0.58, 0.82, 2.0); g.add(hl);
+    var tl = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.18, 0.08), lightMat);
+    tl.position.set(s * 0.6, 0.85, -2.0); g.add(tl);
   }
-  var wGeo = new THREE.CylinderGeometry(0.48, 0.48, 0.34, 12);
+  // 轮子：圆柱默认轴向 Y；绕 Z 转 90° 后轴朝 X（左右方向），滚面贴地
+  var wGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.3, 14);
   var wMat = new THREE.MeshStandardMaterial({ color: 0x0c0e13, roughness: 0.9 });
-  var wheels = [];
+  var hubMat = new THREE.MeshStandardMaterial({ color: 0xb8c4d8, roughness: 0.4, metalness: 0.7 });
+  var wheelSpin = [];   // 存「绕自身轴」的旋转对象，滚动时只转它
   for (var wx = -1; wx <= 1; wx += 2) for (var wz = -1; wz <= 1; wz += 2) {
-    var wg = new THREE.Group();
-    wg.position.set(wx * 0.98, 0.48, wz * 1.42);
+    var wHolder = new THREE.Group();
+    wHolder.position.set(wx * 0.95, 0.42, wz * 1.45);   // 轮心高度 = 半径 0.42，贴地
+    var wRot = new THREE.Group();
     var w = new THREE.Mesh(wGeo, wMat);
-    w.rotation.z = Math.PI / 2;
-    wg.add(w);
-    wg.castShadow = true;
-    g.add(wg);
-    wheels.push(w);
+    w.rotation.z = Math.PI / 2;   // 轴朝 X：轮胎立着、平面朝前后，正确
+    wRot.add(w);
+    var hub = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.32, 8), hubMat);
+    hub.rotation.z = Math.PI / 2;
+    wRot.add(hub);
+    wHolder.add(wRot);
+    wHolder.castShadow = true;
+    g.add(wHolder);
+    wheelSpin.push(wRot);
   }
-  g.userData.wheelGroups = wheels.map(function (m) { return m.parent; });
-  g.userData.wheels = wheels;
+  g.userData.wheelSpin = wheelSpin;
   return g;
 }
 var playerCar = makeCar(0xe63946);
@@ -400,6 +413,12 @@ function update(dt) {
   // 漂移分：高速转向累计
   if (Math.abs(steer) > 0.5 && player.speed > player.MAX_SPEED * 0.5) player.driftScore = (player.driftScore || 0) + dt * 60;   // 逆反模式：左右互换
   var steerRate = 1.35 * (0.35 + Math.abs(player.speed) / player.MAX_SPEED);
+  // 碰撞后的平滑推挤（每帧衰减，不瞬移）
+  if (player.pushLateral) {
+    player.lateral += player.pushLateral * dt * 6;
+    player.pushLateral *= Math.pow(0.12, dt);
+    if (Math.abs(player.pushLateral) < 0.01) player.pushLateral = 0;
+  }
   player.lateral += steer * steerRate * dt;
   var cur = curvatureAt(player.t);
   player.lateral -= cur * (player.speed / player.MAX_SPEED) * 0.42 * dt;
@@ -429,13 +448,13 @@ function update(dt) {
     if (player.hitCooldown <= 0 && dtl < 0.006 && Math.abs(n.lateral - player.lateral) < 0.62) {
       // 温和减速（不砍比例，不被卡死）
       player.speed = Math.max(0, player.speed - 40);
-      // 把玩家和 NPC 都弹开一点，NPC 不会继续压着
+      // 平滑推挤：不瞬移，把「推开目标」记下来，update 里每帧慢慢移动（修画面乱跳）
       var pushDir = n.lateral > player.lateral ? -1 : 1;
-      n.lateral += pushDir * 0.5;
-      player.lateral -= pushDir * 0.35;
+      n.lateral += pushDir * 0.25;
+      player.pushLateral = pushDir * 0.35;
       player.smashCount = (player.smashCount || 0) + 1;
       player.hitCooldown = 0.8;
-      setMsg("碰撞！", 0.8); shake = Math.max(shake, 0.6);
+      setMsg("碰撞！", 0.8); shake = Math.max(shake, 0.25);
     }
   }
   if (msgTimer > 0) { msgTimer -= dt; if (msgTimer <= 0) elMsg.style.opacity = "0"; }
@@ -475,15 +494,27 @@ function frame(ts) {
   if (fvShow) { elFps.textContent = fvShow + " FPS"; elFps.style.color = fvShow >= 45 ? "#8ef7c8" : (fvShow >= 25 ? "#ffd166" : "#ff6b6b"); }
   update(dt);
   var pp = posAt(player.t, player.lateral);
+  // 车头始终朝「实际行驶方向」：前进时 +Z 指 tan，倒车时车头自动转 180°（不再"反"）
   playerCar.position.copy(pp.pos);
   playerCar.position.y += 0.05;
-  var look = pp.pos.clone().add(pp.tan);
-  playerCar.lookAt(look.x, pp.pos.y + 0.05, look.z);
-  playerCar.rotation.z = ((input.left ? 0.05 : 0) + (input.right ? -0.05 : 0)) * (INVERT ? -1 : 1);
-  var ws2 = playerCar.userData.wheels || [];
+  var fwd = pp.tan.clone();
+  if (player.speed < -1) fwd.multiplyScalar(-1);   // 倒车时车头转过来
+  // 用四元数平滑转向（lerp 防画面乱跳，替代生硬 lookAt）
+  var tmpObj = new THREE.Object3D();
+  tmpObj.position.copy(playerCar.position);
+  var lookTgt = playerCar.position.clone().add(fwd);
+  tmpObj.lookAt(lookTgt.x, playerCar.position.y, lookTgt.z);
+  playerCar.quaternion.slerp(tmpObj.quaternion, Math.min(1, dt * 10));
+  // 转向侧倾（视觉用，幅度小；每帧从 0 重算目标，不残留）
+  var steerVis = 0;
+  if (input.left) steerVis += 0.06;
+  if (input.right) steerVis -= 0.06;
+  playerCar._rollT = (playerCar._rollT || 0) + (steerVis - (playerCar._rollT || 0)) * Math.min(1, dt * 8);
+  playerCar.rotation.z = playerCar._rollT;
+  // 轮子滚动：只转轮心（wRot），轴保持朝左右
+  var ws2 = playerCar.userData.wheelSpin || [];
   for (var w = 0; w < ws2.length; w++) {
-    var wg2 = ws2[w].parent;
-    if (wg2) wg2.rotation.y += player.speed * dt * 1.6;
+    ws2[w].rotation.x -= player.speed * dt * 0.9;
   }
   var camH, camDist;
   if (camMode === 1) { camH = 1.7; camDist = 1.2; }
@@ -501,12 +532,17 @@ function frame(ts) {
     var n = npcs[i];
     var np = posAt(n.t, n.lateral);
     n.mesh.position.copy(np.pos);
-    var dir = n.oncoming ? np.tan.clone().multiplyScalar(-1) : np.tan;
-    n.mesh.lookAt(np.pos.x + dir.x, np.pos.y, np.pos.z + dir.z);
-    var nw = n.mesh.userData.wheels || [];
+    // NPC 车头朝向自身行驶方向
+    var nDir = (n.speed >= 0 ? 1 : -1);
+    var nFwd = np.tan.clone().multiplyScalar(n.oncoming ? -nDir : nDir);
+    var nObj = new THREE.Object3D();
+    nObj.position.copy(n.mesh.position);
+    var nTgt = n.mesh.position.clone().add(nFwd);
+    nObj.lookAt(nTgt.x, n.mesh.position.y, nTgt.z);
+    n.mesh.quaternion.slerp(nObj.quaternion, Math.min(1, dt * 8));
+    var nw = n.mesh.userData.wheelSpin || [];
     for (var k = 0; k < nw.length; k++) {
-      var ng = nw[k].parent;
-      if (ng) ng.rotation.y += n.speed * dt * 1.6;
+      nw[k].rotation.x -= n.speed * dt * 0.9;
     }
   }
   sun.position.set(pp.pos.x + 90, pp.pos.y + 140, pp.pos.z + 60);
@@ -517,6 +553,7 @@ function frame(ts) {
 }
 function startRace() {
   player.t = 0; player.lateral = 0.15; player.speed = 0; player.lap = 1; player.lastT = 0; player.finished = false;
+  player.pushLateral = 0;
   overlay.classList.add("hide");
   running = true;
   countdown = 3.2; lastCountShown = -1;
