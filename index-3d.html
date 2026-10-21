@@ -22,18 +22,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05070e;
 .panel{text-align:center;padding:26px 30px;border-radius:22px;background:rgba(10,18,34,.86);border:1px solid rgba(120,190,255,.25);box-shadow:0 24px 90px rgba(0,0,0,.7);backdrop-filter:blur(16px);max-width:94vw}
 .title{font-size:36px;font-weight:900;letter-spacing:5px;background:linear-gradient(180deg,#fff,#67c6ff 70%,#2f7fd0);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:3px}
   body.light3d .title{background:linear-gradient(180deg,#1a3a6e,#1f6fd0);-webkit-background-clip:text;background-clip:text}
-  body.light3d .tip{color:#2a4a70}
+  body.light3d .keys,body.light3d .tip{color:#2a4a70}
   body.light3d .invbtn,body.light3d .invbtn.on{color:#8a5a10;background:rgba(255,190,80,.15);border-color:rgba(200,140,30,.5)}
 .sub{font-size:10.5px;letter-spacing:4px;color:#5f86ad;margin-bottom:18px;font-weight:700}
 .tag3d{display:inline-block;font-size:9.5px;font-weight:900;letter-spacing:2px;padding:3px 10px;border-radius:7px;background:rgba(255,180,60,.2);border:1px solid rgba(255,190,80,.6);color:#ffc078;margin-bottom:12px}
-
+.keys{display:grid;grid-template-columns:auto auto;gap:7px 18px;font-size:12.5px;color:#a9c6e2;text-align:left;margin:0 auto 18px;width:max-content}
+.keys b{color:#fff;font-weight:700;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:2px 7px;font-size:11.5px;display:inline-block;min-width:26px;text-align:center}
 .go{font-size:15px;font-weight:800;letter-spacing:2px;color:#06121e;background:linear-gradient(180deg,#8ef7c8,#38d99a);padding:13px 40px;border-radius:13px;display:inline-block;box-shadow:0 10px 30px rgba(60,220,160,.35);cursor:pointer;border:0}
 .tip{margin-top:12px;font-size:10.5px;color:#4e6b88;letter-spacing:.5px}
 #touch{position:fixed;inset:auto 0 0 0;height:180px;z-index:11;pointer-events:none;display:none}
 .tb{width:88px;height:88px;border-radius:50%;background:rgba(140,200,255,.2);border:3px solid rgba(140,200,255,.5);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#e8f4ff;pointer-events:auto;backdrop-filter:blur(6px);touch-action:none;box-shadow:0 6px 20px rgba(0,0,0,.45)}
 .tb:active{background:rgba(140,200,255,.4)}
 .tb-gas{background:rgba(60,220,160,.25);border-color:rgba(80,230,170,.7);color:#c8ffe8}
-@media (hover:none) and (pointer:coarse){#touch{display:block}}
+@media (hover:none) and (pointer:coarse){#touch{display:block}.keys{display:none}}
 #invBadge{display:inline-block;font-size:11px;font-weight:900;letter-spacing:1.5px;padding:6px 16px;border-radius:999px;background:rgba(255,180,60,.18);border:1.5px solid rgba(255,190,80,.6);color:#ffc078;margin-bottom:14px;animation:invPulse 1.6s ease-in-out infinite}
 #invBadge.off{background:rgba(255,255,255,.06);border-color:rgba(140,200,255,.28);color:#8ba3bd;animation:none}
 @keyframes invPulse{0%,100%{opacity:1}50%{opacity:.6}}
@@ -72,6 +73,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05070e;
     <div id="invLock" style="font-size:10.5px;color:#4e6b88;margin-bottom:14px;letter-spacing:.5px">🔒 跑完一局，解锁点什么</div>
     <div id="invExplain" style="display:none;font-size:11.5px;line-height:1.95;color:#a9c6e2;max-width:300px;margin:0 auto 16px;text-align:left">
       <div>↔ 你已经知道了，对吧？</div>
+    </div>
+    <div class="keys">
+      <span><b>A</b>/<b>←</b> 左</span><span><b>D</b>/<b>→</b> 右</span>
+      <span><b>S</b>/<b>↓</b> 手刹</span><span>自动加速</span>
+      <span><b>C</b> 切视角</span><span><b>R</b> 重开</span>
     </div>
     <button class="go" id="startBtn">开始比赛</button>
     <div class="tip">勇往直前 · 敬请期待</div>
