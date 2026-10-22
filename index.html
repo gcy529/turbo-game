@@ -14,6 +14,7 @@
 <title>极速狂飙 Turbo Game</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
+  .hide{display:none!important}
   /* ── 日间主题 ── */
   body[data-theme='light']{background:#f4f1ea;color:#12233a}
   body[data-theme='light'] .panel{background:#fbf9f4;border-color:rgba(40,80,140,.25);box-shadow:0 24px 90px rgba(60,90,140,.25)}
@@ -4873,7 +4874,6 @@
     var el = document.getElementById('carList');
     if (!el) return;
     el.innerHTML = '';
-    if (!CARS || CARS.length === 0) { el.innerHTML = '<div style="color:red">CARS EMPTY</div>'; return; }
     CARS.forEach(function (c) {
       var d = document.createElement('div');
       d.className = 'carcard' + (c.id === selectedCar ? ' sel' : '');
