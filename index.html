@@ -1244,8 +1244,13 @@
   /* ================= 粒子系统（扬尘/尾气）================= */
   var particles = [];
   function spawnParticle(x, y, vx, vy, size, life, color) {
-    if (particles.length > 120) particles.shift();
+    if (particles.length > 200) particles.shift();
     particles.push({ x: x, y: y, vx: vx, vy: vy, size: size, life: life, maxLife: life, color: color });
+  }
+  // ── 霓虹粒子（发光效果）──
+  function spawnNeonParticle(x, y, vx, vy, size, life, color) {
+    if (particles.length > 250) particles.shift();
+    particles.push({ x: x, y: y, vx: vx, vy: vy, size: size, life: life, maxLife: life, color: color, neon: true });
   }
   function updateParticles(dt) {
     for (var i = particles.length - 1; i >= 0; i--) {
@@ -1254,7 +1259,7 @@
       pt.y += pt.vy * dt;
       pt.vy += 40 * dt;          // 轻微下坠
       pt.vx *= Math.pow(0.35, dt);
-      pt.size += dt * 22;        // 扩散
+      pt.size += dt * (pt.neon ? 15 : 22);        // 扩散
       pt.life -= dt;
       if (pt.life <= 0) particles.splice(i, 1);
     }
@@ -1263,10 +1268,27 @@
     for (var i = 0; i < particles.length; i++) {
       var pt = particles[i];
       var a = Math.max(0, pt.life / pt.maxLife);
-      ctx.fillStyle = 'rgba(' + pt.color + ',' + (a * 0.55) + ')';
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
-      ctx.fill();
+      if (pt.neon) {
+        // 霓虹发光效果
+        var glow = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, pt.size * 2);
+        glow.addColorStop(0, 'rgba(' + pt.color + ',' + a + ')');
+        glow.addColorStop(0.4, 'rgba(' + pt.color + ',' + a * 0.5 + ')');
+        glow.addColorStop(1, 'transparent');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.size * 2, 0, Math.PI * 2);
+        ctx.fill();
+        // 核心亮点
+        ctx.fillStyle = 'rgba(255,255,255,' + a * 0.8 + ')';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(' + pt.color + ',' + (a * 0.55) + ')';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
@@ -2102,13 +2124,13 @@
     var floatY = Math.sin(clock * 3 + seg.index) * size * 0.15;
     var cx = baseX;
     var cy = baseY - size * 0.8 + floatY;
-    // 发光效果
-    var glowSize = size * 0.6;
-    var glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowSize);
-    glow.addColorStop(0, def.color + 'aa');
-    glow.addColorStop(0.5, def.color + '44');
-    glow.addColorStop(1, 'transparent');
-    ctx.fillStyle = glow;
+    // 外层光晕
+    var glowSize = size * 0.9;
+    var outerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowSize);
+    outerGlow.addColorStop(0, def.color + '88');
+    outerGlow.addColorStop(0.5, def.color + '33');
+    outerGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = outerGlow;
     ctx.beginPath();
     ctx.arc(cx, cy, glowSize, 0, Math.PI * 2);
     ctx.fill();
@@ -2122,16 +2144,33 @@
     ctx.lineTo(cx - d * 0.7, cy);
     ctx.closePath();
     ctx.fill();
+    // 内发光
+    var innerGlow = ctx.createRadialGradient(cx, cy - d * 0.3, 0, cx, cy, d * 0.8);
+    innerGlow.addColorStop(0, 'rgba(255,255,255,0.6)');
+    innerGlow.addColorStop(0.5, def.color + 'aa');
+    innerGlow.addColorStop(1, def.color);
+    ctx.fillStyle = innerGlow;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - d * 0.7);
+    ctx.lineTo(cx + d * 0.5, cy);
+    ctx.lineTo(cx, cy + d * 0.7);
+    ctx.lineTo(cx - d * 0.5, cy);
+    ctx.closePath();
+    ctx.fill();
     // 图标
     ctx.font = Math.round(size * 0.35) + 'px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(def.icon, cx, cy);
     // 旋转光环
-    ctx.strokeStyle = def.color + '66';
+    ctx.strokeStyle = def.color + '88';
     ctx.lineWidth = Math.max(1, size * 0.03);
     ctx.beginPath();
-    ctx.arc(cx, cy, d * 1.2, clock * 2, clock * 2 + Math.PI * 1.5);
+    ctx.arc(cx, cy, d * 1.3, clock * 2, clock * 2 + Math.PI * 1.5);
+    ctx.stroke();
+    // 反向光环
+    ctx.beginPath();
+    ctx.arc(cx, cy, d * 1.1, -clock * 1.5, -clock * 1.5 + Math.PI);
     ctx.stroke();
   }
 
@@ -2467,8 +2506,9 @@
       var drifting = p.drift > 0.25;
       var fast = p.speed > carMaxSpeed() * 0.5;
       if ((drifting || fast || p.onPad) && Math.random() < (drifting ? 0.85 : 0.4)) {
-        var col = drifting ? '200,195,190' : '170,175,185';
+        var col = drifting ? '255,200,50' : '170,175,185';
         if (WEATHER === 'rain') col = '190,205,225';
+        // 漂移时加霓虹火花
         spawnParticle(
           V.w / 2 + (Math.random() - 0.5) * carW * 1.1,
           baseY + (Math.random() - 0.3) * 12,
@@ -2477,6 +2517,32 @@
           3 + Math.random() * 5,
           0.5 + Math.random() * 0.5,
           col
+        );
+        if (drifting && Math.random() < 0.6) {
+          // 霓虹火花
+          var neonCol = ['255,100,50', '255,200,50', '255,50,100'][Math.floor(Math.random() * 3)];
+          spawnNeonParticle(
+            V.w / 2 + (Math.random() - 0.5) * carW * 1.5,
+            baseY + Math.random() * 10,
+            (Math.random() - 0.5) * 100 - p.steerVisual * 60,
+            -30 - Math.random() * 50,
+            2 + Math.random() * 3,
+            0.4 + Math.random() * 0.3,
+            neonCol
+          );
+        }
+      }
+      // 加速带粒子
+      if (p.onPad && Math.random() < 0.7) {
+        var padCol = '255,150,30';
+        spawnNeonParticle(
+          V.w / 2 + (Math.random() - 0.5) * carW,
+          baseY + 5,
+          (Math.random() - 0.5) * 30,
+          -50 - Math.random() * 80,
+          3 + Math.random() * 4,
+          0.6 + Math.random() * 0.3,
+          padCol
         );
       }
     }
@@ -2665,6 +2731,26 @@
     g1.addColorStop(1, 'rgba(90,200,255,.9)');
     ctx.fillStyle = g1;
     ctx.fillRect(0, halfH - 1.5, W, 3);
+
+    // 技能激活闪光
+    if (skillFlashAlpha > 0.01) {
+      ctx.fillStyle = skillFlashColor;
+      ctx.globalAlpha = skillFlashAlpha;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+      skillFlashAlpha -= dt * 1.5;
+    }
+    // 技能护盾光效
+    if (P1 && P1.shieldActive) {
+      var shieldGlow = 0.15 + Math.sin(clock * 6) * 0.05;
+      ctx.strokeStyle = '#4fc3f7';
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = shieldGlow;
+      ctx.beginPath();
+      ctx.ellipse(V.w / 2, V.h * 0.75, V.w * 0.18, V.h * 0.12, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
   }
 
   function assignCars(p) {
@@ -3063,6 +3149,21 @@
         flashTip('⭐ +' + SKILL_POINTS_PER_ITEM + ' 技能点');
         // 播放收集音效
         try { playCollectSound && playCollectSound(); } catch(e) {}
+        // 收集爆闪粒子
+        for (var bi = 0; bi < 20; bi++) {
+          var angle = (bi / 20) * Math.PI * 2;
+          var speed = 80 + Math.random() * 120;
+          var def = SKILL_DEFS[curSeg.skillItem.type];
+          spawnNeonParticle(
+            V.w / 2 + p.steerVisual * V.w * 0.15,
+            V.h * 0.75,
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed,
+            3 + Math.random() * 4,
+            0.6 + Math.random() * 0.4,
+            def ? def.color.replace('#', '') : '255,255,100'
+          );
+        }
       }
     }
 
@@ -5142,8 +5243,27 @@
     flashTip(def.icon + ' ' + def.name + ' 激活！');
     // 播放技能音效
     try { playSkillSound && playSkillSound(type); } catch(e) {}
+    // 屏幕闪光效果
+    skillFlashColor = def.color;
+    skillFlashAlpha = 0.4;
+    // 大量粒子爆发
+    for (var si = 0; si < 30; si++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 100 + Math.random() * 200;
+      spawnNeonParticle(
+        V.w / 2,
+        V.h * 0.75,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed,
+        4 + Math.random() * 6,
+        0.8 + Math.random() * 0.5,
+        def.color.replace('#', '')
+      );
+    }
     updateSkillUI();
   }
+  var skillFlashColor = '#ffffff';
+  var skillFlashAlpha = 0;
 
   function updateSkillUI() {
     if (!P1) return;
