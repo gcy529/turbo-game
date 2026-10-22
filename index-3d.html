@@ -767,7 +767,7 @@ function frame(ts) {
   // 用四元数平滑转向（lerp 防画面乱跳，替代生硬 lookAt）
   var tmpObj = new THREE.Object3D();
   tmpObj.position.copy(playerCar.position);
-  var lookTgt = playerCar.position.clone().add(fwd);
+  var lookTgt = playerCar.position.clone().sub(fwd);
   tmpObj.lookAt(lookTgt.x, playerCar.position.y, lookTgt.z);
   playerCar.quaternion.slerp(tmpObj.quaternion, Math.min(1, dt * 10));
   // 转向侧倾（视觉用，幅度小；每帧从 0 重算目标，不残留）
