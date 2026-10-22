@@ -4873,6 +4873,7 @@
     var el = document.getElementById('carList');
     if (!el) return;
     el.innerHTML = '';
+    if (!CARS || CARS.length === 0) { el.innerHTML = '<div style="color:red">CARS EMPTY</div>'; return; }
     CARS.forEach(function (c) {
       var d = document.createElement('div');
       d.className = 'carcard' + (c.id === selectedCar ? ' sel' : '');
