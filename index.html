@@ -514,6 +514,11 @@
 <div id="msg"></div>
 <div id="pace"><div class="ico" id="paceIco">◀</div><div class="txt" id="paceTxt"></div></div>
 <div id="drift"><div class="lbl">DRIFT</div><div class="val" id="driftVal">0</div><div class="chain" id="driftChain"></div></div>
+<div id="skills" style="position:fixed;right:16px;top:calc(50% + 50px);z-index:11;pointer-events:auto;text-align:right;opacity:0;transition:opacity .2s">
+  <div style="font-size:10px;font-weight:900;letter-spacing:2px;color:#ffd166;text-shadow:0 0 8px rgba(255,209,102,.6);margin-bottom:6px">⚡ 技能</div>
+  <div id="skillPoints" style="font-size:18px;font-weight:900;color:#fff;text-shadow:0 0 12px rgba(255,209,102,.8)"></div>
+  <div id="skillBtns" style="display:flex;flex-direction:column;gap:4px;margin-top:8px;align-items:flex-end"></div>
+</div>
 <div id="shortcut">⚡ 加速带</div>
 <div id="launch"><div class="q" id="launchQ"></div><div class="s" id="launchS"></div></div>
 
@@ -725,6 +730,17 @@
   var DRIFT_GRIP = 0.86;                    // 抓地力（越小越滑）
   var DRIFT_SPEED_LOSS = 0.9965;            // 漂移速度衰减（调轻，几乎不掉速）
   var COUNTER_STEER_BOOST = 2.1;            // 反打方向盘的修正力
+  // ── 技能系统 ──
+  var SKILL_POINTS_PER_ITEM = 10;           // 每个技能点道具给的分数
+  var SKILL_SHIELD_COST = 50;               // 护盾技能消耗
+  var SKILL_MAGNET_COST = 40;               // 磁力技能消耗
+  var SKILL_SLOW_COST = 60;                 // 时间减缓消耗
+  var SKILL_MEGABOOST_COST = 80;            // 全屏氮气消耗
+  var SKILL_SHIELD_DURATION = 5;            // 护盾持续时间（秒）
+  var SKILL_MAGNET_DURATION = 6;            // 磁力持续时间
+  var SKILL_SLOW_DURATION = 4;              // 时间减缓持续时间
+  var SKILL_MEGABOOST_DURATION = 3;         // 全屏氮气持续时间
+  // ── 赛道类型 ====================
   var TOTAL_LAPS = 2;
   var CUSTOM_LAPS = 2;   // 玩家可选圈数
 
@@ -1150,6 +1166,22 @@
       }
       placed++;
     }
+
+    // ── 技能道具生成 ──
+    var SKILL_TYPES = ['shield', 'magnet', 'slow', 'megaboost'];
+    var skillPlaced = 0;
+    for (var n = 100; n < segments.length - 50 && skillPlaced < 15; n += Math.floor(Math.random() * 30) + 25) {
+      var seg = segments[n % total];
+      if (seg.boostPad || seg.tunnel || seg.bridge || seg.jump) continue;
+      var skillX = (Math.random() - 0.5) * 1.2; // 赛道内随机位置
+      seg.skillItem = {
+        x: skillX,
+        type: SKILL_TYPES[Math.floor(Math.random() * SKILL_TYPES.length)],
+        collected: false
+      };
+      skillPlaced++;
+    }
+
     return placed;
   }
 
@@ -1289,7 +1321,12 @@
       airTime: 0, airH: 0, airMax: 380, airTotal: 1.35, jumpSpin: 0, inTunnel: false, onBridge: false,
       dustTimer: 0, dustIntensity: 0,
       launchVel: 0, launchSide: 0, tumble: 0,   // 撞飞
-      hitPedestrians: 0   // 撞到行人数
+      hitPedestrians: 0,   // 撞到行人数
+      // ── 技能属性 ──
+      skillPoints: 0,       // 当前技能点
+      activeSkill: null,    // 'shield'|'magnet'|'slow'|'megaboost'
+      skillTimer: 0,        // 技能剩余时间
+      skillGlow: 0          // 技能发光效果计时
     };
   }
 
@@ -2049,6 +2086,55 @@
     }
   }
 
+  // ── 技能道具绘制 ──
+  function drawSkillItem(seg, item) {
+    var scale = seg.p1.screen.scale;
+    if (!isFinite(scale) || scale <= 0) return;
+    var def = SKILL_DEFS[item.type];
+    if (!def) return;
+    // 道具大小：随距离缩小
+    var size = scale * 180 * V.w / 2;
+    if (size < 3) return;
+    // 位置：赛道中央偏上（悬浮效果）
+    var baseX = seg.p1.screen.x + (scale * item.x * ROAD_W * V.w / 2);
+    var baseY = seg.p1.screen.y;
+    // 悬浮动画
+    var floatY = Math.sin(clock * 3 + seg.index) * size * 0.15;
+    var cx = baseX;
+    var cy = baseY - size * 0.8 + floatY;
+    // 发光效果
+    var glowSize = size * 0.6;
+    var glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowSize);
+    glow.addColorStop(0, def.color + 'aa');
+    glow.addColorStop(0.5, def.color + '44');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, glowSize, 0, Math.PI * 2);
+    ctx.fill();
+    // 主体（菱形）
+    var d = size * 0.35;
+    ctx.fillStyle = def.color;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - d);
+    ctx.lineTo(cx + d * 0.7, cy);
+    ctx.lineTo(cx, cy + d);
+    ctx.lineTo(cx - d * 0.7, cy);
+    ctx.closePath();
+    ctx.fill();
+    // 图标
+    ctx.font = Math.round(size * 0.35) + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon, cx, cy);
+    // 旋转光环
+    ctx.strokeStyle = def.color + '66';
+    ctx.lineWidth = Math.max(1, size * 0.03);
+    ctx.beginPath();
+    ctx.arc(cx, cy, d * 1.2, clock * 2, clock * 2 + Math.PI * 1.5);
+    ctx.stroke();
+  }
+
   function drawTrafficCar(seg, car) {
     var scale = seg.p1.screen.scale;
     if (!isFinite(scale) || scale <= 0) return;
@@ -2343,6 +2429,10 @@
       ctx.clip();
       for (i = 0; i < seg.sprites.length; i++) drawSpriteObject(seg, seg.sprites[i]);
       for (i = 0; i < seg.cars.length; i++) drawTrafficCar(seg, seg.cars[i]);
+      // ── 技能道具渲染 ──
+      if (seg.skillItem && !seg.skillItem.collected) {
+        drawSkillItem(seg, seg.skillItem);
+      }
       ctx.restore();
     }
 
@@ -2963,6 +3053,51 @@
       }
     }
 
+    // ── 技能道具收集 ──
+    if (curSeg.skillItem && !curSeg.skillItem.collected) {
+      var itemHalf = 0.18;
+      if (Math.abs(p.playerX - curSeg.skillItem.x) < itemHalf) {
+        curSeg.skillItem.collected = true;
+        p.skillPoints += SKILL_POINTS_PER_ITEM;
+        p.skillGlow = 0.5;
+        flashTip('⭐ +' + SKILL_POINTS_PER_ITEM + ' 技能点');
+        // 播放收集音效
+        try { playCollectSound && playCollectSound(); } catch(e) {}
+      }
+    }
+
+    // ── 技能冷却与效果 ──
+    if (p.activeSkill && p.skillTimer > 0) {
+      p.skillTimer -= dt;
+      // 技能效果
+      if (p.activeSkill === 'shield') {
+        // 护盾：免疫碰撞
+        p.shieldActive = true;
+      } else if (p.activeSkill === 'magnet') {
+        // 磁力：吸引道具
+        p.magnetRange = 0.8;
+      } else if (p.activeSkill === 'slow') {
+        // 时间减缓：NPC 减速
+        p.timeSlow = 0.4; // NPC 速度乘数
+      } else if (p.activeSkill === 'megaboost') {
+        // 全屏氮气：持续加速
+        p.speed = Math.min(MAX_SPEED * 1.4, p.speed + MAX_SPEED * 0.5 * dt);
+      }
+      if (p.skillTimer <= 0) {
+        p.activeSkill = null;
+        p.skillTimer = 0;
+        p.shieldActive = false;
+        p.magnetRange = 0;
+        p.timeSlow = 1;
+        flashTip('⚡ 技能结束');
+      }
+    } else {
+      p.shieldActive = false;
+      p.magnetRange = 0;
+      p.timeSlow = 1;
+    }
+    if (p.skillGlow > 0) p.skillGlow -= dt;
+
     // ── 出界惩罚 ──
     var off = Math.abs(p.playerX) > 1.08;
     if (off && p.speed > OFF_LIMIT) {
@@ -3295,6 +3430,7 @@
     applyBrakeBtnVisual();
     updateHud();
     updateFxHud();
+    updateSkillUI();
     if (ghostFrames.length < 3000 && P1 && P1.totalDistance > 0) recordGhost(P1, dt);
     updateEngines(P1, P2);
     updateTunnelEcho(P1);
@@ -3758,6 +3894,50 @@
       g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + 0.16);
       osc.connect(g); g.connect(masterGain);
       osc.start(); osc.stop(AC.currentTime + 0.18);
+    } catch (e) {}
+  }
+
+  // 技能道具收集音效（清脆"叮"）
+  function playCollectSound() {
+    if (!AC || !CFG.sfx) return;
+    try {
+      var osc = AC.createOscillator();
+      var g = AC.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, AC.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1320, AC.currentTime + 0.08);
+      g.gain.setValueAtTime(0.12, AC.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + 0.18);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(); osc.stop(AC.currentTime + 0.2);
+    } catch (e) {}
+  }
+
+  // 技能激活音效（不同技能不同音调）
+  function playSkillSound(type) {
+    if (!AC || !CFG.sfx) return;
+    try {
+      var freqs = { shield: 660, magnet: 550, slow: 440, megaboost: 880 };
+      var baseFreq = freqs[type] || 660;
+      // 主音
+      var osc = AC.createOscillator();
+      var g = AC.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(baseFreq, AC.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.8, AC.currentTime + 0.15);
+      g.gain.setValueAtTime(0.14, AC.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + 0.35);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(); osc.stop(AC.currentTime + 0.38);
+      // 和声
+      var o2 = AC.createOscillator();
+      var g2 = AC.createGain();
+      o2.type = 'sine';
+      o2.frequency.setValueAtTime(baseFreq * 1.5, AC.currentTime + 0.08);
+      g2.gain.setValueAtTime(0.08, AC.currentTime + 0.08);
+      g2.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + 0.4);
+      o2.connect(g2); g2.connect(masterGain);
+      o2.start(AC.currentTime + 0.08); o2.stop(AC.currentTime + 0.42);
     } catch (e) {}
   }
 
@@ -4934,6 +5114,62 @@
     elMsg.textContent = msg;
     elMsg.style.opacity = '1';
     msgTimer = 1.2;
+  }
+
+  // ── 技能系统 ──
+  var SKILL_DEFS = {
+    shield:   { name: '护盾',   icon: '🛡️', cost: SKILL_SHIELD_COST,   duration: SKILL_SHIELD_DURATION,   color: '#4fc3f7' },
+    magnet:   { name: '磁力',   icon: '🧲', cost: SKILL_MAGNET_COST,   duration: SKILL_MAGNET_DURATION,   color: '#ef5350' },
+    slow:     { name: '缓时',   icon: '⏳', cost: SKILL_SLOW_COST,     duration: SKILL_SLOW_DURATION,     color: '#ab47bc' },
+    megaboost:{ name: '氮气',   icon: '🔥', cost: SKILL_MEGABOOST_COST, duration: SKILL_MEGABOOST_DURATION, color: '#ff9800' }
+  };
+
+  function activateSkill(type) {
+    var def = SKILL_DEFS[type];
+    if (!def || !P1) return;
+    if (P1.skillPoints < def.cost) {
+      flashTip('💫 技能点不足！');
+      return;
+    }
+    if (P1.activeSkill) {
+      flashTip('⚡ 已有激活技能！');
+      return;
+    }
+    P1.skillPoints -= def.cost;
+    P1.activeSkill = type;
+    P1.skillTimer = def.duration;
+    P1.skillGlow = 1.0;
+    flashTip(def.icon + ' ' + def.name + ' 激活！');
+    // 播放技能音效
+    try { playSkillSound && playSkillSound(type); } catch(e) {}
+    updateSkillUI();
+  }
+
+  function updateSkillUI() {
+    if (!P1) return;
+    var elPts = document.getElementById('skillPoints');
+    var elBtns = document.getElementById('skillBtns');
+    if (!elPts || !elBtns) return;
+    elPts.textContent = '⭐ ' + P1.skillPoints;
+    // 构建技能按钮
+    var html = '';
+    for (var key in SKILL_DEFS) {
+      var def = SKILL_DEFS[key];
+      var canUse = P1.skillPoints >= def.cost;
+      var isActive = P1.activeSkill === key;
+      var opacity = canUse ? '1' : '0.35';
+      var border = isActive ? '2px solid ' + def.color : '1px solid rgba(255,255,255,.15)';
+      html += '<button onclick="activateSkill(\'' + key + '\')" style="opacity:' + opacity + ';background:rgba(0,0,0,.4);border:' + border + ';border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;font-weight:900;cursor:' + (canUse ? 'pointer' : 'not-allowed') + ';text-shadow:0 0 8px ' + def.color + ';transition:all .15s">'
+        + def.icon + ' ' + def.name + ' <span style="font-size:10px;opacity:.7">' + def.cost + '点</span>'
+        + (isActive ? ' <span style="color:' + def.color + '">' + Math.ceil(P1.skillTimer) + 's</span>' : '')
+        + '</button>';
+    }
+    elBtns.innerHTML = html;
+    // 显示/隐藏技能面板
+    var elSkills = document.getElementById('skills');
+    if (elSkills) {
+      elSkills.style.opacity = (P1.skillPoints > 0 || P1.activeSkill) ? '1' : '0';
+    }
   }
 
   // 按玩家规划生成赛道
