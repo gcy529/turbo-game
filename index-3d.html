@@ -345,7 +345,7 @@ function spawnNpcs() {
   }
 }
 spawnNpcs();
-// ── 技能道具（3D）──
+// ── 技能道具 ──
 var SKILL_TYPES_3D = ['shield', 'magnet', 'slow', 'megaboost'];
 var SKILL_COLORS_3D = { shield: 0x4fc3f7, magnet: 0xef5350, slow: 0xab47bc, megaboost: 0xff9800 };
 var skillItems = [];
@@ -374,13 +374,12 @@ function spawnSkillItems() {
   }
 }
 spawnSkillItems();
-// ── 粒子系统（3D）──
+// ── 粒子系统 ──
 var MAX_PARTICLES_3D = 300;
 var particleGeo = new THREE.BufferGeometry();
 var particlePositions = new Float32Array(MAX_PARTICLES_3D * 3);
 var particleColors = new Float32Array(MAX_PARTICLES_3D * 3);
 var particleSizes = new Float32Array(MAX_PARTICLES_3D);
-var particleAlphas = new Float32Array(MAX_PARTICLES_3D);
 particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
 particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
 particleGeo.setAttribute('size', new THREE.BufferAttribute(particleSizes, 1));
@@ -403,12 +402,11 @@ function updateParticles3D(dt) {
   for (var i = particles3D.length - 1; i >= 0; i--) {
     var p = particles3D[i];
     p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
-    p.vy -= 5 * dt; // 轻微重力
+    p.vy -= 5 * dt;
     p.vx *= 0.98; p.vz *= 0.98;
     p.life -= dt;
     if (p.life <= 0) particles3D.splice(i, 1);
   }
-  // 更新缓冲区
   for (var i = 0; i < MAX_PARTICLES_3D; i++) {
     if (i < particles3D.length) {
       var p = particles3D[i];
@@ -431,10 +429,7 @@ function updateParticles3D(dt) {
   particleGeo.attributes.color.needsUpdate = true;
   particleGeo.attributes.size.needsUpdate = true;
 }
-var player = { t: 0, lateral: 0.15, speed: 0, MAX_SPEED: 96, lap: 1, totalLaps: 2, lastT: 0, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0,
-  // ── 技能属性 ──
-  skillPoints: 0, activeSkill: null, skillTimer: 0, skillGlow: 0, shieldActive: false, magnetRange: 0, timeSlow: 1
-};
+var player = { t: 0, lateral: 0.15, speed: 0, MAX_SPEED: 96, lap: 1, totalLaps: 2, lastT: 0, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0 };
 var running = false, paused = false, camMode = 0, raceStart = 0, lapStart = 0, shake = 0, clock = 0;
 var AUTO_GAS = true;    // 自动加速（和 2D 一致）
 var INVERT = true;      // 模式开关（默认 A）
@@ -584,9 +579,9 @@ function update(dt) {
         spawnParticle3D(
           item.mesh.position.x, item.mesh.position.y, item.mesh.position.z,
           Math.cos(angle) * speed, 2 + Math.random() * 3, Math.sin(angle) * speed,
-          SKILL_COLORS_3D[item.type] >> 16 & 255 / 255,
-          SKILL_COLORS_3D[item.type] >> 8 & 255 / 255,
-          SKILL_COLORS_3D[item.type] & 255 / 255,
+          (SKILL_COLORS_3D[item.type] >> 16 & 255) / 255,
+          (SKILL_COLORS_3D[item.type] >> 8 & 255) / 255,
+          (SKILL_COLORS_3D[item.type] & 255) / 255,
           0.3 + Math.random() * 0.3, 0.6 + Math.random() * 0.4
         );
       }
@@ -598,20 +593,42 @@ function update(dt) {
     player.skillTimer -= dt;
     if (player.activeSkill === 'shield') {
       player.shieldActive = true;
+    } else if (player.activeSkill === 'magnet') {
+      player.magnetRange = 5;
+      for (var mi = 0; mi < skillItems.length; mi++) {
+        var mitem = skillItems[mi];
+        if (mitem.collected) continue;
+        var mx = pPos.x - mitem.mesh.position.x;
+        var mz = pPos.z - mitem.mesh.position.z;
+        var mdist = Math.sqrt(mx * mx + mz * mz);
+        if (mdist < player.magnetRange) {
+          mitem.mesh.position.x += mx / mdist * 5 * dt;
+          mitem.mesh.position.z += mz / mdist * 5 * dt;
+        }
+      }
+    } else if (player.activeSkill === 'slow') {
+      player.timeSlow = 0.4;
     } else if (player.activeSkill === 'megaboost') {
       player.speed = Math.min(player.MAX_SPEED * 1.3, player.speed + 20 * dt);
-    } else if (player.activeSkill === 'slow') {
-      player.timeSlow = 0.5;
+    }
+    // ── 3D 差异化：环境光随技能变色 ──
+    var ambientColors = { shield: 0x4fc3f7, magnet: 0xef5350, slow: 0xab47bc, megaboost: 0xff9800 };
+    if (ambientLight && ambientColors[player.activeSkill]) {
+      ambientLight.color.lerp(new THREE.Color(ambientColors[player.activeSkill]), dt * 2);
     }
     if (player.skillTimer <= 0) {
       player.activeSkill = null;
       player.shieldActive = false;
+      player.magnetRange = 0;
       player.timeSlow = 1;
+      if (ambientLight) ambientLight.color.lerp(new THREE.Color(0x404060), dt * 3);
       setMsg('⚡ 技能结束', 0.8);
     }
   } else {
     player.shieldActive = false;
+    player.magnetRange = 0;
     player.timeSlow = 1;
+    if (ambientLight) ambientLight.color.lerp(new THREE.Color(0x404060), dt * 3);
   }
   if (player.skillGlow > 0) player.skillGlow -= dt;
   // ── 漂移粒子 ──
@@ -625,6 +642,22 @@ function update(dt) {
     );
   }
   updateParticles3D(dt);
+  // ── 护盾视觉 ──
+  if (player.shieldActive && !playerCar.userData.shieldMesh) {
+    var shieldGeo = new THREE.SphereGeometry(2.5, 16, 16);
+    var shieldMat = new THREE.MeshBasicMaterial({ color: 0x4fc3f7, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
+    playerCar.userData.shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+    playerCar.userData.shieldMesh.position.y = 1.5;
+    playerCar.add(playerCar.userData.shieldMesh);
+  } else if (!player.shieldActive && playerCar.userData.shieldMesh) {
+    playerCar.remove(playerCar.userData.shieldMesh);
+    playerCar.userData.shieldMesh.geometry.dispose();
+    playerCar.userData.shieldMesh.material.dispose();
+    playerCar.userData.shieldMesh = null;
+  }
+  if (playerCar.userData.shieldMesh) {
+    playerCar.userData.shieldMesh.material.opacity = 0.15 + Math.sin(clock * 6) * 0.05;
+  }
   // 逆行提示：速度为负且足够快时显示
   if (revDriveEl) {
     var revNow = player.speed < -15;
@@ -650,7 +683,7 @@ function update(dt) {
   var who3 = document.getElementById('who3d');
   if (who3) who3.textContent = getLastName3d();
   // ── 技能 HUD ──
-  var elSkillPts = document.getElementById('skillPoints3d');
+  var elSkillPts = document.getElementById('skillPts3d');
   var elSkillBar = document.getElementById('skillBar3d');
   if (elSkillPts) elSkillPts.textContent = '⭐ ' + player.skillPoints;
   if (elSkillBar) {
@@ -731,37 +764,32 @@ function frame(ts) {
   sun.position.set(pp.pos.x + 90, pp.pos.y + 140, pp.pos.z + 60);
   sun.target.position.copy(pp.pos);
   sun.target.updateMatrixWorld();
-  // ── 护盾光效（3D）──
-  if (player.shieldActive) {
-    var shieldGeo = new THREE.SphereGeometry(2.5, 16, 16);
-    var shieldMat = new THREE.MeshBasicMaterial({
-      color: 0x4fc3f7,
-      transparent: true,
-      opacity: 0.15 + Math.sin(clock * 6) * 0.05,
-      side: THREE.DoubleSide
-    });
-    if (!playerCar.userData.shieldMesh) {
-      playerCar.userData.shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
-      playerCar.userData.shieldMesh.position.y = 1.5;
-      playerCar.add(playerCar.userData.shieldMesh);
-    } else {
-      playerCar.userData.shieldMesh.material.opacity = 0.15 + Math.sin(clock * 6) * 0.05;
-    }
-  } else if (playerCar.userData.shieldMesh) {
-    playerCar.remove(playerCar.userData.shieldMesh);
-    playerCar.userData.shieldMesh.geometry.dispose();
-    playerCar.userData.shieldMesh.material.dispose();
-    playerCar.userData.shieldMesh = null;
-  }
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 function startRace() {
   player.t = 0; player.lateral = 0.15; player.speed = 0; player.lap = 1; player.lastT = 0; player.finished = false;
   player.pushLateral = 0;
+  // ── 技能重置 ──
+  player.skillPoints = 0; player.activeSkill = null; player.skillTimer = 0; player.skillGlow = 0;
+  player.shieldActive = false; player.magnetRange = 0; player.timeSlow = 1;
+  if (playerCar.userData.shieldMesh) {
+    playerCar.remove(playerCar.userData.shieldMesh);
+    playerCar.userData.shieldMesh.geometry.dispose();
+    playerCar.userData.shieldMesh.material.dispose();
+    playerCar.userData.shieldMesh = null;
+  }
   overlay.classList.add("hide");
   running = true;
   countdown = 3.2; lastCountShown = -1;
+  // 重置技能道具
+  for (var si = 0; si < skillItems.length; si++) {
+    skillItems[si].collected = false;
+    skillItems[si].mesh.visible = true;
+  }
+  // 重置粒子
+  particles3D = [];
+  updateSkillBtns3d();
   setMsg("3", 0.9);
   // 按键提示：手机/触屏不显示；电脑显示 3 秒后自动消失
   var kh = document.getElementById("keyHints");
@@ -800,6 +828,64 @@ window.__T3 = {
     return true;
   }
 };
+// ── 技能系统 ──
+var SKILL_DEFS_3D = {
+  shield:   { name: '护盾',   icon: '🛡️', cost: 50,   duration: 5, color: 0x4fc3f7 },
+  magnet:   { name: '磁力',   icon: '🧲', cost: 40,   duration: 6, color: 0xef5350 },
+  slow:     { name: '缓时',   icon: '⏳', cost: 60,   duration: 4, color: 0xab47bc },
+  megaboost:{ name: '氮气',   icon: '🔥', cost: 80,   duration: 3, color: 0xff9800 }
+};
+window.activateSkill3d = function(type) {
+  var def = SKILL_DEFS_3D[type];
+  if (!def || !player) return;
+  if (player.skillPoints < def.cost) {
+    setMsg('💫 技能点不足！', 1);
+    return;
+  }
+  if (player.activeSkill) {
+    setMsg('⚡ 已有激活技能！', 1);
+    return;
+  }
+  player.skillPoints -= def.cost;
+  player.activeSkill = type;
+  player.skillTimer = def.duration;
+  player.skillGlow = 1.0;
+  setMsg(def.icon + ' ' + def.name + ' 激活！', 1.2);
+  // 粒子爆发
+  var pPos = playerCar.position;
+  for (var si = 0; si < 25; si++) {
+    var angle = Math.random() * Math.PI * 2;
+    var speed = 2 + Math.random() * 4;
+    spawnParticle3D(
+      pPos.x, pPos.y + 0.5, pPos.z,
+      Math.cos(angle) * speed, 1 + Math.random() * 2, Math.sin(angle) * speed,
+      (def.color >> 16 & 255) / 255,
+      (def.color >> 8 & 255) / 255,
+      (def.color & 255) / 255,
+      0.3 + Math.random() * 0.3, 0.8 + Math.random() * 0.4
+    );
+  }
+  updateSkillBtns3d();
+};
+function updateSkillBtns3d() {
+  var btns = document.querySelectorAll('.skill-btn');
+  btns.forEach(function(btn) {
+    var type = btn.getAttribute('data-skill');
+    var def = SKILL_DEFS_3D[type];
+    if (!def) return;
+    var canUse = player.skillPoints >= def.cost;
+    var isActive = player.activeSkill === type;
+    btn.style.opacity = canUse ? '1' : '0.4';
+    btn.style.cursor = canUse ? 'pointer' : 'not-allowed';
+    btn.classList.toggle('active', isActive);
+  });
+  var elSkillUI = document.getElementById('skillUI3d');
+  if (elSkillUI) {
+    elSkillUI.classList.toggle('show', player.skillPoints > 0 || player.activeSkill);
+  }
+}
+// 启动时初始化
+updateSkillBtns3d();
 function unlockSetting() {
   if (UNLOCKED) return;
   UNLOCKED = true;
@@ -902,64 +988,8 @@ updateHud();
 var whoInit = document.getElementById('who3d');
 if (whoInit) whoInit.textContent = getLastName3d();
 updateD3Lock();
-// ── 技能系统（3D）──
-var SKILL_DEFS_3D = {
-  shield:   { name: '护盾',   icon: '🛡️', cost: 50,   duration: 5, color: 0x4fc3f7 },
-  magnet:   { name: '磁力',   icon: '🧲', cost: 40,   duration: 6, color: 0xef5350 },
-  slow:     { name: '缓时',   icon: '⏳', cost: 60,   duration: 4, color: 0xab47bc },
-  megaboost:{ name: '氮气',   icon: '🔥', cost: 80,   duration: 3, color: 0xff9800 }
-};
-window.activateSkill3d = function(type) {
-  var def = SKILL_DEFS_3D[type];
-  if (!def || !player) return;
-  if (player.skillPoints < def.cost) {
-    setMsg('💫 技能点不足！', 1);
-    return;
-  }
-  if (player.activeSkill) {
-    setMsg('⚡ 已有激活技能！', 1);
-    return;
-  }
-  player.skillPoints -= def.cost;
-  player.activeSkill = type;
-  player.skillTimer = def.duration;
-  player.skillGlow = 1.0;
-  setMsg(def.icon + ' ' + def.name + ' 激活！', 1.2);
-  // 粒子爆发
-  var pPos = playerCar.position;
-  for (var si = 0; si < 25; si++) {
-    var angle = Math.random() * Math.PI * 2;
-    var speed = 2 + Math.random() * 4;
-    spawnParticle3D(
-      pPos.x, pPos.y + 0.5, pPos.z,
-      Math.cos(angle) * speed, 1 + Math.random() * 2, Math.sin(angle) * speed,
-      (def.color >> 16 & 255) / 255,
-      (def.color >> 8 & 255) / 255,
-      (def.color & 255) / 255,
-      0.3 + Math.random() * 0.3, 0.8 + Math.random() * 0.4
-    );
-  }
-  updateSkillBtns3d();
-};
-function updateSkillBtns3d() {
-  var btns = document.querySelectorAll('.skill-btn');
-  btns.forEach(function(btn) {
-    var type = btn.getAttribute('data-skill');
-    var def = SKILL_DEFS_3D[type];
-    if (!def) return;
-    var canUse = player.skillPoints >= def.cost;
-    var isActive = player.activeSkill === type;
-    btn.style.opacity = canUse ? '1' : '0.4';
-    btn.style.cursor = canUse ? 'pointer' : 'not-allowed';
-    btn.classList.toggle('active', isActive);
-  });
-  var elSkillUI = document.getElementById('skillUI3d');
-  if (elSkillUI) {
-    elSkillUI.classList.toggle('show', player.skillPoints > 0 || player.activeSkill);
-  }
-}
-// 启动时初始化技能按钮
-updateSkillBtns3d();
+requestAnimationFrame(frame);
+})();
 </script>
 </body>
 </html>
