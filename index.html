@@ -4754,6 +4754,8 @@
     if (hb) hb.classList.add('hide');
     if (ov) ov.classList.remove('hide');
     gotoStep(0);
+    renderCarList(); renderMapList(); renderLapList(); renderWeatherList(); renderModeList();
+    updateSummary();
   }
   function updateHomeBest() {
     var el = document.getElementById('homeBest');
