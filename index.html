@@ -2355,6 +2355,16 @@
     ctx.fillStyle = 'rgba(255,255,255,.5)';
     ctx.fillRect(L + w * 0.105, tailY + tailH * 0.16, tlW * 0.72, tailH * 0.2);
     ctx.fillRect(R - w * 0.09 - tlW + w * 0.015, tailY + tailH * 0.16, tlW * 0.72, tailH * 0.2);
+    // ── 霓虹复古风格增强：贯穿式尾灯条 ──
+    ctx.save();
+    ctx.shadowColor = '#ff0044';
+    ctx.shadowBlur = isPlayer ? 14 : 6;
+    ctx.fillStyle = 'rgba(255,20,60,' + (isPlayer ? 0.55 : 0.35) + ')';
+    ctx.fillRect(L + w * 0.15, tailY + tailH * 0.55, w * 0.7, tailH * 0.28);
+    ctx.restore();
+    // ── 底部镀铬条（复古感）──
+    ctx.fillStyle = 'rgba(200,210,230,.22)';
+    ctx.fillRect(L + w * 0.12, T + h * 0.78, w * 0.76, h * 0.018);
 
     ctx.fillStyle = '#e9eef7';
     roundRect(midX - w * 0.105, T + h * 0.685, w * 0.21, h * 0.085, h * 0.014); ctx.fill();
@@ -2380,6 +2390,24 @@
     ctx.fillStyle = mainColor;
     roundRect(L + w * 0.075, T + h * 0.40, w * 0.085, h * 0.055, h * 0.02); ctx.fill();
     roundRect(R - w * 0.16, T + h * 0.40, w * 0.085, h * 0.055, h * 0.02); ctx.fill();
+
+    // ── 霓虹复古风格：车身外发光边框 ──
+    if (isPlayer) {
+      ctx.save();
+      ctx.strokeStyle = mainColor;
+      ctx.lineWidth = 1.8;
+      ctx.shadowColor = mainColor;
+      ctx.shadowBlur = 10;
+      ctx.globalAlpha = 0.65;
+      ctx.beginPath();
+      ctx.moveTo(L + w * 0.145, T + h * 0.375);
+      ctx.lineTo(R - w * 0.145, T + h * 0.375);
+      ctx.lineTo(R - w * 0.035, T + h * 0.845);
+      ctx.lineTo(L + w * 0.035, T + h * 0.845);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // ── 起步喷尾焰 ──
     if (p.boostTimer > 0) {
@@ -4770,25 +4798,25 @@
     {
       id: 'street', name: '街头小子', nameKey: 'cStreet', icon: '🚗', desc: '均衡入门 · 好开',
       speed: 0.90, accel: 1.00, steer: 1.00, grip: 1.00, boost: 1.00,
-      color: '#e63946',
+      color: '#ff2d7b',   // 霓虹粉
       stats: { 速度: 3, 加速: 3, 操控: 3, 抓地: 3 }
     },
     {
       id: 'beast', name: '赛道猛兽', nameKey: 'cBeast', icon: '🏎️', desc: '极速最高 · 转向偏重',
       speed: 1.18, accel: 1.10, steer: 0.82, grip: 1.08, boost: 1.05,
-      color: '#ff8c00',
+      color: '#00e5ff',   // 赛博青
       stats: { 速度: 5, 加速: 4, 操控: 2, 抓地: 4 }
     },
     {
       id: 'drift', name: '漂移之王', nameKey: 'cDrift', icon: '🚙', desc: '转向极灵 · 高速不稳',
       speed: 0.96, accel: 0.95, steer: 1.32, grip: 0.78, boost: 1.15,
-      color: '#2a9d8f',
+      color: '#bf00ff',   // 霓虹紫
       stats: { 速度: 3, 加速: 2, 操控: 5, 抓地: 1 }
     },
     {
       id: 'tank', name: '重装坦克', nameKey: 'cTank', icon: '🚛', desc: '极稳 · 撞不飞 · 慢',
       speed: 0.82, accel: 0.85, steer: 0.88, grip: 1.35, boost: 0.92,
-      color: '#5a6a7a',
+      color: '#ff9100',   // 霓虹橙
       stats: { 速度: 2, 加速: 1, 操控: 3, 抓地: 5 }
     }
   ];
