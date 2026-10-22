@@ -6518,6 +6518,9 @@
       }).catch(function () {});
     });
   }
+  // 页面加载时渲染向导列表（覆盖默认显示的 overlay 状态）
+  renderCarList(); renderMapList(); renderLapList(); renderWeatherList(); renderModeList();
+  updateSummary();
 })();
 
 </script>
