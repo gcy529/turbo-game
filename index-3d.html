@@ -487,6 +487,42 @@ function persistInvert() { try { localStorage.setItem('turbo3d-invert', INVERT ?
 var UNLOCKED = false;   // 是否已解锁隐藏设置（跑完一局）
 var LOCKED_INVERT = true;  // 未解锁时强制逆反
 var input = { gas: true, brake: false, left: false, right: false };
+// ── 陀螺仪倾斜转向（与 2D 版同步逻辑）──
+var GYRO = { enabled: false, steer: 0, raw: 0, base: null, armed: false };
+try { GYRO.enabled = localStorage.getItem('turbo-racer-gyro') === '1'; } catch (e) {}
+function gyroAxisValue(e) {
+  var landscape = false;
+  try { landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches; } catch (err) {}
+  if (landscape) return e.beta !== null ? e.beta : 0;
+  return e.gamma !== null ? e.gamma : 0;
+}
+function onGyroEvent(e) {
+  if (e.gamma === null && e.beta === null) return;
+  var v = gyroAxisValue(e);
+  if (GYRO.base === null) GYRO.base = v;
+  GYRO.raw = v - GYRO.base;
+}
+function gyroTick(dt) {
+  if (!GYRO.enabled || !GYRO.armed) { GYRO.steer *= Math.max(0, 1 - dt * 8); return; }
+  GYRO.steer += (GYRO.raw - GYRO.steer) * Math.min(1, dt * 9);
+  if (Math.abs(GYRO.steer) < 0.04) GYRO.steer = 0;
+}
+function gyroSteerInput() {
+  if (!GYRO.enabled || !GYRO.armed) return 0;
+  return Math.max(-1, Math.min(1, GYRO.steer / 28));
+}
+function armGyro() {
+  if (typeof window.DeviceOrientationEvent === 'undefined') return;
+  GYRO.armed = true; GYRO.base = null; GYRO.raw = 0; GYRO.steer = 0;
+  window.addEventListener('deviceorientation', onGyroEvent, true);
+  // iOS 13+ 需权限
+  if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+    window.DeviceOrientationEvent.requestPermission().then(function (res) {
+      if (res === 'granted') GYRO.armed = true; else GYRO.armed = false;
+    }).catch(function () { GYRO.armed = false; });
+  }
+}
+if (GYRO.enabled && typeof window.DeviceOrientationEvent !== 'undefined') armGyro();
 var elSpd = document.getElementById("spd"), elLap = document.getElementById("lap"), elT1 = document.getElementById("t1");
 var elMsg = document.getElementById("msg"), overlay = document.getElementById("overlay"), elFps = document.getElementById("fpsBox");
 var revDriveEl = null;
@@ -556,9 +592,18 @@ function update(dt) {
   player.speed = Math.max(-22, Math.min(player.MAX_SPEED, player.speed));
   var dT = (player.speed * dt) / trackLen;
   player.t += dT;
+  // ── 输入方向（键优先，陀螺仪补充）──
   var steer = 0;
   if (input.left) steer -= 1;
   if (input.right) steer += 1;
+  // 陀螺仪：模拟量转向（键按下时不叠加）
+  var gyroIn = 0;
+  if (!input.left && !input.right) {
+    gyroTick(dt);
+    gyroIn = gyroSteerInput();
+    if (Math.abs(gyroIn) > 0.35) steer = gyroIn > 0 ? 1 : -1;
+    else if (Math.abs(gyroIn) > 0.05) steer = gyroIn * 0.8; // 小幅倾斜 = 小幅转向
+  }
   if (INVERT) steer = -steer;
   // 漂移分：高速转向累计
   if (Math.abs(steer) > 0.5 && player.speed > player.MAX_SPEED * 0.5) player.driftScore = (player.driftScore || 0) + dt * 60;   // 逆反模式：左右互换
