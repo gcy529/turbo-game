@@ -78,7 +78,7 @@
   .meta b{color:#fff;font-weight:750}
   #msg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:64px;font-weight:900;letter-spacing:6px;color:#fff;text-shadow:0 0 40px rgba(120,200,255,.9);opacity:0;transition:opacity .25s;pointer-events:none;z-index:12;white-space:nowrap}
   #home{position:fixed;inset:0;z-index:25;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,rgba(20,40,80,.92),rgba(4,6,14,.98));transition:opacity .4s;padding:20px}
-  #home.hide{opacity:0;pointer-events:none}
+  #home.hide{opacity:0;pointer-events:none;display:flex!important}
   .homeInner{text-align:center;display:flex;flex-direction:column;align-items:center}
   .homeLogo{font-size:64px;margin-bottom:6px;filter:drop-shadow(0 8px 24px rgba(90,180,255,.5));animation:logoFloat 3s ease-in-out infinite}
   @keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
