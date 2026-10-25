@@ -650,6 +650,31 @@
 (function () {
   'use strict';
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     ① 配置段 CONFIG
+     车辆 / 地图 / 天气 / 视角 的默认值集中在这里，改数值只改这一处。
+     只集中初始化值，物理、绘制、玩法逻辑一概不动。
+     ═══════════════════════════════════════════════════════════════════════ */
+  var CONFIG = {
+    car: { default: 'street', maxSpeedFactor: 60 },   // 默认车型（CARS 的 id）；最高速 = SEG_LEN * maxSpeedFactor
+    map: { default: 'dusk', laps: 2 },                // 默认地图；默认圈数
+    weather: { default: 'clear' },                   // 默认天气：clear | rain | fog | night
+    view: { default: 1 }                             // 默认视角：0 驾驶舱 / 1 贴地 / 2 俯瞰
+  };
+
+  /* ── 存档三件套：读档 / 存档 / 清档 ──────────────────────────────────────
+     原来散落在全文件的 36 处 localStorage 读写收敛成这三个函数；
+     各自带 try/catch，隐私模式或配额满时行为与原代码一致（读档返回 null）。 */
+  function loadSave(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function saveSave(key, value) {
+    try { localStorage.setItem(key, value); return true; } catch (e) { return false; }
+  }
+  function clearSave(key) {
+    try { localStorage.removeItem(key); return true; } catch (e) { return false; }
+  }
+
   var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
   var rnd = function (a, b) { return a + Math.random() * (b - a); };
   var pick = function (a) { return a[(Math.random() * a.length) | 0]; };
@@ -707,7 +732,7 @@
   var PLAYER_Z = CAM_HEIGHT * CAM_DEPTH;
   var FOG_DENSITY = 5;   // 运行时按天气调整
   var ROAD_W = 2000;
-  var MAX_SPEED = SEG_LEN * 60;
+  var MAX_SPEED = SEG_LEN * CONFIG.car.maxSpeedFactor;
   var ACCEL = MAX_SPEED / 4.2;
   var DECEL = -MAX_SPEED / 9;
   var OFF_LIMIT = MAX_SPEED / 3.6;
@@ -742,7 +767,7 @@
   var SKILL_SLOW_DURATION = 4;              // 时间减缓持续时间
   var SKILL_MEGABOOST_DURATION = 3;         // 全屏氮气持续时间
   // ── 赛道类型 ====================
-  var TOTAL_LAPS = 2;
+  var TOTAL_LAPS = CONFIG.map.laps;
   var CUSTOM_LAPS = 2;   // 玩家可选圈数
 
   /* ================= 地图主题 ================= */
@@ -953,6 +978,9 @@
     markBoostPads();
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     ② 物理与碰撞段 PHYSICS & COLLISION
+     ═══════════════════════════════════════════════════════════════════════ */
   function buildTrack(mapId) {
     if (mapId === 'custom') { buildPlannedTrack(); return; }
 
@@ -1467,6 +1495,9 @@
     ctx.closePath(); ctx.fill();
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     ③ 渲染段 RENDER
+     ═══════════════════════════════════════════════════════════════════════ */
   function drawSegment(seg) {
     var p1 = seg.p1.screen, p2 = seg.p2.screen;
     var c = seg.color;
@@ -2234,6 +2265,11 @@
   }
 
   function drawPlayerCar(p, scale) {
+    // ⚠ 修复（进不去游戏的根因）：本函数内引用了 isPlayer（原 2362/2363/2396 行），
+    // 但 isPlayer 只是 drawCarBody 的形参，不在此作用域 → 首帧 ReferenceError，
+    // 异常从 render() 冒泡出 boot()，boot 后半段（首页按钮绑定、rAF 循环）全部没执行。
+    // 玩家车恒为“玩家”，显式声明为 true，原有发光/尾灯高亮分支行为不变。
+    var isPlayer = true;
     scale = scale === undefined ? 1 : scale;
     var w = Math.min(V.w * 0.155, 200) * scale;
     var h = w * 0.86;
@@ -4261,7 +4297,7 @@
     renderLeaderboard();
     updateWizTitle();
     updateSummary();
-    try { localStorage.setItem('turbo-racer-lang', LANG); } catch (e) {}
+    try { saveSave('turbo-racer-lang', LANG); } catch (e) {}
   }
   function toggleLang() {
     LANG = LANG === 'zh' ? 'en' : 'zh';
@@ -4272,7 +4308,7 @@
     document.body.setAttribute('data-theme', THEME);
     var btn = document.getElementById('themeBtn');
     if (btn) btn.textContent = THEME === 'dark' ? '☀️' : '🌙';
-    try { localStorage.setItem('turbo-racer-theme', THEME); } catch (e) {}
+    try { saveSave('turbo-racer-theme', THEME); } catch (e) {}
   }
   function toggleTheme() {
     THEME = THEME === 'dark' ? 'light' : 'dark';
@@ -4363,8 +4399,11 @@
       applyAudioSettings();
       flashTip('🔇 已静音');
     }
-    try { localStorage.setItem('turbo-racer-sound', on ? '1' : '0'); } catch (e) {}
+    try { saveSave('turbo-racer-sound', on ? '1' : '0'); } catch (e) {}
   }
+  /* ═══════════════════════════════════════════════════════════════════════
+     ⑤ UI 与存档段 UI & SAVE
+     ═══════════════════════════════════════════════════════════════════════ */
   function showHome() {
     var hb = document.getElementById('home');
     var ov = document.getElementById('overlay');
@@ -4422,7 +4461,7 @@
     if (tt) tt.style.display = 'none';
     // 到第 3 步时显示当前选择摘要
     if (WIZ_STEP === 2) updateSummary();
-    try { localStorage.setItem('turbo-racer-wiz', String(WIZ_STEP)); } catch (e) {}
+    try { saveSave('turbo-racer-wiz', String(WIZ_STEP)); } catch (e) {}
   }
 
   function updateSummary() {
@@ -4527,7 +4566,7 @@
   /* ── 累计统计（跨局持久）── */
   function loadCum() {
     try {
-      var c = JSON.parse(localStorage.getItem('turbo-racer-cum'));
+      var c = JSON.parse(loadSave('turbo-racer-cum'));
       if (!c || typeof c !== 'object') c = {};
       return {
         races: c.races || 0,          // 完赛场次
@@ -4541,7 +4580,7 @@
       };
     } catch (e) { return { races: 0, cars: 0, peds: 0, bills: 0, trees: 0, drift: 0, dist: 0, air: 0 }; }
   }
-  function saveCum(c) { try { localStorage.setItem('turbo-racer-cum', JSON.stringify(c)); } catch (e) {} }
+  function saveCum(c) { try { saveSave('turbo-racer-cum', JSON.stringify(c)); } catch (e) {} }
   // 完赛时把本局数据累加进累计
   function accumCum(p) {
     var c = loadCum();
@@ -4558,9 +4597,9 @@
   }
 
   function loadAch() {
-    try { var a = JSON.parse(localStorage.getItem('turbo-racer-ach')); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+    try { var a = JSON.parse(loadSave('turbo-racer-ach')); return Array.isArray(a) ? a : []; } catch (e) { return []; }
   }
-  function saveAch(list) { try { localStorage.setItem('turbo-racer-ach', JSON.stringify(list)); } catch (e) {} }
+  function saveAch(list) { try { saveSave('turbo-racer-ach', JSON.stringify(list)); } catch (e) {} }
   function achUnlocked(id) { return loadAch().indexOf(id) >= 0; }
   // 结算时判定：返回本次新解锁的数组
   function checkAchievements(p, cum) {
@@ -4603,7 +4642,7 @@
   }
 
   /* ================= 玩家名字 ================= */
-  function getLastName() { try { return localStorage.getItem('turbo-racer-name') || ''; } catch (e) { return ''; } }
+  function getLastName() { try { return loadSave('turbo-racer-name') || ''; } catch (e) { return ''; } }
   // 名字长度：汉字算 2，其他算 1，上限 16（= 8 个汉字 / 16 个字母）
   function nameWeight(n) { var w = 0; for (var i = 0; i < n.length; i++) w += (n.charCodeAt(i) > 255 ? 2 : 1); return w; }
   function truncateName(n) {
@@ -4618,17 +4657,17 @@
   function saveName(n) {
     n = truncateName((n || '').trim());
     try {
-      localStorage.setItem('turbo-racer-name', n);
+      saveSave('turbo-racer-name', n);
       if (n) {
         var list = getRecentNames().filter(function (x) { return x !== n; });
         list.unshift(n);
-        localStorage.setItem('turbo-racer-names', JSON.stringify(list.slice(0, 3)));
+        saveSave('turbo-racer-names', JSON.stringify(list.slice(0, 3)));
       }
     } catch (e) {}
     return n;
   }
   function getRecentNames() {
-    try { var a = JSON.parse(localStorage.getItem('turbo-racer-names')); return Array.isArray(a) ? a.slice(0, 3) : []; } catch (e) { return []; }
+    try { var a = JSON.parse(loadSave('turbo-racer-names')); return Array.isArray(a) ? a.slice(0, 3) : []; } catch (e) { return []; }
   }
 
   /* ================= 邀请码（自定义局）================= */
@@ -4709,10 +4748,10 @@
     };
   }
   function loadDailyLb() {
-    try { var a = JSON.parse(localStorage.getItem(dailyKey())); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+    try { var a = JSON.parse(loadSave(dailyKey())); return Array.isArray(a) ? a : []; } catch (e) { return []; }
   }
   function saveDailyLb(list) {
-    try { localStorage.setItem(dailyKey(), JSON.stringify(list.slice(0, 10))); } catch (e) {}
+    try { saveSave(dailyKey(), JSON.stringify(list.slice(0, 10))); } catch (e) {}
   }
   function dailyInfoText() {
     var c = dailyConfig();
@@ -4768,15 +4807,15 @@
   }
   // 启动时恢复语言/主题
   try {
-    var _sl = localStorage.getItem('turbo-racer-lang');
+    var _sl = loadSave('turbo-racer-lang');
     if (_sl === 'en' || _sl === 'zh') LANG = _sl;
-    var _st = localStorage.getItem('turbo-racer-theme');
+    var _st = loadSave('turbo-racer-theme');
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
   var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: true, brakeMode: 'brake', brakeSide: 'right', pixelArt: true, gyro: false };   // ghost=显示最佳圈速徽章（默认开）  // 默认静音;  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
-  var CAM_VIEW = 1;   // 默认贴地视角
+  var CAM_VIEW = CONFIG.view.default;   // 默认贴地视角
   var VIEW_LIST = [
     { id: 0, name: '第一人称', nameKey: 'vFirst', icon: '👁️', desc: '车内视角，看不到自己车' },
     { id: 1, name: '默认视角', nameKey: 'vMid', icon: '📹', desc: '跟车视角，开局就是它' },
@@ -4823,7 +4862,7 @@
       stats: { 速度: 2, 加速: 1, 操控: 3, 抓地: 5 }
     }
   ];
-  var selectedCar = 'street';
+  var selectedCar = CONFIG.car.default;
   var CAR = CARS[0];
 
   function getCar(id) {
@@ -4840,7 +4879,7 @@
   function carSteer() { return CAR.steer; }
   function carGrip() { return CAR.grip; }
   function carBoost() { return CAR.boost; }
-  var WEATHER = 'clear';   // clear | rain | fog | night
+  var WEATHER = CONFIG.weather.default;   // clear | rain | fog | night
   var WEATHER_LIST = [
     { id: 'clear', name: '晴朗', nameKey: 'wClear', desc: '标准视野' },
     { id: 'rain', name: '雨天', nameKey: 'wRain', desc: '湿滑 · 视线差' },
@@ -4921,7 +4960,7 @@
 
   function loadGhost(mapId) {
     try {
-      var raw = localStorage.getItem(GHOST_KEY + '-' + mapId);
+      var raw = loadSave(GHOST_KEY + '-' + mapId);
       if (!raw) return null;
       var g = JSON.parse(raw);
       return g && g.frames ? g : null;
@@ -4929,7 +4968,7 @@
   }
   function saveGhost(mapId, frames, time) {
     try {
-      localStorage.setItem(GHOST_KEY + '-' + mapId, JSON.stringify({ frames: frames.slice(0, 3000), time: time }));
+      saveSave(GHOST_KEY + '-' + mapId, JSON.stringify({ frames: frames.slice(0, 3000), time: time }));
     } catch (e) {}
   }
   // 录制：每 3 帧记一次（位置 + 横向）
@@ -4963,14 +5002,14 @@
   var LB_KEY = 'turbo-racer-leaderboard-v1';
   function loadLeaderboard() {
     try {
-      var raw = localStorage.getItem(LB_KEY);
+      var raw = loadSave(LB_KEY);
       if (!raw) return [];
       var arr = JSON.parse(raw);
       return Array.isArray(arr) ? arr : [];
     } catch (e) { return []; }
   }
   function saveLeaderboard(list) {
-    try { localStorage.setItem(LB_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
+    try { saveSave(LB_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
   }
   function submitScore(entry) {
     var list = loadLeaderboard();
@@ -5002,7 +5041,7 @@
     CAM_VIEW = v;
     flashTip(VIEW_LIST[CAM_VIEW].name);
     updateViewBtns();
-    try { localStorage.setItem('turbo-racer-view2', String(CAM_VIEW)); } catch (e) {}
+    try { saveSave('turbo-racer-view2', String(CAM_VIEW)); } catch (e) {}
   }
 
   function setBrakeSide(side) {
@@ -5016,7 +5055,7 @@
     }
     updateBsBtn();
     flashTip(side === 'left' ? '手刹在左边' : '手刹在右边');
-    try { localStorage.setItem('turbo-racer-bside', side); } catch (e) {}
+    try { saveSave('turbo-racer-bside', side); } catch (e) {}
   }
   function updateBsBtn() {
     var btns = document.querySelectorAll ? document.querySelectorAll('.bsbtn') : [];
@@ -5408,11 +5447,11 @@
         var ok = enableGyro();
         CFG.gyro = ok;
         if (!ok) { syncToggles(); return; }
-        try { localStorage.setItem('turbo-racer-gyro', '1'); } catch (e) {}
+        try { saveSave('turbo-racer-gyro', '1'); } catch (e) {}
       } else {
         disableGyro();
         CFG.gyro = false;
-        try { localStorage.setItem('turbo-racer-gyro', '0'); } catch (e) {}
+        try { saveSave('turbo-racer-gyro', '0'); } catch (e) {}
       }
       syncToggles();
       flashTip(CFG.gyro ? '陀螺仪转向已开' : '陀螺仪转向已关');
@@ -5435,7 +5474,7 @@
             updatePxBtn();
             spawnPeelBurst();
             flashTip(toPix ? '🎨 像素风' : '✨ 超清');
-            try { localStorage.setItem('turbo-racer-pixel', toPix ? '1' : '0'); } catch (e) {}
+            try { saveSave('turbo-racer-pixel', toPix ? '1' : '0'); } catch (e) {}
             setTimeout(function () { bk2.style.opacity = '0'; setTimeout(function () { if (bk2.parentNode) bk2.parentNode.removeChild(bk2); }, 320); }, 500);
           }, 220);
         };
@@ -5450,7 +5489,7 @@
       (function (b) { b.onclick = function () { setBrakeSide(b.getAttribute('data-bs')); }; })(bss[bsi]);
     }
     try {
-      var savedBs = localStorage.getItem('turbo-racer-bside');
+      var savedBs = loadSave('turbo-racer-bside');
       if (savedBs === 'left' || savedBs === 'right') CFG.brakeSide = savedBs;
     } catch (e) {}
     setBrakeSide(CFG.brakeSide);
@@ -5496,7 +5535,7 @@
     { id: 'desert', name: '荒漠公路', nameKey: 'mDesert', desc: '沙丘 · 长直道 · 极速' },
     { id: 'custom', name: '自定义赛道', nameKey: 'mCustom', desc: '自己拼弯道 · 编辑器' },
   ];
-  var selectedMap = 'dusk';
+  var selectedMap = CONFIG.map.default;
   // 自定义赛道参数
   var CUSTOM_TRACK = { curves: 50, hills: 50, length: 50, seed: 12345 };
   // 赛道编辑器：玩家自己规划的弯道序列
@@ -5505,7 +5544,7 @@
   var MAX_PLAN = 16;
   var CUSTOM_ACTIVE = false;
   var LAP_OPTIONS = [1, 2, 3];
-  var selectedLaps = 2;
+  var selectedLaps = CONFIG.map.laps;
   var GAME_MODE = 'solo';   // 'solo' | 'duo'（默认单人）
   var MODE_LIST = [
     { id: 'solo', name: '单人计时', nameKey: 'solo', desc: '全屏 · 挑战自己' },
@@ -5756,8 +5795,8 @@
   }
 
   var LB_SORT = 'time';   // 'time' | 'score'（showResult 时会同步）
-  function getLbSort() { try { var v = localStorage.getItem('turbo-racer-lbsort'); return (v === 'score') ? 'score' : 'time'; } catch (e) { return 'time'; } }
-  function setLbSort(v) { LB_SORT = v; try { localStorage.setItem('turbo-racer-lbsort', v); } catch (e) {} }
+  function getLbSort() { try { var v = loadSave('turbo-racer-lbsort'); return (v === 'score') ? 'score' : 'time'; } catch (e) { return 'time'; } }
+  function setLbSort(v) { LB_SORT = v; try { saveSave('turbo-racer-lbsort', v); } catch (e) {} }
 
   function showAchWall() {
     var got = loadAch();
@@ -6001,6 +6040,9 @@
   }
 
   var lastKeyBrake = 0;
+  /* ═══════════════════════════════════════════════════════════════════════
+     ④ 输入段 INPUT
+     ═══════════════════════════════════════════════════════════════════════ */
   function onKeyDown(e) {
     // 设置面板打开时：Esc 关闭
     if (e.code === 'Escape' && elSetPanel.classList.contains('on')) { closeSettings(); e.preventDefault(); return; }
@@ -6206,14 +6248,14 @@
     // 恢复静音设置（CFG 已定义）
     try {
       // 声音：只看声音自己的开关（修：之前错挂在像素判断上）
-      var _snd = localStorage.getItem('turbo-racer-sound');
+      var _snd = loadSave('turbo-racer-sound');
       if (_snd === '1') { CFG.sfx = true; CFG.bgm = true; }
       else { CFG.sfx = false; CFG.bgm = false; }
       // 画质：默认像素风；存过 '0'（高清）才关
-      var _px = localStorage.getItem('turbo-racer-pixel');
+      var _px = loadSave('turbo-racer-pixel');
       CFG.pixelArt = (_px !== '0');
       // 陀螺仪：存过 '1' 才开（iOS 需用户手势授权，启动时不自动挂监听）
-      try { CFG.gyro = (localStorage.getItem('turbo-racer-gyro') === '1'); } catch (e) {}
+      try { CFG.gyro = (loadSave('turbo-racer-gyro') === '1'); } catch (e) {}
       // 无需手势授权的设备（Android 等）：直接恢复监听；iOS 等下次开设置时授权
       if (CFG.gyro && typeof window.DeviceOrientationEvent !== 'undefined'
           && typeof window.DeviceOrientationEvent.requestPermission !== 'function') {
@@ -6225,7 +6267,7 @@
       setTimeout(applyPixelMode, 50);
     } catch (e) {}
     try {
-      var _st = localStorage.getItem('turbo-racer-theme');
+      var _st = loadSave('turbo-racer-theme');
       if (_st === 'light' || _st === 'dark') THEME = _st;
     } catch (e) {}
     applyTheme();
@@ -6262,14 +6304,14 @@
     }
     // 恢复上次视角（新 key；旧 key 做 1↔3 对调迁移后清掉）
     try {
-      var savedView2 = localStorage.getItem('turbo-racer-view2');
+      var savedView2 = loadSave('turbo-racer-view2');
       if (savedView2 === '0' || savedView2 === '1' || savedView2 === '2') {
         CAM_VIEW = parseInt(savedView2, 10);
       } else {
-        var oldView = parseInt(localStorage.getItem('turbo-racer-view') || 'x', 10);
+        var oldView = parseInt(loadSave('turbo-racer-view') || 'x', 10);
         if (oldView === 0) CAM_VIEW = 2;        // 旧1俯瞰 → 新3俯瞰
         else if (oldView === 2) CAM_VIEW = 0;   // 旧3驾驶舱 → 新1驾驶舱
-        try { localStorage.removeItem('turbo-racer-view'); } catch (e2) {}
+        try { clearSave('turbo-racer-view'); } catch (e2) {}
       }
     } catch (e) {}
     updateViewBtns();
@@ -6315,7 +6357,7 @@
           updatePxBtn();
           syncPeelLbl();
           flashTip(toPix ? '🎨 像素风' : '✨ 超清');
-          try { localStorage.setItem('turbo-racer-pixel', toPix ? '1' : '0'); } catch (e) {}
+          try { saveSave('turbo-racer-pixel', toPix ? '1' : '0'); } catch (e) {}
           // 粒子 0.5s 后收场
           setTimeout(function () {
             bk.classList.remove('on');

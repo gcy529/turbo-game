@@ -1,0 +1,73 @@
+{
+  "target": "http://127.0.0.1:8099/index.html",
+  "exceptions": [],
+  "consoleErrors": [],
+  "logErrors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)",
+    "Manifest fetch from http://127.0.0.1:8099/manifest.json failed, code 404",
+    "Failed to load resource: the server responded with a status of 404 (File not found)",
+    "Failed to load resource: the server responded with a status of 404 (File not found)",
+    "Manifest fetch from http://127.0.0.1:8099/manifest.json failed, code 404"
+  ],
+  "steps": {
+    "afterLoad": {
+      "state": {
+        "home": "flex",
+        "startBtn": "none",
+        "wizNext": "block"
+      },
+      "pixels": {
+        "sample": 262,
+        "nonzero": 262,
+        "canvas": [
+          410,
+          256
+        ]
+      }
+    },
+    "click#homeSolo": {
+      "found": true,
+      "clicked": true,
+      "display": "flex"
+    },
+    "click#wizNext": {
+      "found": true,
+      "clicked": true,
+      "display": "none"
+    },
+    "click#startBtn": {
+      "found": true,
+      "clicked": true,
+      "display": "block"
+    },
+    "afterStart": {
+      "state": {
+        "home": "flex",
+        "startBtn": "block",
+        "msg": "1",
+        "spd": "0",
+        "fps": "60 FPS"
+      },
+      "pixels": {
+        "sample": 262,
+        "nonzero": 262,
+        "canvas": [
+          410,
+          256
+        ]
+      },
+      "probes": {
+        "T": "object",
+        "view": "{\"CAM_VIEW\":1,\"params\":{\"camH\":280,\"carScale\":1.3,\"carY\":0,\"drawCar\":true,\"fov\":0.92}}"
+      },
+      "pixels2": {
+        "sample": 262,
+        "nonzero": 262,
+        "canvas": [
+          410,
+          256
+        ]
+      }
+    }
+  }
+}

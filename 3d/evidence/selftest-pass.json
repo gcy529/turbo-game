@@ -1,0 +1,52 @@
+{
+ "threeRevision": "160",
+ "frames": 120,
+ "minUpY": 0.9935,
+ "maxUpY": 0.9995,
+ "minHeadingDot": 0.9984,
+ "headingDotFirst": 0.9984,
+ "headingDotLast": 0.9998,
+ "finalState": {
+  "upY": 0.9995,
+  "headingDot": 0.9998,
+  "t": 0.0353,
+  "lateral": 0.165,
+  "speed": 52.87,
+  "lap": 1,
+  "running": true,
+  "countdown": 0,
+  "recoveries": 0,
+  "roll": 0,
+  "drawCalls": 120,
+  "triangles": 38142
+ },
+ "steerPhase": {
+  "frames": 100,
+  "minUpY": 0.9921,
+  "maxAbsRoll": 0.1196,
+  "minHeadingDot": 0.9956
+ },
+ "flipTestZ": {
+  "before": -1,
+  "recovered": true,
+  "afterUpY": 0.9972
+ },
+ "flipTestX": {
+  "before": -1,
+  "recovered": true,
+  "afterUpY": 0.9977
+ },
+ "runMs": 0,
+ "pageErrors": [],
+ "drawCalls": 120,
+ "triangles": 38142,
+ "pass": {
+  "noPageErrors": true,
+  "neverFlipped": true,
+  "neverReversed": true,
+  "steerKeepsUpright": true,
+  "flipRecovers": true,
+  "stillRunning": true
+ },
+ "ok": true
+}
