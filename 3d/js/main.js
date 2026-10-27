@@ -78,7 +78,7 @@ const START_BACK = 4.5;
 const START_T = -START_BACK / track.trackLen;
 
 const player = {
-  t: START_T, lateral: 0.34, speed: 0, lap: 1, totalLaps: RACE.laps, lastT: START_T,
+  t: START_T, lateral: 0, speed: 0, lap: 1, totalLaps: RACE.laps, lastT: START_T,
   armed: false,         // 起步后第一次压过起终点线：只算「出发」，不算一圈
   finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0,
   driftScore: 0, pushLateral: 0, recovered: 0,
@@ -389,9 +389,13 @@ function footPose(dt) {
 
 function updateCamera(dt, pp) {
   const mode = CAMERA.modes[camMode];
+  // 起步镜头：倒计时期间把相机抬高、拉远，让玩家看清车停在起跑格上
+  // （正常机位车身会把前方那条起跑线全挡住，只露出车两侧一小截）
+  const intro = countdown > 0 ? Math.min(1, countdown / RACE.countdown) : 0;
+  const lift = 1 + intro * 0.55;
   const camPos = pp.pos.clone()
-    .addScaledVector(pp.tan, -mode.dist)
-    .add(new THREE.Vector3(0, mode.height, 0));
+    .addScaledVector(pp.tan, -mode.dist * lift)
+    .add(new THREE.Vector3(0, mode.height * lift, 0));
   if (shake > 0.01) {
     camPos.x += (Math.random() - 0.5) * shake * 0.8;
     camPos.y += (Math.random() - 0.5) * shake * 0.8;
@@ -423,7 +427,7 @@ function poseAndRender(dt, doRender) {
 
 function startRace() {
   audio.init();          // 必须由用户手势触发，否则移动端 AudioContext 起不来
-  Object.assign(player, { t: START_T, lateral: 0.34, speed: 0, lap: 1, lastT: START_T, armed: false, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0, coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins });
+  Object.assign(player, { t: START_T, lateral: 0, speed: 0, lap: 1, lastT: START_T, armed: false, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0, coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins });
   player._settled = false;
   coins.reset();
   particles.reset();

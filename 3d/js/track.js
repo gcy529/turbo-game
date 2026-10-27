@@ -109,6 +109,9 @@ export function buildTrack(scene) {
   let dvi = 0;
   for (let i = 1; i <= SEG; i++) {
     if (i % TRACK.dashEvery >= TRACK.dashLen) continue;
+    // 起跑区（起终点线前后各 4 段）不画中线：发车格和起跑线要干净对称，
+    // 车停在正中时中线正好从车身底下钻出来，看着特别别扭
+    if (i <= 4 || i >= SEG - 4) continue;
     const a = frames[i - 1], b = frames[i];
     const y = 0.035;
     dashPos.push(
@@ -256,6 +259,7 @@ export function buildTrack(scene) {
   // 起跑门架：两根立柱 + 横梁 + 一条棋盘横幅（纯视觉，不参与碰撞）
   function addGate(frameIdx, banner) {
     const f = frames[((frameIdx % SEG) + SEG) % SEG];
+    // 横梁必须垂直于「它自己那一段」的赛道，立柱才会左右等距地落在路肩外
     const holder = new THREE.Group();
     holder.position.set(f.p.x, f.p.y, f.p.z);
     holder.rotation.y = Math.atan2(f.tan.x, f.tan.z);
@@ -279,13 +283,13 @@ export function buildTrack(scene) {
     beam.position.set(0, postH, 0);
     holder.add(beam);
 
-    // 横幅：面向来车，双面可见
+    // 横幅：面向来车，双面可见。宽度按「路宽 - 0.6」算，两边留一样的边
     const banner3 = new THREE.Mesh(
-      new THREE.PlaneGeometry(off * 2 - 1.2, 1.7),
+      new THREE.PlaneGeometry(ROAD_W - 0.6, 1.7),
       new THREE.MeshStandardMaterial({
-        map: checkerTexture(banner === 'finish' ? 18 : 12, 2), side: THREE.DoubleSide,
+        map: checkerTexture(16, 3), side: THREE.DoubleSide,
         roughness: 0.5, metalness: 0.05,
-        emissive: banner === 'finish' ? 0x3a2a2a : 0x22303f, emissiveIntensity: 0.5,
+        emissive: 0x22303f, emissiveIntensity: 0.5,
       })
     );
     banner3.position.set(0, postH - 1.35, 0);
@@ -300,7 +304,7 @@ export function buildTrack(scene) {
   // 之前起点线在 frames[3]、终点线在 frames[-3]，两条线夹着车只隔 18 米，
   // 俯视一眼就能看出是两套重复的标线；玩家起步时也分不清哪条是起跑线。
   addCheckerLine(0, 6, 6, 2);
-  addGate(4, 'start');           // 门架在线前 12 米：再近就糊满上半屏
+  addGate(8, 'start');           // 门架在线前 25 米：整座能进画面，不会糊满脸
 
 
   // ── 路边景物：树与路灯（InstancedMesh，控制 draw call）──
