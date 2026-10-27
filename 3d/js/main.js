@@ -71,8 +71,15 @@ function renderGarage() {
 renderGarage();
 const npcs = [];
 
+// 起终点线在 t=0（计圈点），车停在它后面 4.5 米 —— 和真赛道一样：
+// 车趴在起跑格上，前方就是那条黑白线和门架。
+// t 为负不影响渲染（posAt/curvatureAt 都做过归一化），只需跳过「起步出线」这一下。
+const START_BACK = 4.5;
+const START_T = -START_BACK / track.trackLen;
+
 const player = {
-  t: 0, lateral: 0.34, speed: 0, lap: 1, totalLaps: RACE.laps, lastT: 0,
+  t: START_T, lateral: 0.34, speed: 0, lap: 1, totalLaps: RACE.laps, lastT: START_T,
+  armed: false,         // 起步后第一次压过起终点线：只算「出发」，不算一圈
   finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0,
   driftScore: 0, pushLateral: 0, recovered: 0,
   // ── 金币 / 氮气 ──
@@ -260,24 +267,29 @@ function update(dt) {
 
   const tp = ((player.t % 1) + 1) % 1;
   if (player.lastT > 0.75 && tp < 0.25) {
-    player.lap++;
-    const lapTime = raceClock - lapStartClock;
-    lapStartClock = raceClock;
-    if (player.lap > player.totalLaps) {
-      player.finished = true;
-      player.finishTime = raceClock;
-      running = false;
-      hud.setRunning(false);
-      input.unlock();
-      settleRace();
-      audio.finish();
-      audio.engineOff();
-      hud.setMsg('完成！' + player.finishTime.toFixed(2) + 's', 4);
-      setTimeout(() => { hud.syncInvert(input.state.invert, true); hud.countdownPanel(player); }, 700);
+    // 起步位置在线后 4.5 米，第一次压线只是「出发」，不能算跑完一圈
+    if (!player.armed) {
+      player.armed = true;
     } else {
-      coins.reshuffle();        // 新一圈，金币重新铺出来
-      audio.beep(true);
-      hud.setMsg('第 ' + (player.lap - 1) + ' 圈 ' + lapTime.toFixed(2) + 's', 1.6);
+      player.lap++;
+      const lapTime = raceClock - lapStartClock;
+      lapStartClock = raceClock;
+      if (player.lap > player.totalLaps) {
+        player.finished = true;
+        player.finishTime = raceClock;
+        running = false;
+        hud.setRunning(false);
+        input.unlock();
+        settleRace();
+        audio.finish();
+        audio.engineOff();
+        hud.setMsg('完成！' + player.finishTime.toFixed(2) + 's', 4);
+        setTimeout(() => { hud.syncInvert(input.state.invert, true); hud.countdownPanel(player); }, 700);
+      } else {
+        coins.reshuffle();        // 新一圈，金币重新铺出来
+        audio.beep(true);
+        hud.setMsg('第 ' + (player.lap - 1) + ' 圈 ' + lapTime.toFixed(2) + 's', 1.6);
+      }
     }
   }
   player.lastT = tp;
@@ -335,7 +347,7 @@ function update(dt) {
       hud.setMsg('+' + (got.length * FX.coinValue) + ' 币', 0.7);
     }
   }
-  coins.update(dt, clock);
+  coins.update(dt, clock, player.t);
   if (player.nitroTimer > 0 && Math.random() < 0.9) {
     // 喷射：车尾蓝色尾迹
     for (let k = 0; k < 2; k++) {
@@ -411,7 +423,7 @@ function poseAndRender(dt, doRender) {
 
 function startRace() {
   audio.init();          // 必须由用户手势触发，否则移动端 AudioContext 起不来
-  Object.assign(player, { t: 0, lateral: 0.34, speed: 0, lap: 1, lastT: 0, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0, coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins });
+  Object.assign(player, { t: START_T, lateral: 0.34, speed: 0, lap: 1, lastT: START_T, armed: false, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0, coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins });
   player._settled = false;
   coins.reset();
   particles.reset();

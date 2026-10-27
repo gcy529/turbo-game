@@ -296,12 +296,11 @@ export function buildTrack(scene) {
     return holder;
   }
 
-  // 起跑线：车头前 4 米左右起（frames[3]≈9 米），格子做大，
-  // 远看是黑白块而不是一条白杠；门架再往后放，别压在线头上。
-  addCheckerLine(3, 6, 6, 2);
-  addCheckerLine(-3, 6, 6, 2);   // 终点线：环形回绕的同一处
-  addGate(8, 'start');           // 起跑门架 ≈25 米
-  addGate(-8, 'finish');         // 终点门架
+  // 起终点：环形赛道只有「一条线 + 一座门架」，就画在 t=0（计圈点）上。
+  // 之前起点线在 frames[3]、终点线在 frames[-3]，两条线夹着车只隔 18 米，
+  // 俯视一眼就能看出是两套重复的标线；玩家起步时也分不清哪条是起跑线。
+  addCheckerLine(0, 6, 6, 2);
+  addGate(4, 'start');           // 门架在线前 12 米：再近就糊满上半屏
 
 
   // ── 路边景物：树与路灯（InstancedMesh，控制 draw call）──

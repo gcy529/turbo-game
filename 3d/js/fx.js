@@ -75,25 +75,57 @@ export function createParticles(scene) {
 }
 
 export function createCoins(scene, track) {
-  // 赛道上撒金币：每圈一批，跑完一圈重新刷，两圈都能捡
-  // 视觉：金色圆盘（薄圆柱）+ 加色光晕，自转 + 上下浮动
+  // 赛道金币（天天飞车那套节奏）：
+  //   出现（弹一下）→ 亮着 9~14 秒 → 没吃就缩小消失 → 冷却 2.5~4.5 秒 → 换个地方再出现
+  // 原来是 24 枚钉死在原地、跑完一圈才刷新，赛道上经常出现「一段有、一段空」的死区。
   const items = [];
   const geo = new THREE.CylinderGeometry(0.62, 0.62, 0.14, 20);
   geo.rotateX(Math.PI / 2);                 // 立起来当硬币
   const haloGeo = new THREE.TorusGeometry(0.86, 0.045, 6, 24);
   const gold = FX.coinColors[0];
 
+  const LIFE_MIN = 10, LIFE_MAX = 22;
+  const COOL_MIN = 1.5, COOL_MAX = 3;
+  const FADE_IN = 0.28, FADE_OUT = 0.22;
+
+  function wrapDelta(a, b) {
+    let d = a - b;
+    if (d < -0.5) d += 1;
+    if (d > 0.5) d -= 1;
+    return d;
+  }
+
+  /** 在赛道上挑一个空位：重生时优先放到玩家前方（天天飞车那种「前面一直有」的节奏） */
+  function place(it, playerT) {
+    const pt = playerT === undefined ? null : ((playerT % 1) + 1) % 1;
+    let t = Math.random(), lateral = 0;
+    for (let k = 0; k < 14; k++) {
+      // 已经开跑：8%~78% 圈的前方随机；开局 / 换圈：整圈均匀铺
+      const raw = pt === null ? Math.random() : pt + 0.08 + Math.random() * 0.70;
+      t = ((raw % 1) + 1) % 1;
+      lateral = (Math.random() - 0.5) * 1.15;
+      let ok = pt === null || Math.abs(wrapDelta(t, pt)) > 0.035;
+      if (!ok) continue;
+      for (const o of items) {
+        if (o === it || o.state === 'off') continue;
+        if (Math.abs(wrapDelta(t, o.t)) < 0.014) { ok = false; break; }
+      }
+      if (ok) break;
+    }
+    it.t = t;
+    it.lateral = lateral;
+    const api = track.posAt(t, lateral);
+    it.mesh.position.copy(api.pos);
+    it.mesh.position.y = api.pos.y + 1.05;
+    it.baseY = it.mesh.position.y;
+  }
+
   function buildOne(i, n) {
-    const t = (i + 0.5) / n;
-    const lateral = (Math.random() - 0.5) * 1.15;
     const mat = new THREE.MeshStandardMaterial({
       color: gold, emissive: 0xffb300, emissiveIntensity: 0.85,
       metalness: 0.9, roughness: 0.22,
     });
     const mesh = new THREE.Mesh(geo, mat);
-    const api = track.posAt(t, lateral);
-    mesh.position.copy(api.pos);
-    mesh.position.y = api.pos.y + 1.05;
     const halo = new THREE.Mesh(haloGeo, new THREE.MeshBasicMaterial({
       color: 0xffd54f, transparent: true, opacity: 0.5,
       blending: THREE.AdditiveBlending, depthWrite: false,
@@ -101,7 +133,12 @@ export function createCoins(scene, track) {
     mesh.add(halo);
     mesh.castShadow = true;
     scene.add(mesh);
-    return { mesh, halo, t, lateral, collected: false, baseY: mesh.position.y, seed: Math.random() * 6 };
+    const it = {
+      mesh, halo, t: (i + 0.5) / n, lateral: 0, state: 'on', life: LIFE_MIN + Math.random() * (LIFE_MAX - LIFE_MIN),
+      cool: 0, anim: 0, baseY: 0, seed: Math.random() * 6,
+    };
+    place(it);
+    return it;
   }
 
   function spawnAll() {
@@ -110,9 +147,47 @@ export function createCoins(scene, track) {
   }
   spawnAll();
 
-  function update(dt, clock) {
+  function update(dt, clock, playerT) {
     for (const it of items) {
-      if (it.collected) continue;
+      if (it.state === 'off') {
+        it.cool -= dt;
+        if (it.cool <= 0) {
+          place(it, playerT);
+          it.state = 'in';
+          it.anim = 0;
+          it.mesh.visible = true;
+          it.mesh.scale.setScalar(0.01);
+        }
+        continue;
+      }
+      if (it.state === 'in') {
+        // 出现：从 0 弹到 1，带一点过冲
+        it.anim += dt;
+        const k = Math.min(1, it.anim / FADE_IN);
+        const s = k < 1 ? k * (1 + (1 - k) * 0.45) : 1;
+        it.mesh.scale.setScalar(Math.max(0.01, s));
+        if (k >= 1) {
+          it.mesh.scale.setScalar(1);
+          it.state = 'on';
+          it.life = LIFE_MIN + Math.random() * (LIFE_MAX - LIFE_MIN);
+        }
+        continue;
+      }
+      if (it.state === 'on') {
+        it.life -= dt;
+        if (it.life <= 0) { it.state = 'out'; it.anim = 0; continue; }
+      } else if (it.state === 'out') {
+        // 消失：缩到 0 再藏起来
+        it.anim += dt;
+        const k = Math.max(0, 1 - it.anim / FADE_OUT);
+        it.mesh.scale.setScalar(k);
+        if (k <= 0.01) {
+          it.state = 'off';
+          it.mesh.visible = false;
+          it.cool = COOL_MIN + Math.random() * (COOL_MAX - COOL_MIN);
+          continue;
+        }
+      }
       it.mesh.rotation.y += dt * 2.2;
       it.mesh.position.y = it.baseY + Math.sin(clock * 2.4 + it.seed) * 0.16;
       it.halo.scale.setScalar(1 + Math.sin(clock * 3 + it.seed) * 0.08);
@@ -123,22 +198,31 @@ export function createCoins(scene, track) {
   function collect(playerPos) {
     const got = [];
     for (const it of items) {
-      if (it.collected) continue;
+      if (it.state !== 'on' && it.state !== 'in') continue;
       const dx = playerPos.x - it.mesh.position.x, dz = playerPos.z - it.mesh.position.z;
       if (Math.hypot(dx, dz) < FX.coinRadius) {
-        it.collected = true;
+        it.state = 'off';
         it.mesh.visible = false;
+        it.cool = COOL_MIN + Math.random() * (COOL_MAX - COOL_MIN);
         got.push({ position: it.mesh.position.clone() });
       }
     }
     return got;
   }
 
-  /** 一圈跑完：金币重新铺出来 */
+  /** 一圈跑完：全部重新铺出来 */
   function reshuffle() {
-    for (const it of items) { it.collected = false; it.mesh.visible = true; }
+    items.forEach((it, i) => {
+      place(it);
+      it.state = 'in';
+      it.anim = 0;
+      it.mesh.visible = true;
+      it.mesh.scale.setScalar(0.01);
+      it.life = LIFE_MIN + Math.random() * (LIFE_MAX - LIFE_MIN);
+    });
   }
   function reset() { reshuffle(); }
 
   return { items, update, collect, reset, reshuffle };
 }
+

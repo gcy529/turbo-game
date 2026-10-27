@@ -42,18 +42,29 @@ export function createAudio() {
     return on;
   }
 
-  /** 车速驱动引擎音：0..96 → 90..520Hz，音量随速度略升 */
+  let lastSpeed = -1, lastActive = null;
+  /** 车速驱动引擎音：0..96 → 88..488Hz，音量随速度略升 */
   function engine(speed, active) {
     if (!AC || !engGain) return;
+    // 只在速度真的变了才推参数：每帧都改会产生大量自动化事件，
+    // 而且原来那个 `speed % 7` 的抖动在 6.99→0 处是断崖，听起来像卡带。
+    if (Math.abs(speed - lastSpeed) < 0.35 && active === lastActive) return;
+    lastSpeed = speed;
+    lastActive = active;
     const v = Math.min(1, Math.abs(speed) / 96);
-    const f = 90 + v * 430 + (Math.abs(speed) % 7) * 1.4;   // 轻微抖动，别像纯音
+    const f = 88 + v * 400;
     const now = AC.currentTime;
-    eng.frequency.setTargetAtTime(f, now, 0.08);
-    sub.frequency.setTargetAtTime(f * 0.5, now, 0.08);
-    engFilter.frequency.setTargetAtTime(500 + v * 2200, now, 0.1);
-    engGain.gain.setTargetAtTime(active ? (0.05 + v * 0.16) : 0, now, 0.12);
+    eng.frequency.setTargetAtTime(f, now, 0.12);
+    sub.frequency.setTargetAtTime(f * 0.5, now, 0.12);
+    engFilter.frequency.setTargetAtTime(420 + v * 1500, now, 0.15);
+    engGain.gain.setTargetAtTime(active ? (0.03 + v * 0.11) : 0, now, 0.16);
   }
-  function engineOff() { if (engGain && AC) engGain.gain.setTargetAtTime(0, AC.currentTime, 0.1); }
+  function engineOff() {
+    if (engGain && AC && lastActive !== false) {
+      engGain.gain.setTargetAtTime(0, AC.currentTime, 0.1);
+      lastActive = false;
+    }
+  }
 
   function blip(freq, dur, type, vol, slideTo) {
     if (!ensure()) return;
