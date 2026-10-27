@@ -264,7 +264,7 @@ export function buildTrack(scene) {
     holder.position.set(f.p.x, f.p.y, f.p.z);
     holder.rotation.y = Math.atan2(f.tan.x, f.tan.z);
 
-    const postH = 8.6, off = ROAD_W / 2 - 0.8;
+    const postH = 8.6, off = ROAD_W / 2 - 1.6;
     const postMat = new THREE.MeshStandardMaterial({ color: 0x9aa6b8, roughness: 0.4, metalness: 0.75 });
     for (const s of [-1, 1]) {
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, postH, 8), postMat);
@@ -285,7 +285,7 @@ export function buildTrack(scene) {
 
     // 横幅：面向来车，双面可见。宽度按「路宽 - 0.6」算，两边留一样的边
     const banner3 = new THREE.Mesh(
-      new THREE.PlaneGeometry(12, 1.5),
+      new THREE.PlaneGeometry(11, 1.5),
       new THREE.MeshStandardMaterial({
         map: checkerTexture(16, 3), side: THREE.DoubleSide,
         roughness: 0.5, metalness: 0.05,

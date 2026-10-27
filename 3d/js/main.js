@@ -392,7 +392,7 @@ function updateCamera(dt, pp) {
   // 起步镜头：倒计时期间把相机抬高、拉远，让玩家看清车停在起跑格上
   // （正常机位车身会把前方那条起跑线全挡住，只露出车两侧一小截）
   const intro = countdown > 0 ? Math.min(1, countdown / RACE.countdown) : 0;
-  const lift = 1 + intro * 0.55;
+  const lift = 1 + intro * 0.75;
   const camPos = pp.pos.clone()
     .addScaledVector(pp.tan, -mode.dist * lift)
     .add(new THREE.Vector3(0, mode.height * lift, 0));
