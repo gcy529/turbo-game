@@ -450,6 +450,87 @@
   /* 结算页按钮：内容再长也吸在面板底部，不用滚半天找「再来一局」 */
   #overlay .panel .btnRow{position:sticky;bottom:0;z-index:2;margin-top:10px;padding:10px 0 4px;background:#0c1424;box-shadow:0 -10px 18px rgba(6,12,22,.85)}
   body[data-theme='light'] #overlay .panel .btnRow{background:#fbf9f4;box-shadow:0 -10px 18px rgba(240,236,226,.9)}
+  /* ═══════════════ 日间（浅色）主题精修 ═══════════════ */
+  /* 首页：浅色下 CRT 扫描线就是一层灰条纹，直接关掉；标题改深墨金 */
+  body[data-theme='light'] #home{background:radial-gradient(circle at 50% 26%,#fffdf8 0%,#f7f2e6 55%,#e9e0cd 100%)}
+  body[data-theme='light'] #home::after{display:none}
+  body[data-theme='light'] .rTitle{color:#8a4b00;text-shadow:0 1px 0 #fff,0 3px 12px rgba(138,75,0,.20);animation:none}
+  body[data-theme='light'] .rSub{color:#0b6f86;text-shadow:none}
+  body[data-theme='light'] .rBest{color:#4a6484}
+  body[data-theme='light'] .rBtn{background:#fffdf7;border-color:rgba(138,75,0,.42);color:#7a3f00;box-shadow:0 3px 0 rgba(138,75,0,.12),inset 0 0 0 2px rgba(255,255,255,.7)}
+  body[data-theme='light'] .rBtn:hover{background:#fff;color:#5a2d00;border-color:#8a4b00}
+  body[data-theme='light'] .rBtn i{color:#b06a10}
+  body[data-theme='light'] .rBtnDaily{color:#a24e00;border-color:rgba(180,90,0,.45)}
+  body[data-theme='light'] .rBtnDaily small{color:#4a6484}
+  body[data-theme='light'] #soundBtn{animation:none;background:rgba(255,196,80,.4)!important;border-color:rgba(180,110,0,.65)!important;color:#6a3a00!important}
+  body[data-theme='light'] .homeMini{background:#fffdf7;border-color:rgba(40,80,140,.28);color:#26405c}
+  body[data-theme='light'] .homeMini:hover{background:#fff}
+  /* 游戏内：浅色卡片 + 深色文字；单位、标签补对比 */
+  body[data-theme='light'] .pbox{background:rgba(255,253,247,.95);border-color:rgba(40,80,140,.26);box-shadow:0 8px 22px rgba(60,90,140,.14)}
+  body[data-theme='light'] .tag.t1{color:#a3122c;background:rgba(255,70,95,.14);border-color:rgba(200,40,70,.32)}
+  body[data-theme='light'] .tag.t2{color:#0d4f8b;background:rgba(47,127,208,.14);border-color:rgba(47,127,208,.34)}
+  body[data-theme='light'] .unit{color:#2a6ea8}
+  body[data-theme='light'] .meta{color:#3f5a78}
+  body[data-theme='light'] #trackLabel{color:#2a4a68;background:rgba(255,253,247,.92);border-color:rgba(40,80,140,.2)}
+  body[data-theme='light'] #bestBadge{background:rgba(255,253,247,.94);border-color:rgba(200,150,40,.5);color:#8a5a10;box-shadow:0 6px 16px rgba(60,90,140,.12)}
+  body[data-theme='light'] #pace{background:rgba(255,253,247,.94);border-color:rgba(200,150,40,.45);box-shadow:0 6px 18px rgba(60,90,140,.12)}
+  body[data-theme='light'] #pace .txt{color:#1a2434}
+  /* 画布上的大字（倒计时 / PERFECT / DRIFT）保持亮色 + 深阴影，任何地图都读得清 */
+  body[data-theme='light'] #msg{color:#fff;text-shadow:0 2px 10px rgba(4,10,20,.85),0 0 46px rgba(60,140,220,.55)}
+  body[data-theme='light'] #drift .lbl{color:#ffd166}
+  body[data-theme='light'] #drift .val{color:#fff;text-shadow:0 2px 12px rgba(4,10,20,.8)}
+  body[data-theme='light'] #launch .s{color:#fff;text-shadow:0 2px 10px rgba(4,10,20,.85)}
+  body[data-theme='light'] #shortcut{color:#0a1a14}
+  /* 结算 / 排行榜 */
+  body[data-theme='light'] #resultLb{color:#26405c}
+  body[data-theme='light'] #nameInput{background:#fff!important;border-color:rgba(40,80,140,.35)!important;color:#12233a!important}
+  body[data-theme='light'] .chipBtn{background:rgba(40,80,140,.1);color:#26405c;border-color:rgba(40,80,140,.25)}
+  body[data-theme='light'] #pausedHint{color:#a1610a}
+  body[data-theme='light'] .toggle{background:rgba(40,80,140,.16);border-color:rgba(40,80,140,.32)}
+  body[data-theme='light'] .toggle::after{background:#5a7695}
+  body[data-theme='light'] .toggle.on{background:rgba(42,157,143,.38);border-color:rgba(42,157,143,.8)}
+  body[data-theme='light'] .toggle.on::after{background:#0f7a68}
+  body[data-theme='light'] .setbtn{background:rgba(40,80,140,.12);color:#1a3552;border-color:rgba(40,80,140,.28)}
+  body[data-theme='light'] .setbtn.primary{background:linear-gradient(180deg,#4fd6a6,#20b184);color:#04231a;border-color:transparent}
+  body[data-theme='light'] .setbtn.danger{background:rgba(255,90,110,.12);color:#8a2230;border-color:rgba(200,50,70,.35)}
+  /* ── 结算面板（类名化，深浅色都能读）── */
+  .achBox{margin:12px 0;padding:11px 15px;border-radius:11px;background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(255,140,60,.08));border:1px solid rgba(255,190,80,.45);max-width:300px;text-align:left}
+  .achTitle{font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px}
+  .achLine{font-size:12.5px;line-height:1.9;color:#ffe9c4}
+  .achDesc{color:#9dbdd8;font-size:11px}
+  .achQuote{font-size:11px;color:#ffdf9e;font-style:italic;padding-left:26px}
+  .achCheer{text-align:right;font-size:11px;color:#8ef7c8;margin-top:8px;font-weight:800;letter-spacing:1px}
+  .totalScore{margin-top:6px;font-size:14px;color:#ffd166;font-weight:900}
+  .bestLapLine{margin-top:6px;font-size:12.5px;color:#9dbdd8}
+  .scoreBox{margin:12px 0;padding:10px 14px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.2);text-align:left;max-width:300px;font-size:12px;line-height:2;color:#cfe4f7}
+  .scRow{display:flex;justify-content:space-between}
+  .scRow b{color:#ffd166}
+  .nameBox{margin:12px 0;padding:11px 15px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.22);max-width:300px;text-align:left}
+  .nameLabel{font-size:11px;font-weight:850;letter-spacing:2px;color:#8ef7c8;margin-bottom:8px}
+  .nameHint{text-align:center;font-size:9.5px;color:#6f8db0;margin-top:5px;letter-spacing:.5px}
+  .lbBox{margin:14px 0;padding:11px 15px;border-radius:11px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28);text-align:left;max-width:300px}
+  .lbTitle{font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+  .lbList{font-size:12.5px;color:#cfe4f7;line-height:1.85}
+  .goGold{background:rgba(255,209,102,.16)!important;color:#ffd166!important;box-shadow:none!important;border:1.5px solid rgba(255,190,80,.5)!important}
+  .goGhost{background:rgba(255,255,255,.1)!important;color:#cfe8ff!important;box-shadow:none!important;border:1.5px solid rgba(140,200,255,.35)!important}
+  body[data-theme='light'] .achBox{background:linear-gradient(135deg,rgba(255,196,80,.22),rgba(255,150,60,.12));border-color:rgba(190,130,20,.45)}
+  body[data-theme='light'] .achTitle{color:#8a5a10}
+  body[data-theme='light'] .achLine{color:#2a2013}
+  body[data-theme='light'] .achDesc{color:#5a6f88}
+  body[data-theme='light'] .achQuote{color:#8a5a10}
+  body[data-theme='light'] .achCheer{color:#0f7a68}
+  body[data-theme='light'] .totalScore{color:#a2610a}
+  body[data-theme='light'] .bestLapLine{color:#5a7695}
+  body[data-theme='light'] .scoreBox{background:rgba(40,80,140,.05);border-color:rgba(40,80,140,.2);color:#26405c}
+  body[data-theme='light'] .scRow b{color:#8a5a10}
+  body[data-theme='light'] .nameBox{background:rgba(40,80,140,.05);border-color:rgba(40,80,140,.22)}
+  body[data-theme='light'] .nameLabel{color:#0f7a68}
+  body[data-theme='light'] .nameHint{color:#6f8db0}
+  body[data-theme='light'] .lbBox{background:rgba(255,205,100,.16);border-color:rgba(190,140,20,.4)}
+  body[data-theme='light'] .lbTitle{color:#8a5a10}
+  body[data-theme='light'] .lbList{color:#26405c}
+  body[data-theme='light'] .goGold{background:rgba(255,205,100,.32)!important;color:#7a4a00!important;border-color:rgba(190,140,20,.55)!important}
+  body[data-theme='light'] .goGhost{background:rgba(40,80,140,.08)!important;color:#26405c!important;border-color:rgba(40,80,140,.28)!important}
 </style>
 </head>
 <body data-theme="dark">
@@ -505,23 +586,16 @@
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div class="setlabel">手刹位置<small>刹车/漂移键放哪边</small></div>
       <div style="display:flex;gap:7px;margin-bottom:9px">
-        <button class="bsbtn" data-bs="left" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">⬅ 左边</button>
-        <button class="bsbtn" data-bs="right" style="flex:1;padding:8px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">➡ 右边</button>
-      </div>
-
-    <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
-      <div class="setlabel">画质<small>默认像素风 · 高清更精细</small></div>
-      <div style="display:flex;gap:7px">
-        <button class="pxbtn" data-px="1" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">🎨 像素风</button>
-        <button class="pxbtn" data-px="0" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">✨ 高清</button>
+        <button class="bsbtn" data-bs="left" style="flex:1;padding:8px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">⬅ 左边</button>
+        <button class="bsbtn" data-bs="right" style="flex:1;padding:8px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">➡ 右边</button>
       </div>
     </div>
     <div class="setrow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div class="setlabel">视角<small>1 第一人称 / 2 默认 / 3 俯视</small></div>
       <div style="display:flex;gap:7px">
-        <button class="vmbtn" data-v="0" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">1 第一人称</button>
-        <button class="vmbtn" data-v="1" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">2 贴地</button>
-        <button class="vmbtn" data-v="2" style="flex:1;padding:9px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(140,200,255,.22);color:#cfe4f7;font-size:12px;font-weight:800;cursor:pointer">3 俯视视角</button>
+        <button class="vmbtn" data-v="0" style="flex:1;padding:9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">1 第一人称</button>
+        <button class="vmbtn" data-v="1" style="flex:1;padding:9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">2 贴地</button>
+        <button class="vmbtn" data-v="2" style="flex:1;padding:9px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">3 俯视视角</button>
       </div>
     </div>
     <div class="setclose">
@@ -564,7 +638,6 @@
     </div>
     <a class="brandLock" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener" title="deepseek v4.1-flash -1017 &amp; gcy529"><span>deepseek v4.1-flash -1017</span><span class="amp">&amp;</span><span class="by">gcy529</span></a>
   </div>
-  <div id="peelCorner" title="切换画质"><div class="fold"></div><div class="lbl" id="peelLbl">像素</div></div>
 </div>
 <div id="overlay">
   <div class="panel">
@@ -730,20 +803,14 @@
   var W = 0, H = 0, DPR = 1;
 
   function resize() {
-    var nativeDPR = Math.min(window.devicePixelRatio || 1, 2);
-    DPR = nativeDPR;
-    if (CFG.pixelArt) {
-      // 像素风：按设备像素比降采样。手机保持原比例（省电），
-      // 桌面给一个 0.75 的下限 —— 原来 1080p 屏只剩 0.32 倍（400×250），糊到看不清车道。
-      var small = window.innerWidth < 900;
-      DPR = small ? Math.max(0.32, nativeDPR / 3.2) : Math.max(0.75, nativeDPR / 3.2);
-    }
+    // 只保留高清：按设备像素比渲染（上限 2，兼顾清晰度与性能）
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = canvas.clientWidth || window.innerWidth;
     H = canvas.clientHeight || window.innerHeight;
     canvas.width = Math.round(W * DPR);
     canvas.height = Math.round(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    ctx.imageSmoothingEnabled = !CFG.pixelArt;            // 像素风：硬边放大
+    ctx.imageSmoothingEnabled = true;            // 高清：平滑缩放
   }
   function applyPixelMode() {
     ctx.imageSmoothingEnabled = !CFG.pixelArt;
@@ -4884,7 +4951,7 @@
     if (_st === 'light' || _st === 'dark') THEME = _st;
   } catch (e) {}
 
-  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: true, brakeMode: 'brake', brakeSide: 'right', pixelArt: true, gyro: false };   // ghost=显示最佳圈速徽章（默认开）  // 默认静音;  // 幽灵车默认关（有重影）
+  var CFG = { bgm: false, sfx: false, auto: false, manualGas: false, ghost: true, brakeMode: 'brake', brakeSide: 'right', pixelArt: false, gyro: false };   // ghost=显示最佳圈速徽章（默认开）  // 默认静音;  // 幽灵车默认关（有重影）
   // 视角：0=远视(按键上方) 1=中视(按键中间) 2=第一视角
   var CAM_VIEW = CONFIG.view.default;   // 默认贴地视角
   var VIEW_LIST = [
@@ -6045,14 +6112,14 @@
       var chips0 = rn.slice(0, 3);
       var achHtml = '';
       if (freshAch.length) {
-        achHtml = '<div style="margin:12px 0;padding:11px 15px;border-radius:11px;background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(255,140,60,.08));border:1px solid rgba(255,190,80,.45);max-width:300px;text-align:left">' +
-          '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px">🎉 解锁成就 ×' + freshAch.length + '</div>' +
+        achHtml = '<div class="achBox">' +
+          '<div class="achTitle">🎉 解锁成就 ×' + freshAch.length + '</div>' +
           freshAch.map(function (aid) {
             var am = achMeta(aid);
-            return '<div style="font-size:12.5px;line-height:1.9;color:#ffe9c4">' + am.icon + ' <b>' + am.name + '</b> <span style="color:#9dbdd8;font-size:11px">' + am.desc + '</span>' +
-              (am.quote ? '<div style="font-size:11px;color:#ffdf9e;font-style:italic;padding-left:26px">"' + am.quote + '"</div>' : '') + '</div>';
+            return '<div class="achLine">' + am.icon + ' <b>' + am.name + '</b> <span class="achDesc">' + am.desc + '</span>' +
+              (am.quote ? '<div class="achQuote">"' + am.quote + '"</div>' : '') + '</div>';
           }).join('') +
-          '<div style="text-align:right;font-size:11px;color:#8ef7c8;margin-top:8px;font-weight:800;letter-spacing:1px">「 ' + ACH_CHEERS[Math.floor(Math.random() * ACH_CHEERS.length)] + ' 」</div>' +
+          '<div class="achCheer">「 ' + ACH_CHEERS[Math.floor(Math.random() * ACH_CHEERS.length)] + ' 」</div>' +
           '</div>';
       }
       panel.innerHTML = '<div class="title">完成！</div>' +
@@ -6060,29 +6127,29 @@
         achHtml +
         '<div class="res">' +
         '<div>总时间 <b>' + formatTime(P1.finishTime) + '</b></div>' +
-        '<div style="margin-top:6px;font-size:14px;color:#ffd166;font-weight:900">🏅 总积分 ' + calcScore(P1) + '</div>' +
-        '<div style="margin-top:6px;font-size:12.5px;color:#9dbdd8">最快单圈 ' + best + ' 秒</div>' +
+        '<div class="totalScore">🏅 总积分 ' + calcScore(P1) + '</div>' +
+        '<div class="bestLapLine">最快单圈 ' + best + ' 秒</div>' +
         '</div>' +
-        '<div style="margin:12px 0;padding:10px 14px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.2);text-align:left;max-width:300px;font-size:12px;line-height:2;color:#cfe4f7">' +
-        scoreBreakdown(P1).map(function (r) { return '<div style="display:flex;justify-content:space-between"><span>' + r[0] + '</span><b style="color:#ffd166">+' + r[1] + '</b></div>'; }).join('') +
+        '<div class="scoreBox">' +
+        scoreBreakdown(P1).map(function (r) { return '<div class="scRow"><span>' + r[0] + '</span><b>+' + r[1] + '</b></div>'; }).join('') +
         '</div>' +
-        '<div style="margin:12px 0;padding:11px 15px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.22);max-width:300px;text-align:left">' +
-        '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#8ef7c8;margin-bottom:8px">✍ 你的大名（上榜用）</div>' +
+        '<div class="nameBox">' +
+        '<div class="nameLabel">✍ 你的大名（上榜用）</div>' +
         '<input id="nameInput" maxlength="16" placeholder="留空 = 玩家" value="' + escHtml(getLastName()) + '" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(0,0,0,.3);color:#eaf2ff;font-size:14px;font-weight:800;text-align:center;outline:none;font-family:inherit">' +
-        '<div style="text-align:center;font-size:9.5px;color:#6f8db0;margin-top:5px;letter-spacing:.5px">最长 8 个汉字 · 16 个字符</div>' +
+        '<div class="nameHint">最长 8 个汉字 · 16 个字符</div>' +
         (chips0.length ? '<div class="chipRow" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + chips0.map(function (n) { return '<button class="chipBtn" data-n="' + escHtml(n) + '">' + escHtml(n) + '</button>'; }).join('') + '</div>' : '') +
         '</div>' +
-        '<div style="margin:14px 0;padding:11px 15px;border-radius:11px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28);text-align:left;max-width:300px">' +
-        '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center">' +
+        '<div class="lbBox">' +
+        '<div class="lbTitle">' +
         '<span>' + (DAILY_MODE ? '🎯 今日打卡排行' : '🏆 本图排行榜') + '</span>' +
         '<span class="sbtnRow" style="display:flex;gap:5px"><button id="sortTime" class="sbtn on">⏱时间</button><button id="sortScore" class="sbtn">🏅积分</button></span>' +
         '</div>' +
-        '<div id="resultLb" style="font-size:12.5px;color:#cfe4f7;line-height:1.85"></div>' +
+        '<div id="resultLb" class="lbList"></div>' +
         '</div>' +
         '<div class="btnRow" style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">' +
-        '<button class="go" id="achBtn" style="background:rgba(255,209,102,.16);color:#ffd166;box-shadow:none;border:1.5px solid rgba(255,190,80,.5)">🏆 成就</button>' +
+        '<button class="go goGold" id="achBtn">🏆 成就</button>' +
         '<button class="go" id="againBtn">再来一局</button>' +
-        '<button class="go" id="shareBtn" style="background:rgba(255,255,255,.1);color:#cfe8ff;box-shadow:none;border:1.5px solid rgba(140,200,255,.35)">分享</button>' +
+        '<button class="go goGhost" id="shareBtn">分享</button>' +
         '</div>';
       overlay.classList.remove('hide');
       var ab = document.getElementById('againBtn');
@@ -6385,9 +6452,8 @@
       var _snd = loadSave('turbo-racer-sound');
       if (_snd === '1') { CFG.sfx = true; CFG.bgm = true; }
       else { CFG.sfx = false; CFG.bgm = false; }
-      // 画质：默认像素风；存过 '0'（高清）才关
-      var _px = loadSave('turbo-racer-pixel');
-      CFG.pixelArt = (_px !== '0');
+      // 画质：只用高清（像素风档已下线）
+      CFG.pixelArt = false;
       // 陀螺仪：存过 '1' 才开（iOS 需用户手势授权，启动时不自动挂监听）
       try { CFG.gyro = (loadSave('turbo-racer-gyro') === '1'); } catch (e) {}
       // 无需手势授权的设备（Android 等）：直接恢复监听；iOS 等下次开设置时授权
@@ -6465,42 +6531,6 @@
     if (tb2) tb2.addEventListener('click', function () { goSetup(); setTimeout(openSettings, 60); });
     var lb2 = document.getElementById('langBtn');
     if (lb2) lb2.addEventListener('click', toggleLang);
-    // 右上撕角：两段式画质切换
-    var peel = document.getElementById('peelCorner');
-    if (peel) {
-      var peelBusy = false;
-      var syncPeelLbl = function () {
-        var lb = document.getElementById('peelLbl');
-        if (lb) lb.textContent = CFG.pixelArt ? '像素' : '超清';
-      };
-      syncPeelLbl();
-      peel.addEventListener('click', function () {
-        if (peelBusy) return;
-        peelBusy = true;
-        // 第一段：揭开（角掀起 + 全页暗场浮现）
-        peel.classList.add('peeling');
-        var bk = document.getElementById('peelBack');
-        if (!bk) { bk = document.createElement('div'); bk.id = 'peelBack'; document.body.appendChild(bk); }
-        requestAnimationFrame(function () { bk.classList.add('on'); });
-        // 停一拍 0.18s 后：粒子 + 切换
-        setTimeout(function () {
-          var toPix = !CFG.pixelArt;
-          spawnPeelBurst();
-          CFG.pixelArt = toPix;
-          applyPixelMode();
-          updatePxBtn();
-          syncPeelLbl();
-          flashTip(toPix ? '🎨 像素风' : '✨ 超清');
-          try { saveSave('turbo-racer-pixel', toPix ? '1' : '0'); } catch (e) {}
-          // 粒子 0.5s 后收场
-          setTimeout(function () {
-            bk.classList.remove('on');
-            peel.classList.remove('peeling');
-            setTimeout(function () { if (bk.parentNode) bk.parentNode.removeChild(bk); peelBusy = false; }, 320);
-          }, 500);
-        }, 450 + 180);
-      });
-    }
     var sndb = document.getElementById('soundBtn');
     if (sndb) sndb.addEventListener('click', toggleSound);
     updateSoundBtn();
@@ -6676,7 +6706,7 @@
           offTimer: P1 ? Number((P1.offTimer || 0).toFixed(2)) : 0,
           recovering: P1 ? Number((P1.recovering || 0).toFixed(2)) : 0,
           padBoost: P1 ? Number((P1.padBoost || 0).toFixed(2)) : 0,
-          pixelArt: !!CFG.pixelArt,
+          pixelArt: false,
           smoothing: ctx.imageSmoothingEnabled,
           canvasW: canvas.width,
           padBoost: P1 ? Number((P1.padBoost || 0).toFixed(2)) : 0,
