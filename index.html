@@ -1300,14 +1300,41 @@
 
   /* ================= 粒子系统（扬尘/尾气）================= */
   var particles = [];
+  // 颜色统一成 "r,g,b"：调用方有传 '#ff2d7b' 的、有传 '255,200,50' 的、
+  // 还有把 # 去掉传 'ef5350' 的。之前直接拼 rgba(ef5350,0.9) 会让
+  // canvas.addColorStop 抛异常，把整个 rAF 循环打断 → 看起来"卡死"。
+  function normParticleColor(c) {
+    if (Array.isArray(c) && c.length >= 3) return c.slice(0, 3).join(',');
+    var s = String(c == null ? '' : c).trim();
+    var m = s.match(/^#?([0-9a-f]{6})$/i);
+    if (m) {
+      var h = m[1];
+      return parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16);
+    }
+    m = s.match(/^#?([0-9a-f]{3})$/i);
+    if (m) {
+      var t = m[1];
+      return parseInt(t[0] + t[0], 16) + ',' + parseInt(t[1] + t[1], 16) + ',' + parseInt(t[2] + t[2], 16);
+    }
+    m = s.match(/^rgba?\(([^)]+)\)$/i);
+    if (m) s = m[1];
+    var parts = s.split(',');
+    if (parts.length >= 3) {
+      var r = Math.round(parseFloat(parts[0])), g = Math.round(parseFloat(parts[1])), b = Math.round(parseFloat(parts[2]));
+      if (isFinite(r) && isFinite(g) && isFinite(b)) {
+        return clamp(r, 0, 255) + ',' + clamp(g, 0, 255) + ',' + clamp(b, 0, 255);
+      }
+    }
+    return '255,255,255';
+  }
   function spawnParticle(x, y, vx, vy, size, life, color) {
     if (particles.length > 200) particles.shift();
-    particles.push({ x: x, y: y, vx: vx, vy: vy, size: size, life: life, maxLife: life, color: color });
+    particles.push({ x: x, y: y, vx: vx, vy: vy, size: size, life: life, maxLife: life, color: normParticleColor(color) });
   }
   // ── 霓虹粒子（发光效果）──
   function spawnNeonParticle(x, y, vx, vy, size, life, color) {
     if (particles.length > 250) particles.shift();
-    particles.push({ x: x, y: y, vx: vx, vy: vy, size: size, life: life, maxLife: life, color: color, neon: true });
+    particles.push({ x: x, y: y, vx: vx, vy: vy, size: size, life: life, maxLife: life, color: normParticleColor(color), neon: true });
   }
   function updateParticles(dt) {
     for (var i = particles.length - 1; i >= 0; i--) {
@@ -6312,23 +6339,33 @@
   }
 
   var fpsAccum = 0, fpsFrames = 0;
+  var frameErrLogged = false;
   function frame(ts) {
     if (!lastTs) lastTs = ts;
     var dt = Math.min((ts - lastTs) / 1000, 0.05);
-    fpsAccum += dt; fpsFrames++;
-    if (fpsAccum >= 0.5) {
-      var fv = Math.round(fpsFrames / fpsAccum);
-      var fb = document.getElementById('fpsBox');
-      if (fb) { fb.textContent = fv + ' FPS'; fb.style.color = fv >= 50 ? '#8ef7c8' : (fv >= 30 ? '#ffd166' : '#ff6b6b'); }
-      fpsAccum = 0; fpsFrames = 0;
-    }
     lastTs = ts;
-    clock += dt;
-    gyroTick(dt);
-    update(dt);
-    // 每帧为两个视角分别分配车流
-    assignCars(P1);
-    render();
+    // 单帧异常绝不能让循环停掉：原来 render 里一抛错，下一帧就不再排，
+    // 画面定格 + 提示语不消失，表现就是"卡死"。
+    try {
+      fpsAccum += dt; fpsFrames++;
+      if (fpsAccum >= 0.5) {
+        var fv = Math.round(fpsFrames / fpsAccum);
+        var fb = document.getElementById('fpsBox');
+        if (fb) { fb.textContent = fv + ' FPS'; fb.style.color = fv >= 50 ? '#8ef7c8' : (fv >= 30 ? '#ffd166' : '#ff6b6b'); }
+        fpsAccum = 0; fpsFrames = 0;
+      }
+      clock += dt;
+      gyroTick(dt);
+      update(dt);
+      // 每帧为两个视角分别分配车流
+      assignCars(P1);
+      render();
+    } catch (e) {
+      if (!frameErrLogged) {
+        frameErrLogged = true;
+        try { console.error('[turbo-game] 单帧异常已跳过（循环继续）：', e); } catch (e2) {}
+      }
+    }
     requestAnimationFrame(frame);
   }
 
@@ -6576,6 +6613,22 @@
       } catch (e) { return { err: String(e) }; }
     },
     setOff: function (x, spd) { try { P1.playerX = x; P1.speed = (spd === undefined ? 10 : spd); return true; } catch (e) { return String(e); } },
+    // 调试：传送到前方最近的技能道具（复现拾取）、直接加点
+    skillTest: function () {
+      try {
+        var base = findSegment(P1.position);
+        for (var i = 1; i < segments.length; i++) {
+          var seg = segments[(base.index + i) % segments.length];
+          if (seg.skillItem && !seg.skillItem.collected) {
+            P1.position = (seg.index * SEG_LEN - PLAYER_Z - SEG_LEN + trackLength) % trackLength;
+            P1.playerX = seg.skillItem.x;
+            return { seg: seg.index, x: seg.skillItem.x, type: seg.skillItem.type, dist: i };
+          }
+        }
+        return { none: true };
+      } catch (e) { return { err: String(e) }; }
+    },
+    addPoints: function (n) { try { P1.skillPoints += (n || 10); updateSkillUI(); return P1.skillPoints; } catch (e) { return String(e); } },
     setStats: function (o) {
       try {
         if (o.smashCount !== undefined) P1.smashCount = o.smashCount;
@@ -6602,6 +6655,9 @@
         return {
           speed: P1 ? Math.round((P1.speed / MAX_SPEED) * 320) : 0,
           lap: P1 ? P1.lap : 0,
+          dist: P1 ? Math.round(P1.totalDistance) : 0,
+          trackLen: trackLength,
+          skillPoints: P1 ? P1.skillPoints : 0,
           playerX: P1 ? Number(P1.playerX.toFixed(3)) : 0,
           countdown: Number(countdown.toFixed(2)),
           running: running,
