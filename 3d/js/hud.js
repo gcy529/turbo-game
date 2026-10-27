@@ -207,7 +207,7 @@ export function createHud() {
     // 内测倒计时下线：直接标为可用，不再弹「距正式版 N 天」
     if (el.d3lock) el.d3lock.style.display = 'none';
     // 版本号直接标在首页标签上：能一眼确认加载的是不是最新版（躲开旧缓存）
-    if (el.d3tag) el.d3tag.textContent = 'WEBGL · 3D 正式版 · v7';
+    if (el.d3tag) el.d3tag.textContent = 'WEBGL · 3D 正式版 · v8';
   }
 
   return {

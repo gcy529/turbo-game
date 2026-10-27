@@ -9,7 +9,7 @@
 
 [[redirects]]
   from = "/3d"
-  to = "/3d/index-3d.v2.html"
+  to = "/3d/index.html"
   status = 301
 
 [[headers]]
