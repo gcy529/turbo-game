@@ -264,7 +264,7 @@ export function buildTrack(scene) {
     holder.position.set(f.p.x, f.p.y, f.p.z);
     holder.rotation.y = Math.atan2(f.tan.x, f.tan.z);
 
-    const postH = 7.2, off = ROAD_W / 2 + 1.5;
+    const postH = 8.6, off = ROAD_W / 2 - 0.8;
     const postMat = new THREE.MeshStandardMaterial({ color: 0x9aa6b8, roughness: 0.4, metalness: 0.75 });
     for (const s of [-1, 1]) {
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, postH, 8), postMat);
@@ -285,14 +285,14 @@ export function buildTrack(scene) {
 
     // 横幅：面向来车，双面可见。宽度按「路宽 - 0.6」算，两边留一样的边
     const banner3 = new THREE.Mesh(
-      new THREE.PlaneGeometry(ROAD_W - 0.6, 1.7),
+      new THREE.PlaneGeometry(12, 1.5),
       new THREE.MeshStandardMaterial({
         map: checkerTexture(16, 3), side: THREE.DoubleSide,
         roughness: 0.5, metalness: 0.05,
         emissive: 0x22303f, emissiveIntensity: 0.5,
       })
     );
-    banner3.position.set(0, postH - 1.35, 0);
+    banner3.position.set(0, postH - 1.25, 0);
     holder.add(banner3);
 
     holder.traverse((o) => { if (o.isMesh) o.castShadow = false; });
@@ -304,7 +304,7 @@ export function buildTrack(scene) {
   // 之前起点线在 frames[3]、终点线在 frames[-3]，两条线夹着车只隔 18 米，
   // 俯视一眼就能看出是两套重复的标线；玩家起步时也分不清哪条是起跑线。
   addCheckerLine(0, 6, 6, 2);
-  addGate(8, 'start');           // 门架在线前 25 米：整座能进画面，不会糊满脸
+  addGate(0, 'start');           // 门架就架在起终点线上，两样是一体的
 
 
   // ── 路边景物：树与路灯（InstancedMesh，控制 draw call）──

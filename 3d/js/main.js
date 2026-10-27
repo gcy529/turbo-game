@@ -74,7 +74,7 @@ const npcs = [];
 // 起终点线在 t=0（计圈点），车停在它后面 4.5 米 —— 和真赛道一样：
 // 车趴在起跑格上，前方就是那条黑白线和门架。
 // t 为负不影响渲染（posAt/curvatureAt 都做过归一化），只需跳过「起步出线」这一下。
-const START_BACK = 4.5;
+const START_BACK = 7.5;
 const START_T = -START_BACK / track.trackLen;
 
 const player = {
