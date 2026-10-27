@@ -1,45 +1,32 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<meta name="theme-color" content="#0b1230" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>逆反 3D · TURBO INVERSE</title>
+<meta http-equiv="refresh" content="0; url=3d/index-3d.v2.html">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#05070e;
-  font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:#eaf2ff;user-select:none;-webkit-tap-highlight-color:transparent}
-#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;
-  background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.92),rgba(4,6,14,.98))}
-.panel{text-align:center;padding:32px 30px;border-radius:22px;background:rgba(10,18,34,.86);
-  border:1px solid rgba(120,190,255,.25);box-shadow:0 24px 90px rgba(0,0,0,.7);backdrop-filter:blur(16px);max-width:460px;width:100%}
-.tag3d{display:inline-block;font-size:9.5px;font-weight:900;letter-spacing:2px;padding:3px 10px;border-radius:7px;
-  background:rgba(255,180,60,.2);border:1px solid rgba(255,190,80,.6);color:#ffc078;margin-bottom:16px}
-.title{font-size:46px;font-weight:900;letter-spacing:6px;line-height:1.1;
-  background:linear-gradient(180deg,#fff,#67c6ff 70%,#2f7fd0);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px}
-.sub{font-size:10.5px;letter-spacing:4px;color:#5f86ad;margin-bottom:22px;font-weight:700}
-.desc{font-size:13px;line-height:2;color:#a9c6e2;margin-bottom:6px}
-.desc b{color:#fff}
-.note{font-size:10.5px;color:#4e6b88;letter-spacing:.5px;margin-top:14px}
-.back{margin-top:20px}
-.back a{color:#67c6ff;text-decoration:none;font-size:13px;font-weight:700;letter-spacing:1px}
+  html,body{height:100%;margin:0;background:#05070e;color:#9dbdd8;
+    font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+  a{color:#67c6ff;text-decoration:none;font-weight:700}
+  .box{max-width:360px;line-height:1.9;font-size:13px}
+  .sp{width:26px;height:26px;margin:0 auto 14px;border-radius:50%;
+    border:3px solid rgba(140,200,255,.25);border-top-color:#67c6ff;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div id="wrap">
-  <div class="panel">
-    <div class="tag3d">WEBGL · 内测版</div>
-    <div class="title">逆反 3D</div>
-    <div class="sub">T U R B O &nbsp; I N V E R S E</div>
-    <div class="desc">
-      Turbo 的 3D 版本，核心玩法只有一个字：<b>反</b>。<br>
-      方向盘是反的、撞车掉头是反的、爽感也是反的。<br>
-      勇往直前，别回头。
+  <div class="box">
+    <div class="sp"></div>
+    <div>正在进入「逆反 3D」…</div>
+    <div style="margin-top:10px;font-size:11.5px;color:#4e6b88">
+      没有自动跳转？<a href="3d/index-3d.v2.html">点这里</a> · <a href="index.html">回到 2D 版</a>
     </div>
-    <div class="note">需 iOS 10+ / 较新浏览器 · 老设备请玩 2D 版</div>
-    <div class="note">2026.11.11 全量解锁 · 敬请期待</div>
-    <div class="back"><a href="index.html">← 回到 2D 版</a></div>
   </div>
-</div>
+  <script>
+    // 统一入口：/index-3d.html 与 /3d 都指向真正在跑的模块化 3D 版
+    location.replace('3d/index-3d.v2.html' + location.search + location.hash);
+  </script>
 </body>
 </html>

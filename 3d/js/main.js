@@ -19,7 +19,11 @@ const particles = createParticles(stage.scene);
 const skillItems = createSkillItems(stage.scene, track);
 const shieldFx = createShield(stage.scene);
 const skills = createSkills((text, dur) => hud.setMsg(text, dur));
-
+// 技能按钮：真正绑事件（原来只有 HTML 内联 onclick，指向不存在的函数）
+hud.bindSkillButtons(skills, (type) => {
+  const def = FX.skillDefs[type];
+  if (def) particles.burst(playerCar.position, def.color, 25, 4);
+});
 const playerCar = buildCar(0x00ffcc, 'high');
 stage.scene.add(playerCar);
 const npcs = [];
@@ -30,6 +34,7 @@ const player = {
   driftScore: 0, pushLateral: 0, skills: skills.s, recovered: 0,
 };
 let running = false, camMode = 0, clock = 0, countdown = 0, raceClock = 0, lapStartClock = 0, shake = 0, roll = 0;
+let paused = false;
 
 function spawnNpcs() {
   for (let i = 0; i < NPC.count; i++) {
@@ -65,7 +70,7 @@ hud.syncInvert(input.state.invert, input.state.unlocked);
 
 // ── 玩法更新 ──
 function update(dt) {
-  if (!running) { hud.tickMsg(dt); return; }
+  if (!running || paused) { hud.tickMsg(dt); return; }
   clock += dt;
   if (countdown > 0) {
     const before = Math.ceil(countdown);
@@ -215,6 +220,9 @@ function startRace() {
   particles.reset();
   roll = 0;
   running = true;
+  paused = false;
+  const pp = document.getElementById('pausePanel');
+  if (pp) pp.classList.remove('show');
   countdown = RACE.countdown;
   clock = 0;
   hud.hideOverlay();
@@ -223,8 +231,36 @@ function startRace() {
 }
 function restart() {
   running = false;
+  paused = false;
   player.speed = 0;
-  hud.showOverlay();
+  const pp = document.getElementById('pausePanel');
+  if (pp) pp.classList.remove('show');
+  hud.restorePanel();      // 结算面板换回首页，否则「R 重开」会回到成绩页
+  bindStartBtn();
+  hud.update(player, 0);
+}
+
+// ── 暂停 / 设置 ──
+function setPaused(v) {
+  if (!running) return;
+  paused = !!v;
+  const pp = document.getElementById('pausePanel');
+  if (pp) pp.classList.toggle('show', paused);
+}
+function quitToMenu() {
+  running = false;
+  paused = false;
+  player.speed = 0;
+  const pp = document.getElementById('pausePanel');
+  if (pp) pp.classList.remove('show');
+  hud.restorePanel();
+  bindStartBtn();
+  hud.syncInvert(input.state.invert, input.state.unlocked);
+  hud.update(player, 0);
+}
+function bindStartBtn() {
+  const b = document.getElementById('startBtn');
+  if (b) b.addEventListener('click', startRace);
 }
 
 // ── 主循环 ──
@@ -237,11 +273,25 @@ function frame(ts) {
   fpsN++;
   if (fpsAcc >= 0.5) { hud.setFps(Math.round(fpsN / fpsAcc)); fpsAcc = 0; fpsN = 0; }
   update(dt);
-  poseAndRender(dt, true);
+  poseAndRender(paused ? 0 : dt, true);
   rafId = requestAnimationFrame(frame);
 }
 
-if (hud.el.startBtn) hud.el.startBtn.addEventListener('click', () => startRace());
+bindStartBtn();
+hud.setOnAgain(() => startRace());   // 结算页「再来一局」原地重开，不整页刷新
+{
+  const pb = document.getElementById('pauseBtn');
+  if (pb) pb.addEventListener('click', () => setPaused(!paused));
+  const pr = document.getElementById('pauseResume');
+  if (pr) pr.addEventListener('click', () => setPaused(false));
+  const pst = document.getElementById('pauseRestart');
+  if (pst) pst.addEventListener('click', () => { setPaused(false); startRace(); });
+  const pq = document.getElementById('pauseQuit');
+  if (pq) pq.addEventListener('click', quitToMenu);
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape') { setPaused(!paused); e.preventDefault(); }
+  });
+}
 hud.applyLock(); hud.update(player, 0);
 rafId = requestAnimationFrame(frame);
 // 停止主循环（无头验证用，避免 rAF 空转把虚拟时间耗尽）

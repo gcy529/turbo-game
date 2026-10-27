@@ -47,6 +47,22 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 .skill-btn:hover{background:rgba(140,200,255,.2)}
 .skill-btn.active{border-color:#ffd166;box-shadow:0 0 10px rgba(255,209,102,.5)}
 #skillBar3d{display:none;align-items:center;gap:8px;padding:6px 12px;border-radius:10px;background:rgba(6,12,22,.8);border:1.5px solid rgba(140,200,255,.4);backdrop-filter:blur(8px)}
+#pauseBtn{position:fixed;right:14px;top:14px;z-index:14;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#cfe8ff;background:rgba(6,12,22,.7);border:1px solid rgba(120,190,255,.28);cursor:pointer;backdrop-filter:blur(6px);user-select:none}
+#pauseBtn:active{background:rgba(140,200,255,.25)}
+#pausePanel{position:fixed;inset:0;z-index:25;display:none;align-items:center;justify-content:center;background:rgba(4,7,14,.72);backdrop-filter:blur(8px);padding:18px}
+#pausePanel.show{display:flex}
+#pausePanel .go{display:block;width:100%}
+/* 品牌 / 版权 lockup：deepseek v4.1-flash -1017 & gcy529 */
+.brandLock{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 13px;border-radius:999px;
+  background:rgba(140,200,255,.05);border:1px solid rgba(140,200,255,.16);
+  font-family:'Courier New',monospace;font-size:9.5px;font-weight:700;letter-spacing:1.1px;
+  color:rgba(180,206,232,.62);text-decoration:none;white-space:nowrap;line-height:1;transition:border-color .2s,color .2s}
+.brandLock .amp{color:rgba(142,247,200,.72);font-weight:900}
+.brandLock .by{color:#9fc6e8;font-weight:800}
+.brandLock:hover{border-color:rgba(140,200,255,.42);color:rgba(220,236,250,.92)}
+#brandMark{position:fixed;left:10px;bottom:3px;z-index:9;font-family:'Courier New',monospace;font-size:9px;
+  font-weight:700;color:rgba(140,180,220,.4);letter-spacing:.7px;text-decoration:none;white-space:nowrap;pointer-events:auto}
+#brandMark:hover{color:rgba(200,225,250,.8)}
 .skill-name{font-size:12px;font-weight:800;color:#fff}
 .skill-timer{font-size:11px;color:#ffd166;font-weight:900}
 #boot{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#05070e;color:#9dbdd8;font-size:13px;letter-spacing:1px;text-align:center;padding:20px}
@@ -58,15 +74,29 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 <body>
 <canvas id="game"></canvas>
 <div id="hud"><span id="spd">0</span><span class="u">KM/H</span>
-  <span id="meta">圈 <b id="lap">1</b>/2 · <b id="score3d" style="color:#ffd166">0</b>分<br>本圈 <b id="t1">0.00</b> · <b id="who3d" style="color:#8ef7c8"></b></span></div>
+  <span id="meta">圈 <b id="lap">1</b>/<b id="lapTotal3d">2</b> · <b id="score3d" style="color:#ffd166">0</b>分<br>本圈 <b id="t1">0.00</b> · <b id="who3d" style="color:#8ef7c8"></b></span></div>
 <div id="skillUI3d">
   <div id="skillPts3d">⭐ 0</div>
   <div id="skillBar3d"><span class="skill-name"></span><span class="skill-timer"></span></div>
   <div id="skillBtns3d">
-    <button class="skill-btn" data-skill="shield" onclick="activateSkill3d('shield')">🛡️ 护盾 (50)</button>
-    <button class="skill-btn" data-skill="magnet" onclick="activateSkill3d('magnet')">🧲 磁力 (40)</button>
-    <button class="skill-btn" data-skill="slow" onclick="activateSkill3d('slow')">⏳ 缓时 (60)</button>
-    <button class="skill-btn" data-skill="megaboost" onclick="activateSkill3d('megaboost')">🔥 氮气 (80)</button>
+    <button class="skill-btn" data-skill="shield">🛡️ 护盾 (50)</button>
+    <button class="skill-btn" data-skill="magnet">🧲 磁力 (40)</button>
+    <button class="skill-btn" data-skill="slow">⏳ 缓时 (60)</button>
+    <button class="skill-btn" data-skill="megaboost">🔥 氮气 (80)</button>
+  </div>
+</div>
+<div id="pauseBtn" title="暂停 / 设置">⏸</div>
+<div id="pausePanel">
+  <div class="panel" style="max-width:320px">
+    <div class="tag3d">PAUSED</div>
+    <div class="title" style="font-size:28px">暂停</div>
+    <div class="sub" style="letter-spacing:3px">S E T T I N G S</div>
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:6px">
+      <button class="go" id="pauseResume">继续比赛</button>
+      <button class="go" id="pauseRestart" style="background:rgba(140,200,255,.16);color:#cfe8ff;box-shadow:none;border:1.5px solid rgba(140,200,255,.4)">重新开始</button>
+      <button class="go" id="pauseQuit" style="background:rgba(255,90,110,.16);color:#ffb3bd;box-shadow:none;border:1.5px solid rgba(255,90,110,.45)">回到菜单</button>
+    </div>
+    <div class="tip">Esc 也可以暂停 / 继续</div>
   </div>
 </div>
 <div id="msg"></div>
@@ -75,6 +105,7 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
   <span style="font-weight:800;color:#fff">S</span>/<span style="font-weight:800;color:#fff">↓</span> 手刹 &nbsp;&nbsp; <span style="font-weight:800;color:#fff">C</span> 切视角 &nbsp;&nbsp; <span style="font-weight:800;color:#fff">R</span> 重开
 </div>
 <div id="fpsBox">-- FPS</div>
+<a id="brandMark" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener">deepseek v4.1-flash -1017 <span style="color:rgba(142,247,200,.55)">&amp;</span> gcy529</a>
 <div id="touch">
   <div class="tb" id="tl" style="position:absolute;left:16px;bottom:22px">◀</div>
   <div class="tb" id="tr" style="position:absolute;right:16px;bottom:22px">▶</div>
@@ -105,19 +136,20 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
     <button class="go" id="startBtn">开始比赛</button>
     <div class="tip">按键提示：开始后屏幕上方弹 3 秒</div>
     <div class="tip" style="font-size:9.5px;color:#4e6b88">需 iOS 10+ / 较新浏览器 · 老设备请玩 2D 版</div>
-    <div class="tip" style="margin-top:10px"><a href="index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>
+    <div class="tip" style="margin-top:10px"><a href="../index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>
+    <div><a class="brandLock" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener" title="deepseek v4.1-flash -1017 &amp; gcy529"><span>deepseek v4.1-flash -1017</span><span class="amp">&amp;</span><span class="by">gcy529</span></a></div>
   </div>
 </div>
 
-<div id="boot"><div class="sp"></div><div>正在加载 three.js（CDN · r160）与模块…</div></div>
+<div id="boot"><div class="sp"></div><div>正在加载 three.js（本地 · r160）与模块…</div></div>
 
-<!-- three.js 走锁定版本的 CDN ES module；仓库里不再保留 three.min.js。
-     换 CDN 只改下面两行地址即可（例如 cdn.jsdelivr.net / unpkg.com）。 -->
+<!-- three.js r160 已本地化到 3d/vendor/，不再依赖 jsdelivr / unpkg。
+     国内 CDN 实测 15s 都下不完，且离线 PWA 缓存不到外域模块。 -->
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/addons/"
   }
 }
 </script>
@@ -125,6 +157,10 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 <script type="module">
   const boot = document.getElementById('boot');
   const q = new URLSearchParams(location.search);
+  // 直接打开 /3d 的用户也要能离线：补注册根目录的 Service Worker
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('../sw.js').catch(() => {});
+  }
   try {
     await import('./js/main.js');
     if (boot) boot.classList.add('gone');
@@ -134,8 +170,8 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
     window.__TURBO_BOOT_ERROR = msg;
     if (boot) boot.innerHTML = '<b style="color:#ff8080">加载失败：' + msg + '</b>' +
       '<span style="font-size:11.5px;color:#8ba3bd;max-width:420px;line-height:1.8">' +
-      '多半是 CDN 不通。把 index-3d.v2.html 里 importmap 的 three 地址换成 ' +
-      'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js 或 unpkg 同路径即可。</span>';
+      '先确认 3d/vendor/three.module.js 与 3d/vendor/addons/ 有没有一起上传；' +
+      '用 file:// 直接打开也会因为 ES 模块跨域被拦，请用本地服务器访问。</span>';
   }
 </script>
 </body>

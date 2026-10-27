@@ -7,13 +7,14 @@ export function createHud() {
   const el = {
     spd: document.getElementById('spd'),
     lap: document.getElementById('lap'),
+    lapTotal: document.getElementById('lapTotal3d'),
     t1: document.getElementById('t1'),
     score: document.getElementById('score3d'),
     who: document.getElementById('who3d'),
     msg: document.getElementById('msg'),
     fps: document.getElementById('fpsBox'),
     overlay: document.getElementById('overlay'),
-    panel: document.querySelector('.panel'),
+    panel: document.querySelector('#overlay .panel'),   // 必须是 overlay 里的面板（暂停面板也有 .panel）
     skillUI: document.getElementById('skillUI3d'),
     skillPts: document.getElementById('skillPts3d'),
     skillBar: document.getElementById('skillBar3d'),
@@ -25,6 +26,8 @@ export function createHud() {
   };
 
   let msgTimer = 0;
+  let onAgain = null;                       // 结算页「再来一局」回调（由 main.js 注入）
+  const panelHome = el.panel ? el.panel.innerHTML : '';   // 首页面板原始 HTML
   function setMsg(text, dur) {
     if (!el.msg) return;
     el.msg.textContent = text;
@@ -62,6 +65,7 @@ export function createHud() {
   function update(p, lapTime) {
     if (el.spd) el.spd.textContent = String(Math.round(Math.abs(p.speed) * 3.6 * 1.15));
     if (el.lap) el.lap.textContent = String(Math.min(p.lap, p.totalLaps));
+    if (el.lapTotal) el.lapTotal.textContent = String(p.totalLaps);
     if (el.t1) el.t1.textContent = Math.max(0, lapTime).toFixed(2);
     if (el.score) el.score.textContent = String(calcScore(p));
     if (el.who) el.who.textContent = getName();
@@ -78,6 +82,7 @@ export function createHud() {
       }
     }
     if (el.skillUI) el.skillUI.classList.toggle('show', p.skills.points > 0 || !!p.skills.active);
+    syncSkillButtons(p.skills);
     const rev = ensureRevEl();
     const show = p.speed < -15;
     if (show !== rev._shown) { rev.style.opacity = show ? '1' : '0'; rev._shown = show; }
@@ -132,6 +137,28 @@ export function createHud() {
     });
   }
 
+  function bindSkillButtons(skills, onActivated) {
+    // HTML 里原来的 onclick="activateSkill3d(...)" 指向一个根本不存在的全局函数，
+    // 每次点击都是 ReferenceError，技能完全用不了。这里改成真正的监听。
+    document.querySelectorAll('.skill-btn').forEach((btn) => {
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const type = btn.getAttribute('data-skill');
+        const res = skills.activate(type);
+        if (res && res.ok && onActivated) onActivated(type);
+        syncSkillButtons(skills);
+      });
+    });
+    syncSkillButtons(skills);
+  }
+
+  function restorePanel() {
+    if (!el.panel) return;
+    el.panel.innerHTML = panelHome;
+    if (el.d3cd && !el.d3cd.textContent) applyLock();   // 恢复「距正式版」倒计时（避免重复起循环）
+    showOverlay();
+  }
+
   function hideOverlay() { if (el.overlay) el.overlay.classList.add('hide'); }
   function showOverlay() { if (el.overlay) el.overlay.classList.remove('hide'); }
 
@@ -155,9 +182,12 @@ export function createHud() {
       '<div style="font-size:11.5px;color:#cfe4f7;line-height:1.7">有个开关解锁了<br>' +
       '<span style="color:#6f8db0;font-size:10.5px">下次开始前，试试换一种开法</span></div></div>' +
       '<button class="go" id="againBtn">再来一局</button>' +
-      '<div class="tip" style="margin-top:10px"><a href="index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>';
+      '<div class="tip" style="margin-top:10px"><a href="../index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>' +
+      '<div><a class="brandLock" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener"><span>deepseek v4.1-flash -1017</span><span class="amp">&amp;</span><span class="by">gcy529</span></a></div>';
     const again = document.getElementById('againBtn');
-    if (again) again.addEventListener('click', () => location.reload());
+    if (again) again.addEventListener('click', () => {
+      if (onAgain) onAgain(); else location.reload();
+    });
     showOverlay();
   }
 
@@ -183,7 +213,8 @@ export function createHud() {
   }
 
   return {
-    el, setMsg, tickMsg, update, setFps, syncSkillButtons, syncInvert, bindInvertButtons,
-    hideOverlay, showOverlay, showKeyHints, countdownPanel, applyLock, getName, calcScore,
+    el, setMsg, tickMsg, update, setFps, syncSkillButtons, bindSkillButtons, syncInvert, bindInvertButtons,
+    hideOverlay, showOverlay, restorePanel, showKeyHints, countdownPanel, applyLock, getName, calcScore,
+    setOnAgain(fn) { onAgain = fn; },
   };
 }

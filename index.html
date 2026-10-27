@@ -163,6 +163,18 @@
   .rRow{display:flex;gap:9px;margin-top:20px}
   .rGit{margin-top:14px;font-size:10px;letter-spacing:1px;color:rgba(140,180,220,.45);text-decoration:none;font-family:'Courier New',monospace}
   .rGit:hover{color:#67c6ff}
+  /* 品牌 / 版权 lockup：deepseek v4.1-flash -1017 & gcy529 */
+  .brandLock{display:inline-flex;align-items:center;gap:7px;margin-top:15px;padding:6px 13px;border-radius:999px;
+    background:rgba(140,200,255,.05);border:1px solid rgba(140,200,255,.16);
+    font-family:'Courier New',monospace;font-size:9.5px;font-weight:700;letter-spacing:1.1px;
+    color:rgba(180,206,232,.62);text-decoration:none;white-space:nowrap;line-height:1;
+    transition:border-color .2s,color .2s,background .2s}
+  .brandLock .amp{color:rgba(142,247,200,.72);font-weight:900}
+  .brandLock .by{color:#9fc6e8;font-weight:800;transition:color .2s}
+  .brandLock:hover{border-color:rgba(140,200,255,.42);color:rgba(220,236,250,.92);background:rgba(140,200,255,.09)}
+  .brandLock:hover .by{color:#8ef7c8}
+  body[data-theme='light'] .brandLock{background:rgba(40,80,140,.05);border-color:rgba(40,80,140,.18);color:rgba(40,70,110,.62)}
+  body[data-theme='light'] .brandLock .by{color:#1f6fd0}
   body[data-theme='light'] .rTitle{text-shadow:0 0 6px rgba(255,180,0,.3),2px 2px 0 rgba(122,61,0,.35)}
   body[data-theme='light'] .rSub{text-shadow:0 0 8px rgba(0,180,220,.4)}
   body[data-theme='light'] .rBtn{background:rgba(255,252,245,.85);color:#8a5a10}
@@ -428,6 +440,16 @@
     .rBtnDaily small{margin-top:4px}
   }
 @media (orientation:portrait){.rTitle{font-size:30px;letter-spacing:6px}.rSub{font-size:11px;letter-spacing:9px}.rMenu{width:260px;gap:8px}.rBtn{font-size:14px;padding:11px 16px}}
+  /* ═══ 技能按钮（只建一次，增量更新）═══ */
+  .skbtn{display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;font-weight:900;font-family:inherit;line-height:1.25;transition:opacity .15s,border-color .15s,transform .1s;touch-action:manipulation}
+  .skbtn:active{transform:scale(.96)}
+  .skbtn .skc{font-size:10px;opacity:.7}
+  .skbtn .skt{font-size:11px;font-weight:900;min-width:0}
+  /* 设置面板：矮屏时可滚动，标题和底部按钮不再被裁掉 */
+  .setbox{max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  /* 结算页按钮：内容再长也吸在面板底部，不用滚半天找「再来一局」 */
+  #overlay .panel .btnRow{position:sticky;bottom:0;z-index:2;margin-top:10px;padding:10px 0 4px;background:#0c1424;box-shadow:0 -10px 18px rgba(6,12,22,.85)}
+  body[data-theme='light'] #overlay .panel .btnRow{background:#fbf9f4;box-shadow:0 -10px 18px rgba(240,236,226,.9)}
 </style>
 </head>
 <body data-theme="dark">
@@ -435,12 +457,12 @@
 
 <div class="pbox p1box">
   <div class="prow"><span class="tag t1">P1</span><span class="spd" id="spd1">0</span><span class="u">KM/H</span></div>
-  <span class="meta">圈 <b id="lap1">1</b>/3 · 本圈 <b id="t1">0.00</b> · <b id="score1" style="color:#ffd166">0</b>分<br><span id="gap1" style="color:#8ef7c8"></span></span>
+  <span class="meta">圈 <b id="lap1">1</b>/<b id="lapTotal1">3</b> · 本圈 <b id="t1">0.00</b> · <b id="score1" style="color:#ffd166">0</b>分<br><span id="gap1" style="color:#8ef7c8"></span></span>
 </div>
 
 <div class="pbox p2box">
   <div class="prow"><span class="tag t2">P2</span><span class="spd" id="spd2">0</span><span class="u">KM/H</span></div>
-  <span class="meta">圈 <b id="lap2">1</b>/3 · 本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
+  <span class="meta">圈 <b id="lap2">1</b>/<b id="lapTotal2">3</b> · 本圈 <b id="t2">0.00</b><br><span id="gap2" style="color:#ff9aa8"></span></span>
 </div>
 
 <div id="autoWheelBtn" title="智驾 / 手动" style="position:fixed;right:14px;top:56px;z-index:15;width:52px;height:52px;border-radius:50%;background:rgba(10,18,34,.72);border:1.5px solid rgba(140,200,255,.3);cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
@@ -449,7 +471,7 @@
 <div id="autoDriveTag" style="position:fixed;right:14px;top:114px;z-index:15;display:none;padding:4px 10px;border-radius:8px;background:rgba(10,18,34,.75);border:1px solid rgba(140,200,255,.25);font-size:9.5px;font-weight:800;letter-spacing:1px;color:#8ba3bd;pointer-events:none">手动驾驶</div>
 <div id="viewBar" style="position:fixed;left:14px;top:82px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="第一人称">1</div><div class="vbtn" data-v="1" title="默认视角">2</div><div class="vbtn" data-v="2" title="俯视视角">3</div></div>
 <div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:16;width:44px;height:44px;border-radius:12px;background:rgba(20,40,70,.85);border:2px solid rgba(140,200,255,.5);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:900;color:#8ef7c8;-webkit-backdrop-filter: backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);transition:background .15s">↻</div>
-<a id="elGitMark" href="https://github.com/gcy529/turbo-game" target="_blank" style="position:fixed;left:12px;bottom:12px;z-index:13;font-size:9.5px;font-weight:700;color:rgba(140,180,220,.4);text-decoration:none;letter-spacing:.5px;pointer-events:auto">github.com/gcy529/turbo-game</a>
+<a id="elGitMark" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener" style="position:fixed;left:10px;bottom:3px;z-index:13;font-family:'Courier New',monospace;font-size:9px;font-weight:700;color:rgba(140,180,220,.4);text-decoration:none;letter-spacing:.7px;pointer-events:auto;white-space:nowrap">deepseek v4.1-flash -1017 <span style="color:rgba(142,247,200,.55)">&amp;</span> gcy529</a>
 <div id="fpsBox" style="position:fixed;right:14px;bottom:14px;z-index:14;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums;-webkit-backdrop-filter: backdrop-filter:blur(6px);pointer-events:none;letter-spacing:.5px">-- FPS</div>
 <div id="settingsBtn" title="设置"><span class="gear">⚙</span></div>
 <div id="settingsPanel">
@@ -532,7 +554,7 @@
       <button class="rBtn" id="homeSolo"><i>▶</i><span data-i18n="r1p">1P 单人挑战</span></button>
       <button class="rBtn" id="homeDuo"><i>▶</i><span data-i18n="r2p">2P 双人对战</span></button>
       <button class="rBtn rBtnDaily" id="homeDaily"><i>★</i><span data-i18n="rDaily">今日打卡</span><small id="dailyInfo"></small></button>
-      <a class="rBtn rBtn3d" id="home3d" href="index-3d.html"><i>▶</i><span data-i18n="r3d">逆反 3D · 勇往直前</span></a>
+      <a class="rBtn rBtn3d" id="home3d" href="3d/index-3d.v2.html"><i>▶</i><span data-i18n="r3d">逆反 3D · 勇往直前</span></a>
       <button class="rBtn" id="toSettingsHome"><i>▶</i><span data-i18n="rSettings">设 置</span></button>
     </div>
     <div class="rRow">
@@ -540,7 +562,7 @@
       <button class="homeMini" id="langBtn">中/EN</button>
       <button class="homeMini" id="themeBtn">☀️</button>
     </div>
-    <a class="rGit" href="https://github.com/gcy529/turbo-game" target="_blank">github.com/gcy529/turbo-game</a>
+    <a class="brandLock" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener" title="deepseek v4.1-flash -1017 &amp; gcy529"><span>deepseek v4.1-flash -1017</span><span class="amp">&amp;</span><span class="by">gcy529</span></a>
   </div>
   <div id="peelCorner" title="切换画质"><div class="fold"></div><div class="lbl" id="peelLbl">像素</div></div>
 </div>
@@ -708,8 +730,14 @@
   var W = 0, H = 0, DPR = 1;
 
   function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    if (CFG.pixelArt) DPR = Math.max(0.32, DPR / 3.2);   // 像素风：低分辨率渲染
+    var nativeDPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = nativeDPR;
+    if (CFG.pixelArt) {
+      // 像素风：按设备像素比降采样。手机保持原比例（省电），
+      // 桌面给一个 0.75 的下限 —— 原来 1080p 屏只剩 0.32 倍（400×250），糊到看不清车道。
+      var small = window.innerWidth < 900;
+      DPR = small ? Math.max(0.32, nativeDPR / 3.2) : Math.max(0.75, nativeDPR / 3.2);
+    }
     W = canvas.clientWidth || window.innerWidth;
     H = canvas.clientHeight || window.innerHeight;
     canvas.width = Math.round(W * DPR);
@@ -4110,6 +4138,7 @@
   var elMsg = document.getElementById('msg');
   var elSpd1 = document.getElementById('spd1'), elSpd2 = document.getElementById('spd2');
   var elLap1 = document.getElementById('lap1'), elLap2 = document.getElementById('lap2');
+  var elLapTotal1 = document.getElementById('lapTotal1'), elLapTotal2 = document.getElementById('lapTotal2');
   var elT1 = document.getElementById('t1'), elT2 = document.getElementById('t2');
 
   function setMsg(text, dur) {
@@ -4123,6 +4152,9 @@
     elSpd2.textContent = String(Math.round((P2.speed / MAX_SPEED) * 320));
     elLap1.textContent = String(Math.min(P1.lap, TOTAL_LAPS));
     elLap2.textContent = String(Math.min(P2.lap, TOTAL_LAPS));
+    // 总圈数跟随设置（原来 HTML 里写死 /3，选 1/2 圈也显示 1/3）
+    if (elLapTotal1) elLapTotal1.textContent = String(TOTAL_LAPS);
+    if (elLapTotal2) elLapTotal2.textContent = String(TOTAL_LAPS);
     var now = performance.now();
     elT1.textContent = fmt(Math.max(0, (now - P1.lapStart) / 1000));
     var scEl = document.getElementById('score1');
@@ -4409,6 +4441,8 @@
     var ov = document.getElementById('overlay');
     if (ov) ov.classList.add('hide');
     if (hb) hb.classList.remove('hide');
+    // 首页有自己的「设置」入口；右上角齿轮被首页盖住（看得见点不到），直接收起
+    if (elSetBtn) elSetBtn.style.display = 'none';
     updateHomeBest();
     updateDailyInfo();
   }
@@ -4669,6 +4703,12 @@
   function getRecentNames() {
     try { var a = JSON.parse(loadSave('turbo-racer-names')); return Array.isArray(a) ? a.slice(0, 3) : []; } catch (e) { return []; }
   }
+  // 名字会拼进 innerHTML / 属性里，统一转义（防自己把自己页面搞崩）
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
   /* ================= 邀请码（自定义局）================= */
   var INV_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';   // 54 字符（去掉 I L O 0 1）
@@ -4777,6 +4817,9 @@
     selectedLaps = 1; TOTAL_LAPS = 1;
     applyModeUi();
     renderModeList();
+    // 原来没关首页：点「今日打卡」比赛在首页背后开跑，玩家只看到菜单
+    var hb = document.getElementById('home');
+    if (hb) hb.classList.add('hide');
     startRace();
   }
 
@@ -4793,6 +4836,7 @@
     var ov = document.getElementById('overlay');
     if (hb) hb.classList.add('hide');
     if (ov) ov.classList.remove('hide');
+    if (elSetBtn) elSetBtn.style.display = 'flex';   // 回到选车/比赛中，齿轮才出现
     gotoStep(0);
     renderCarList(); renderMapList(); renderLapList(); renderWeatherList(); renderModeList();
     updateSummary();
@@ -5335,30 +5379,68 @@
   var skillFlashColor = '#ffffff';
   var skillFlashAlpha = 0;
 
-  function updateSkillUI() {
-    if (!P1) return;
-    var elPts = document.getElementById('skillPoints');
+  // ── 技能面板：按钮只建一次 + 事件委托 + 增量更新 ──
+  // 旧实现每帧 innerHTML 重建（60 次/秒），且用内联 onclick 调用 IIFE 内的
+  // activateSkill —— 点击必然抛 "activateSkill is not defined"，技能全废。
+  var skillBtnsReady = false;
+  var skillBtnCache = [];
+  var skillSig = '';
+  function buildSkillButtons() {
+    if (skillBtnsReady) return;
     var elBtns = document.getElementById('skillBtns');
-    if (!elPts || !elBtns) return;
-    elPts.textContent = '⭐ ' + P1.skillPoints;
-    // 构建技能按钮
+    if (!elBtns) return;
     var html = '';
     for (var key in SKILL_DEFS) {
       var def = SKILL_DEFS[key];
-      var canUse = P1.skillPoints >= def.cost;
-      var isActive = P1.activeSkill === key;
-      var opacity = canUse ? '1' : '0.35';
-      var border = isActive ? '2px solid ' + def.color : '1px solid rgba(255,255,255,.15)';
-      html += '<button onclick="activateSkill(\'' + key + '\')" style="opacity:' + opacity + ';background:rgba(0,0,0,.4);border:' + border + ';border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;font-weight:900;cursor:' + (canUse ? 'pointer' : 'not-allowed') + ';text-shadow:0 0 8px ' + def.color + ';transition:all .15s">'
-        + def.icon + ' ' + def.name + ' <span style="font-size:10px;opacity:.7">' + def.cost + '点</span>'
-        + (isActive ? ' <span style="color:' + def.color + '">' + Math.ceil(P1.skillTimer) + 's</span>' : '')
-        + '</button>';
+      html += '<button type="button" class="skbtn" data-skill="' + key + '" style="text-shadow:0 0 8px ' + def.color + '">'
+        + '<span class="ski">' + def.icon + '</span><span class="skn">' + def.name + '</span>'
+        + '<span class="skc">' + def.cost + '点</span><span class="skt"></span></button>';
     }
     elBtns.innerHTML = html;
-    // 显示/隐藏技能面板
+    // 事件委托：整块只挂一个 click，之后不管怎么重建都不会丢
+    elBtns.addEventListener('click', function (ev) {
+      var node = ev.target;
+      while (node && node !== elBtns) {
+        if (node.getAttribute && node.getAttribute('data-skill')) {
+          activateSkill(node.getAttribute('data-skill'));
+          return;
+        }
+        node = node.parentNode;
+      }
+    });
+    var bs = elBtns.querySelectorAll('.skbtn');
+    for (var i = 0; i < bs.length; i++) {
+      skillBtnCache.push({ el: bs[i], timer: bs[i].querySelector('.skt') });
+    }
+    skillBtnsReady = true;
+  }
+
+  function updateSkillUI() {
+    if (!P1) return;
+    var elPts = document.getElementById('skillPoints');
     var elSkills = document.getElementById('skills');
+    if (!elPts) return;
+    buildSkillButtons();
+    var visible = (P1.skillPoints > 0 || !!P1.activeSkill);
     if (elSkills) {
-      elSkills.style.opacity = (P1.skillPoints > 0 || P1.activeSkill) ? '1' : '0';
+      elSkills.style.opacity = visible ? '1' : '0';
+      elSkills.style.pointerEvents = visible ? 'auto' : 'none';   // 隐藏时别误触
+    }
+    var sig = P1.skillPoints + '|' + (P1.activeSkill || '') + '|' + Math.ceil(P1.skillTimer || 0);
+    if (sig === skillSig) return;   // 值没变就完全不碰 DOM
+    skillSig = sig;
+    elPts.textContent = '⭐ ' + P1.skillPoints;
+    for (var i = 0; i < skillBtnCache.length; i++) {
+      var it = skillBtnCache[i];
+      var skey = it.el.getAttribute('data-skill');
+      var def = SKILL_DEFS[skey];
+      var canUse = P1.skillPoints >= def.cost;
+      var isActive = P1.activeSkill === skey;
+      it.el.style.opacity = canUse ? '1' : '0.35';
+      it.el.style.cursor = canUse ? 'pointer' : 'not-allowed';
+      it.el.style.border = isActive ? '2px solid ' + def.color : '1px solid rgba(255,255,255,.15)';
+      it.timer.textContent = isActive ? (Math.ceil(P1.skillTimer) + 's') : '';
+      it.timer.style.color = def.color;
     }
   }
 
@@ -5858,7 +5940,9 @@
       if (resultSubmitted) { updateLastNameOnly(); return; }
       resultSubmitted = true;
       var ni = document.getElementById('nameInput');
-      var nm = saveName(ni ? ni.value : getLastName()) || '玩家';
+      var rawName = ni ? ni.value : getLastName();
+      // 空名字不再覆盖已存的名字（原来 saveName('') 会把存档清空）
+      var nm = (rawName && rawName.trim()) ? (saveName(rawName) || '玩家') : (getLastName() || '玩家');
       var entry = {
         map: selectedMap,
         mapName: selectedMap === 'custom' ? (TRACK_NAME || '自定义') : ((MAP_LIST.find(function(m){return m.id===selectedMap;}) || {}).name || selectedMap),
@@ -5883,6 +5967,8 @@
     // ── 成就判定（先累加本局到累计，再判定）──
     var cumNow = accumCum(P1);
     var freshAch = checkAchievements(P1, cumNow);
+    // 完赛即上榜：不再等玩家填名字或点分享（原来直接关页面，这局就白跑了）
+    ensureSubmit();
     // 已提交后改名：只更新本次记录的名字（不再插新记录）
     function updateLastNameOnly() {
       try {
@@ -5915,7 +6001,7 @@
         var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '  ';
         var nm = e.name || '无名';
         return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">' +
-          '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + medal + ' ' + nm + '</span>' +
+          '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + medal + ' ' + escHtml(nm) + '</span>' +
           '<span style="white-space:nowrap"><b style="color:#8ef7c8">' + formatTime(e.time) + '</b> <span style="color:#ffd166;font-size:11px">' + (e.score || 0) + '分</span></span></div>';
       }).join('') || '<div style="color:#6f8db0">暂无记录</div>';
       box.innerHTML = html;
@@ -5955,9 +6041,9 @@
         '</div>' +
         '<div style="margin:12px 0;padding:11px 15px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.22);max-width:300px;text-align:left">' +
         '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#8ef7c8;margin-bottom:8px">✍ 你的大名（上榜用）</div>' +
-        '<input id="nameInput" maxlength="16" placeholder="留空 = 玩家" value="" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(0,0,0,.3);color:#eaf2ff;font-size:14px;font-weight:800;text-align:center;outline:none;font-family:inherit">' +
+        '<input id="nameInput" maxlength="16" placeholder="留空 = 玩家" value="' + escHtml(getLastName()) + '" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(0,0,0,.3);color:#eaf2ff;font-size:14px;font-weight:800;text-align:center;outline:none;font-family:inherit">' +
         '<div style="text-align:center;font-size:9.5px;color:#6f8db0;margin-top:5px;letter-spacing:.5px">最长 8 个汉字 · 16 个字符</div>' +
-        (chips0.length ? '<div class="chipRow" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + chips0.map(function (n) { return '<button class="chipBtn" data-n="' + n + '">' + n + '</button>'; }).join('') + '</div>' : '') +
+        (chips0.length ? '<div class="chipRow" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + chips0.map(function (n) { return '<button class="chipBtn" data-n="' + escHtml(n) + '">' + escHtml(n) + '</button>'; }).join('') + '</div>' : '') +
         '</div>' +
         '<div style="margin:14px 0;padding:11px 15px;border-radius:11px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.28);text-align:left;max-width:300px">' +
         '<div style="font-size:11px;font-weight:850;letter-spacing:2px;color:#ffd166;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center">' +
@@ -5973,7 +6059,8 @@
         '</div>';
       overlay.classList.remove('hide');
       var ab = document.getElementById('againBtn');
-      if (ab) ab.addEventListener('click', function () { ensureSubmit(); location.reload(); });
+      // 原地重开：不再 location.reload()（整页重载要重新拉资源，离线/弱网下很慢）
+      if (ab) ab.addEventListener('click', function () { ensureSubmit(); againRace(); });
       var shb = document.getElementById('shareBtn');
       if (shb) shb.addEventListener('click', function () { ensureSubmit(); shareScore(P1.finishTime); });
       // 名字：回车/失焦即提交上榜（程序化 blur 不触发事件，用 change + 显式调用）
@@ -6021,7 +6108,7 @@
       '<button class="go" id="againBtn">再来一局</button>';
     overlay.classList.remove('hide');
     var ab = document.getElementById('againBtn');
-    if (ab) ab.addEventListener('click', function () { location.reload(); });
+    if (ab) ab.addEventListener('click', againRace);
   }
 
   function keymap() {
@@ -6152,6 +6239,12 @@
     flashTip('重新开始');
   }
 
+  // 结算页「再来一局」：同一套车/图/圈数原地重开
+  function againRace() {
+    closeSettings();
+    startRace();      // 内部会重建赛道、重置玩家、重新倒计时并隐藏结算层
+  }
+
   function totalDistanceInit() {
     // 占位：createPlayer 已重置 totalDistance
   }
@@ -6163,6 +6256,9 @@
     initDriftNoise();
     startBgm();
     TOTAL_LAPS = selectedLaps;
+    // 倒计时期间 update() 提前 return，HUD 不会刷新 → 这里先把总圈数写对
+    if (elLapTotal1) elLapTotal1.textContent = String(TOTAL_LAPS);
+    if (elLapTotal2) elLapTotal2.textContent = String(TOTAL_LAPS);
     applyCar(selectedCar);
     CUSTOM_ACTIVE = selectedMap === 'custom';
     if (CUSTOM_ACTIVE) {
@@ -6187,6 +6283,7 @@
     finishedCount = 0;
     var rbtn = document.getElementById('restartBtn');
     if (rbtn) { rbtn.classList.add('show'); rbtn.style.display = 'flex'; }
+    if (elSetBtn) elSetBtn.style.display = 'flex';   // 直接开跑（今日打卡/邀请码）时也要能开设置
     updateAutoUI();
     if (elTrackLabel) {
       var tname = selectedMap === 'custom' ? (TRACK_NAME || '我的赛道') :

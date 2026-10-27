@@ -106,12 +106,16 @@
 ```
 turbo-game/
 ├── index.html       2D 主游戏（单文件，~200KB）
-├── index-3d.html    逆反 3D（Three.js）
+├── index-3d.html    3D 入口（自动跳到 3d/index-3d.v2.html）
+├── 3d/
+│   ├── index-3d.v2.html  逆反 3D 主页面（模块化）
+│   ├── js/               config/scene/track/car/fx/input/skills/hud/main
+│   └── vendor/           three.js r160 本地化（three.module.js + 2 个 addons）
 ├── solo.html        单人版
 ├── home.html        平台入口选择页
-├── three.min.js     Three.js r128（本地化，离线可用）
+├── three.min.js     旧版 Three.js r128（已无页面引用，保留仅作备份）
 ├── manifest.json    PWA 配置
-├── sw.js            Service Worker（离线缓存）
+├── sw.js            Service Worker（离线缓存，含 3D 资源）
 ├── icon-192.png     PWA 图标
 ├── icon-512.png     PWA 图标
 ├── netlify.toml     Netlify 配置
@@ -186,6 +190,6 @@ netlify deploy --prod --dir=.
 
 ---
 
-Made with ❤️ and many late nights · by gcy529
+Made with ❤️ and many late nights · **deepseek v4.1-flash -1017 & gcy529**
 
 <!-- build-tick: 1792424452269 -->
