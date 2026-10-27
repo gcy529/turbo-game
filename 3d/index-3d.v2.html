@@ -46,6 +46,7 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 #invBadge.off{background:rgba(255,255,255,.06);border-color:rgba(140,200,255,.28);color:#8ba3bd;animation:none}
 @keyframes invPulse{0%,100%{opacity:1}50%{opacity:.6}}
 #fpsBox{position:fixed;right:12px;bottom:12px;z-index:13;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums}
+#keyHints b{color:#fff;font-weight:800}
 /* 车库：3D 入口免费，车漆用金币解锁（与 2D 共用存档） */
 #garage3d{margin:0 0 14px;width:100%;max-width:300px}
 #garage3d .gHead{font-size:10px;letter-spacing:1.5px;color:#7f9ab6;margin-bottom:8px;font-family:'Courier New',monospace}
@@ -161,10 +162,10 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
   </div>
 </div>
 <div id="msg"></div>
-<div id="keyHints" style="position:fixed;left:50%;top:12%;transform:translateX(-50%);z-index:11;display:none;grid-template-columns:auto auto;gap:6px 16px;font-size:11.5px;color:#a9c6e2;text-align:left;background:rgba(6,12,22,.72);border:1px solid rgba(140,200,255,.25);border-radius:12px;padding:10px 14px;backdrop-filter:blur(6px);pointer-events:none">
-  <span style="font-weight:800;color:#fff">A</span>/<span style="font-weight:800;color:#fff">←</span> 左 &nbsp;&nbsp; <span style="font-weight:800;color:#fff">D</span>/<span style="font-weight:800;color:#fff">→</span> 右<br>
-  <span style="font-weight:800;color:#fff">T</span> 智驾 &nbsp;&nbsp; <span style="font-weight:800;color:#fff">Shift</span> 氮气 &nbsp;&nbsp; <span style="font-weight:800;color:#fff">C</span> 切视角<br>
-  <span style="font-weight:800;color:#fff">R</span> 重开 &nbsp;&nbsp; <span style="font-weight:800;color:#fff">Esc</span> 暂停 &nbsp;&nbsp; 油门自动
+<div id="keyHints" style="position:fixed;left:50%;top:11%;transform:translateX(-50%);z-index:11;display:none;flex-direction:column;gap:3px;font-size:11px;color:#a9c6e2;text-align:left;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.25);border-radius:11px;padding:8px 13px;backdrop-filter:blur(6px);pointer-events:none;white-space:nowrap;line-height:1.55">
+  <span><b>A</b>/<b>←</b> 左 · <b>D</b>/<b>→</b> 右</span>
+  <span><b>T</b> 智驾 · <b>Shift</b> 氮气 · <b>C</b> 视角</span>
+  <span><b>R</b> 重开 · <b>Esc</b> 暂停 · 油门自动</span>
 </div>
 <div id="fpsBox">-- FPS</div>
 <a id="brandMark" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener">deepseek v4.1-flash -1017 <span style="color:rgba(142,247,200,.55)">&amp;</span> gcy529</a>
