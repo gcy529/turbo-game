@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// fx.js · 粒子系统与技能道具（全部程序化生成）
+// fx.js · 粒子系统与赛道金币（全部程序化生成）
 // ─────────────────────────────────────────────────────────────
 import * as THREE from 'three';
 import { FX } from './config.js';
@@ -11,8 +11,23 @@ export function createParticles(scene) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  // 圆形软边贴图：默认的方形点在高分辨率下就是一堆白方块
+  const sprite = (() => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grd.addColorStop(0, 'rgba(255,255,255,1)');
+    grd.addColorStop(0.42, 'rgba(255,255,255,.62)');
+    grd.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grd;
+    g.fillRect(0, 0, 64, 64);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  })();
   const mat = new THREE.PointsMaterial({
-    size: 0.34, vertexColors: true, transparent: true, opacity: 0.95,
+    size: 0.46, map: sprite, alphaTest: 0.02, vertexColors: true, transparent: true, opacity: 0.95,
     blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
   });
   const points = new THREE.Points(geo, mat);
@@ -59,83 +74,71 @@ export function createParticles(scene) {
   return { spawn, burst, update, reset, points };
 }
 
-export function createSkillItems(scene, track) {
+export function createCoins(scene, track) {
+  // 赛道上撒金币：每圈一批，跑完一圈重新刷，两圈都能捡
+  // 视觉：金色圆盘（薄圆柱）+ 加色光晕，自转 + 上下浮动
   const items = [];
-  const geo = new THREE.OctahedronGeometry(0.5, 0);
-  const ringGeo = new THREE.TorusGeometry(0.75, 0.03, 6, 24);
+  const geo = new THREE.CylinderGeometry(0.62, 0.62, 0.14, 20);
+  geo.rotateX(Math.PI / 2);                 // 立起来当硬币
+  const haloGeo = new THREE.TorusGeometry(0.86, 0.045, 6, 24);
+  const gold = FX.coinColors[0];
 
-  for (let i = 0; i < FX.skillItems; i++) {
-    const t = 0.05 + Math.random() * 0.9;
-    const lateral = (Math.random() - 0.5) * 1.2;
-    const type = FX.skillTypes[Math.floor(Math.random() * FX.skillTypes.length)];
-    const color = FX.skillColors[type];
-    const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.9, roughness: 0.2, metalness: 0.7 });
+  function buildOne(i, n) {
+    const t = (i + 0.5) / n;
+    const lateral = (Math.random() - 0.5) * 1.15;
+    const mat = new THREE.MeshStandardMaterial({
+      color: gold, emissive: 0xffb300, emissiveIntensity: 0.85,
+      metalness: 0.9, roughness: 0.22,
+    });
     const mesh = new THREE.Mesh(geo, mat);
     const api = track.posAt(t, lateral);
     mesh.position.copy(api.pos);
-    mesh.position.y = api.pos.y + 1.25;
-    mesh.castShadow = true;
-    const halo = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55 }));
-    halo.rotation.x = Math.PI / 2;
+    mesh.position.y = api.pos.y + 1.05;
+    const halo = new THREE.Mesh(haloGeo, new THREE.MeshBasicMaterial({
+      color: 0xffd54f, transparent: true, opacity: 0.5,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
     mesh.add(halo);
+    mesh.castShadow = true;
     scene.add(mesh);
-    items.push({ mesh, t, lateral, type, collected: false, baseY: mesh.position.y, seed: Math.random() * 6 });
+    return { mesh, halo, t, lateral, collected: false, baseY: mesh.position.y, seed: Math.random() * 6 };
   }
 
-  function update(dt, clock, playerPos, magnetRange) {
+  function spawnAll() {
+    const n = FX.coinCount;
+    for (let i = 0; i < n; i++) items.push(buildOne(i, n));
+  }
+  spawnAll();
+
+  function update(dt, clock) {
     for (const it of items) {
       if (it.collected) continue;
-      it.mesh.rotation.y += dt * 1.6;
-      it.mesh.rotation.x += dt * 0.7;
-      it.mesh.position.y = it.baseY + Math.sin(clock * 2 + it.seed) * 0.18;
-      if (magnetRange > 0) {
-        const dx = playerPos.x - it.mesh.position.x, dz = playerPos.z - it.mesh.position.z;
-        const d = Math.hypot(dx, dz);
-        if (d < magnetRange && d > 0.001) {
-          it.mesh.position.x += (dx / d) * 5 * dt;
-          it.mesh.position.z += (dz / d) * 5 * dt;
-        }
-      }
+      it.mesh.rotation.y += dt * 2.2;
+      it.mesh.position.y = it.baseY + Math.sin(clock * 2.4 + it.seed) * 0.16;
+      it.halo.scale.setScalar(1 + Math.sin(clock * 3 + it.seed) * 0.08);
     }
   }
 
-  /** 返回本帧吃到的道具（类型）*/
+  /** 返回本帧吃到的金币（含世界坐标，用于爆特效）*/
   function collect(playerPos) {
     const got = [];
     for (const it of items) {
       if (it.collected) continue;
       const dx = playerPos.x - it.mesh.position.x, dz = playerPos.z - it.mesh.position.z;
-      if (Math.hypot(dx, dz) < 2.5) {
+      if (Math.hypot(dx, dz) < FX.coinRadius) {
         it.collected = true;
         it.mesh.visible = false;
-        got.push({ type: it.type, position: it.mesh.position.clone() });
+        got.push({ position: it.mesh.position.clone() });
       }
     }
     return got;
   }
 
-  function reset() {
+  /** 一圈跑完：金币重新铺出来 */
+  function reshuffle() {
     for (const it of items) { it.collected = false; it.mesh.visible = true; }
   }
-  return { items, update, collect, reset };
-}
+  function reset() { reshuffle(); }
 
-export function createShield(scene) {
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(2.6, 18, 14),
-    new THREE.MeshBasicMaterial({ color: 0x4fc3f7, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
-  );
-  mesh.visible = false;
-  scene.add(mesh);
-  return {
-    mesh,
-    update(dt, clock, active, pos) {
-      mesh.visible = active;
-      if (!active) return;
-      mesh.position.copy(pos);
-      mesh.position.y += 1.3;
-      mesh.material.opacity = 0.14 + Math.sin(clock * 6) * 0.05;
-      mesh.rotation.y += dt * 0.6;
-    },
-  };
+  return { items, update, collect, reset, reshuffle };
 }

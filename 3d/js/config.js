@@ -30,7 +30,7 @@ export const CAR = {
   steerSpeedGain: 0.35,
   driftSpeedGain: 0.42,
   lateralLimit: 1.0,
-  lateralHardLimit: 1.7,
+  lateralHardLimit: 1.12,
   wallSlow: 0.55,
   maxRoll: 0.12,      // 侧倾上限（弧度）——超过这个值观感就假了
   rollLerp: 8,
@@ -42,34 +42,41 @@ export const CAR = {
 export const RACE = {
   laps: 2,
   countdown: 3.2,
-  hitDistance: 0.006, // NPC 碰撞的 t 距离阈值
-  hitLateral: 0.62,
-  hitCooldown: 0.8,
-  hitSlow: 40,
+  // 碰撞改成「车体椭圆」实测（原来用 t/lateral 参数近似，弯道刻度失真 → 隔空撞 / 贴脸不撞）
+  hitAlong: 4.3,      // 沿赛道切线的半长之和（两车长加起来约 4.6）
+  hitSide: 1.85,      // 垂直赛道的半宽之和（两车宽加起来约 1.9）
+  hitCooldown: 1.1,   // 撞一次后的无敌时间，避免连环判定把速度打没
+  hitSlow: 0.55,      // 按相对速度比例削速
   openAt: [2026, 10, 11], // 定时开放：2026-11-11（月份从 0 计）
 };
 
 export const NPC = {
-  count: 18,
+  count: 14,
   colors: [0xff0066, 0x9944ff, 0xffaa00, 0x00ff88, 0xff3366, 0x44aaff],
   speedMin: 22,
   speedRange: 26,
-  oncomingEvery: 3,
+  oncomingEvery: 5,
   oncomingMin: 26,
   oncomingRange: 22,
 };
 
 export const FX = {
   maxParticles: 300,
-  skillItems: 12,
-  skillTypes: ['shield', 'magnet', 'slow', 'megaboost'],
-  skillColors: { shield: 0x4fc3f7, magnet: 0xef5350, slow: 0xab47bc, megaboost: 0xff9800 },
-  skillDefs: {
-    shield:    { name: '护盾', icon: '🛡️', cost: 50, duration: 5, color: 0x4fc3f7 },
-    magnet:    { name: '磁力', icon: '🧲', cost: 40, duration: 6, color: 0xef5350 },
-    slow:      { name: '缓时',   icon: '⏳', cost: 60, duration: 4, color: 0xab47bc },
-    megaboost: { name: '氮气',   icon: '🔥', cost: 80, duration: 3, color: 0xff9800 },
-  },
+  // ── 赛道金币（技能系统已下线，改为拾取金币解锁）──
+  coinCount: 24,        // 每圈撒多少枚
+  coinValue: 3,         // 每枚值多少币
+  coinColors: [0xffc93c, 0xffe082, 0xffab00],
+  coinRadius: 3.0,      // 拾取半径（米）
+};
+
+// ── 氮气：漂移集气 → 点按释放（与 2D 版同一套手感）──
+export const NITRO = {
+  segs: 3,              // 最多 3 格
+  time: 2.0,            // 每格喷 2 秒
+  boost: 1.35,          // 喷射时极速倍率
+  gainDrift: 0.55,      // 漂移每秒集气（格）
+  gainCoin: 0.12,       // 吃一枚金币顺带集气
+  tapMs: 260,           // 按下多久内抬起算「点一下」
 };
 
 export const THEME = {

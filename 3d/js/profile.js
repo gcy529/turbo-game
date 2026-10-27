@@ -45,6 +45,22 @@ export function buyLivery(profile, livery) {
   return 'ok';
 }
 
+// 加币（拾取金币 / 完赛奖励都走这里，立即落盘）
+export function addCoins(profile, n) {
+  if (!profile) return 0;
+  profile.coins = Math.max(0, Math.round((profile.coins || 0) + n));
+  writeProfile(profile);
+  return profile.coins;
+}
+
+// 累计里程 / 场次（结算时更新，和 2D 的字段保持一致）
+export function bumpStats(profile, races, dist) {
+  if (!profile) return;
+  profile.races = (profile.races || 0) + (races || 0);
+  profile.dist = (profile.dist || 0) + (dist || 0);
+  writeProfile(profile);
+}
+
 export function selectLivery(profile, livery) {
   if (!profile) return false;
   if (profile.liveries.indexOf(livery.id) < 0) return false;

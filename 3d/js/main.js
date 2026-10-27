@@ -2,29 +2,20 @@
 // main.js · 装配与主循环（状态机 / 圈数 / NPC / 碰撞 / 相机 / 测试接口）
 // ─────────────────────────────────────────────────────────────
 import * as THREE from 'three';
-import { CAR, RACE, NPC, CAMERA, FX } from './config.js';
+import { CAR, RACE, NPC, CAMERA, FX, NITRO } from './config.js';
 import { createStage } from './scene.js';
 import { buildTrack } from './track.js';
 import { buildCar, poseCar, headingOf, updateWheels, applyEnvIntensity, setBrake } from './car.js';
 import { createInput } from './input.js';
-import { createParticles, createSkillItems, createShield } from './fx.js';
-import { createSkills } from './skills.js';
+import { createParticles, createCoins } from './fx.js';
 import { createHud } from './hud.js';
-import { readProfile, buyLivery, selectLivery } from './profile.js';
+import { readProfile, buyLivery, selectLivery, addCoins, bumpStats } from './profile.js';
 
 const canvas = document.getElementById('game');
 const stage = createStage(canvas);
 const track = buildTrack(stage.scene);
 const hud = createHud();
 const particles = createParticles(stage.scene);
-const skillItems = createSkillItems(stage.scene, track);
-const shieldFx = createShield(stage.scene);
-const skills = createSkills((text, dur) => hud.setMsg(text, dur));
-// 技能按钮：真正绑事件（原来只有 HTML 内联 onclick，指向不存在的函数）
-hud.bindSkillButtons(skills, (type) => {
-  const def = FX.skillDefs[type];
-  if (def) particles.burst(playerCar.position, def.color, 25, 4);
-});
 // ── 车库：3D 入口免费，车漆用金币解锁（和 2D 共用同一份档案）──
 const profile = readProfile();
 const LIVERIES = [
@@ -36,6 +27,9 @@ function liveryById(id) { return LIVERIES.find(l => l.id === id) || LIVERIES[0];
 
 let playerCar = buildCar(liveryById(profile.livery).color, 'high');
 stage.scene.add(playerCar);
+
+// 赛道金币（技能系统已下线：不再有技能点/道具，改为直接捡钱）
+const coins = createCoins(stage.scene, track);
 
 function applyLivery() {
   const l = liveryById(profile.livery);
@@ -51,6 +45,7 @@ function renderGarage() {
   const row = document.getElementById('liveryRow3d');
   if (coinEl) coinEl.textContent = String(profile.coins);
   if (idEl) idEl.textContent = profile.id;
+  hud.setCoinBalance(profile.coins);
   if (!row) return;
   row.innerHTML = '';
   LIVERIES.forEach((l) => {
@@ -77,7 +72,13 @@ const npcs = [];
 const player = {
   t: 0, lateral: 0.15, speed: 0, lap: 1, totalLaps: RACE.laps, lastT: 0,
   finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0,
-  driftScore: 0, pushLateral: 0, skills: skills.s, recovered: 0,
+  driftScore: 0, pushLateral: 0, recovered: 0,
+  // ── 金币 / 氮气 ──
+  coinGot: 0,           // 本局拾取金币数
+  coinsEarned: 0,       // 本局进入结算的金币总额
+  charge: 0,            // 氮气：0..NITRO.segs 格
+  nitroTimer: 0,        // 喷射剩余时间
+  nitroFlash: 0,        // 释放闪光
 };
 let running = false, camMode = 0, clock = 0, countdown = 0, raceClock = 0, lapStartClock = 0, shake = 0, roll = 0;
 let paused = false;
@@ -109,10 +110,50 @@ const input = createInput({
   onCamera: () => { camMode = (camMode + 1) % CAMERA.modes.length; hud.setMsg(CAMERA.modes[camMode].name, 0.7); },
   onRestart: () => restart(),
   onStart: () => { if (!running) startRace(); },
+  onNitro: () => tryNitro(),
 });
+// 手机氮气大钮：单手拇指按一下就放
+{
+  const nb = document.getElementById('nitroBtn3d');
+  if (nb) {
+    const fire = (ev) => { ev.preventDefault(); tryNitro(); };
+    nb.addEventListener('pointerdown', fire, { passive: false });
+  }
+}
 hud.bindInvertButtons((v) => { input.setInvert(v); hud.syncInvert(input.state.invert, input.state.unlocked); });
 if (!input.state.unlocked) input.setInvert(true);
 hud.syncInvert(input.state.invert, input.state.unlocked);
+
+// ── 本局金币结算：赛道拾取 + 完赛奖励（节奏与 2D 对齐：一局 60~130）──
+function settleRace() {
+  if (!player || player._settled) return 0;
+  player._settled = true;
+  const lapBonus = player.totalLaps * 4;                                          // 2 圈 → 8
+  const driftBonus = Math.min(14, Math.floor((player.driftScore || 0) / 900));    // 最多 14
+  const cleanBonus = Math.max(0, 6 - Math.floor((player.smashCount || 0) / 6));   // 最多 6
+  const raceBonus = Math.max(20, Math.min(60, 16 + lapBonus + driftBonus + cleanBonus));
+  const total = player.coinsEarned + raceBonus;                                   // 拾取 + 奖励
+  addCoins(profile, raceBonus);
+  bumpStats(profile, 1, Math.round(track.trackLen * player.totalLaps));
+  player.coinsRaceBonus = raceBonus;
+  player.coinTotal = total;
+  player.coinBalance = profile.coins;
+  hud.setCoinBalance(profile.coins);
+  renderGarage();
+  return total;
+}
+
+// ── 氮气：点一下消耗 1 格，喷 2 秒 ──
+function tryNitro() {
+  if (!running || paused || countdown > 0 || player.finished) return false;
+  if (player.charge < 1) { hud.setMsg('氮气不足 · 漂移集气', 1.2); return false; }
+  player.charge -= 1;
+  player.nitroTimer = Math.min(NITRO.time * 2, player.nitroTimer + NITRO.time);
+  player.nitroFlash = 0.4;
+  shake = Math.max(shake, 0.32);
+  hud.setMsg('🔥 氮气释放', 0.9);
+  return true;
+}
 
 // ── 玩法更新 ──
 function update(dt) {
@@ -131,10 +172,21 @@ function update(dt) {
   if (input.keys.brake) player.speed -= CAR.brakeDecel * dt;
   else if (!input.keys.gas) player.speed -= CAR.coast * dt;
   player.speed = Math.max(CAR.minSpeed, Math.min(CAR.maxSpeed, player.speed));
-  player.speed = skills.boost(player.speed, CAR.maxSpeed, dt);
+  // ── 氮气喷射：额外推力 + 抬高极速上限 ──
+  if (player.nitroTimer > 0) {
+    player.nitroTimer = Math.max(0, player.nitroTimer - dt);
+    player.speed = Math.min(CAR.maxSpeed * NITRO.boost, player.speed + CAR.maxSpeed * 0.8 * dt);
+  }
+  if (player.nitroFlash > 0) player.nitroFlash = Math.max(0, player.nitroFlash - dt);
+  const speedCap = player.nitroTimer > 0 ? CAR.maxSpeed * NITRO.boost : CAR.maxSpeed;
+  player.speed = Math.min(speedCap, player.speed);
 
   const steer = input.steerAxis(dt);
   if (Math.abs(steer) > 0.5 && player.speed > CAR.maxSpeed * 0.5) player.driftScore += dt * 60;
+  // ── 集气：漂移是本作唯一的主动操作，气从这里来（和 2D 同一套）──
+  if (Math.abs(steer) > 0.5 && player.speed > CAR.maxSpeed * 0.45) {
+    player.charge = Math.min(NITRO.segs, player.charge + dt * NITRO.gainDrift);
+  }
   const rate = CAR.steerRate * (CAR.steerSpeedGain + Math.abs(player.speed) / CAR.maxSpeed);
   if (player.pushLateral) {
     player.lateral += player.pushLateral * dt * 6;
@@ -159,44 +211,80 @@ function update(dt) {
       player.finished = true;
       player.finishTime = raceClock;
       running = false;
+      hud.setRunning(false);
       input.unlock();
+      settleRace();
       hud.setMsg('完成！' + player.finishTime.toFixed(2) + 's', 4);
       setTimeout(() => { hud.syncInvert(input.state.invert, true); hud.countdownPanel(player); }, 700);
     } else {
+      coins.reshuffle();        // 新一圈，金币重新铺出来
       hud.setMsg('第 ' + (player.lap - 1) + ' 圈 ' + lapTime.toFixed(2) + 's', 1.6);
     }
   }
   player.lastT = tp;
 
   if (player.hitCooldown > 0) player.hitCooldown -= dt;
+  // ── 碰撞：把两车位移分解到「沿赛道」与「垂直赛道」两个轴，
+  //    按车体椭圆判定。原来是 t 距离 + lateral 参数阈值，
+  //    弯道里 t 的刻度会被拉长/压缩，导致隔空撞、贴脸不撞。
+  const pNow = track.posAt(player.t, player.lateral);
+  const pPos = pNow.pos, pTan = pNow.tan;
   for (const n of npcs) {
     n.t += (n.speed * dt) / track.trackLen;
     if (n.t > 1) n.t -= 1;
     if (n.t < 0) n.t += 1;
-    const dtl = Math.abs(((n.t - player.t + 0.5 + 1) % 1) - 0.5);
-    if (player.hitCooldown <= 0 && dtl < RACE.hitDistance && Math.abs(n.lateral - player.lateral) < RACE.hitLateral) {
-      player.speed = Math.max(0, player.speed - RACE.hitSlow);
+    if (player.hitCooldown > 0) continue;
+    const nPos = track.posAt(n.t, n.lateral).pos;
+    const dx = nPos.x - pPos.x, dz = nPos.z - pPos.z;
+    const along = Math.abs(dx * pTan.x + dz * pTan.z);       // 前后
+    const side = Math.abs(-dx * pTan.z + dz * pTan.x);       // 左右
+    if (along < RACE.hitAlong && side < RACE.hitSide) {
+      // 迎面撞按相对速度削，追尾按速度差削；低速贴着走不会掉速
+      const rel = Math.abs(player.speed - n.speed);
+      const loss = Math.min(player.speed, rel * RACE.hitSlow + 6);
+      player.speed = Math.max(0, player.speed - loss);
       const dir = n.lateral > player.lateral ? -1 : 1;
-      n.lateral += dir * 0.25;
-      player.pushLateral = dir * 0.35;
+      n.lateral = Math.max(-1.15, Math.min(1.15, n.lateral + dir * 0.32));
+      player.pushLateral = dir * 0.42;
       player.smashCount++;
       player.hitCooldown = RACE.hitCooldown;
-      hud.setMsg('碰撞！', 0.8);
-      shake = Math.max(shake, 0.25);
+      hud.setMsg(rel > 40 ? '迎面撞！' : '碰撞！', 0.8);
+      shake = Math.max(shake, rel > 40 ? 0.5 : 0.26);
     }
   }
 
   setBrake(playerCar, input.keys.brake || player.speed < 0);
 
-  const got = skillItems.collect(playerCar.position);
+  // ── 拾取金币：直接进钱包（与 2D 共用同一份档案）──
+  const got = coins.collect(playerCar.position);
   for (const g of got) {
-    skills.add(10);
-    hud.setMsg('⭐ +10 技能点', 1);
-    particles.burst(g.position, FX.skillColors[g.type], 15, 5);
+    player.coinGot += 1;
+    player.coinsEarned += FX.coinValue;
+    addCoins(profile, FX.coinValue);
+    hud.setCoinBalance(profile.coins);
+    particles.burst(g.position, FX.coinColors[0], 16, 3.4);
+    player.charge = Math.min(NITRO.segs, player.charge + NITRO.gainCoin);
   }
-  skillItems.update(dt, clock, playerCar.position, skills.s.magnetRange);
-  skills.update(dt);
-  shieldFx.update(dt, clock, skills.s.shield, playerCar.position);
+  // 连吃一串金币时不要每枚都闪提示，0.7 秒内只闪一次
+  if (got.length) {
+    const now = clock;
+    if (!player._lastCoinMsg || now - player._lastCoinMsg > 0.7) {
+      player._lastCoinMsg = now;
+      hud.setMsg('+' + (got.length * FX.coinValue) + ' 币', 0.7);
+    }
+  }
+  coins.update(dt, clock);
+  if (player.nitroTimer > 0 && Math.random() < 0.9) {
+    // 喷射：车尾蓝色尾迹
+    for (let k = 0; k < 2; k++) {
+      particles.spawn(
+        playerCar.position.x + (Math.random() - 0.5) * 0.9,
+        playerCar.position.y + 0.35 + Math.random() * 0.3,
+        playerCar.position.z - 1.8,
+        (Math.random() - 0.5) * 2.2, 0.6 + Math.random() * 1.6, -6 - Math.random() * 5,
+        0.35, 0.78, 1.0, 0.34, 0.45);
+    }
+  }
   if (player.driftScore > 10 && Math.random() < 0.3) {
     particles.spawn(playerCar.position.x + (Math.random() - 0.5) * 1.5, playerCar.position.y + 0.3,
       playerCar.position.z - 1.4, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2,
@@ -260,10 +348,12 @@ function poseAndRender(dt, doRender) {
 }
 
 function startRace() {
-  Object.assign(player, { t: 0, lateral: 0.15, speed: 0, lap: 1, lastT: 0, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0 });
-  skills.reset();
-  skillItems.reset();
+  Object.assign(player, { t: 0, lateral: 0.15, speed: 0, lap: 1, lastT: 0, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0, coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins });
+  player._settled = false;
+  coins.reset();
   particles.reset();
+  hud.setRunning(true);
+  hud.setCoinBalance(profile.coins);
   roll = 0;
   running = true;
   paused = false;
@@ -278,6 +368,7 @@ function startRace() {
 function restart() {
   running = false;
   paused = false;
+  hud.setRunning(false);
   player.speed = 0;
   const pp = document.getElementById('pausePanel');
   if (pp) pp.classList.remove('show');
@@ -296,6 +387,7 @@ function setPaused(v) {
 function quitToMenu() {
   running = false;
   paused = false;
+  hud.setRunning(false);
   player.speed = 0;
   const pp = document.getElementById('pausePanel');
   if (pp) pp.classList.remove('show');
@@ -351,7 +443,10 @@ function pauseLoop() {
 window.__THREE_REVISION = THREE.REVISION;
 window.__TURBO = {
   ready: true,
-  stage, track, player, playerCar, npcs, skills, input, hud, particles,
+  stage, track, player, playerCar, npcs, coins, input, hud, particles, profile,
+  addCoins(n) { const v = addCoins(profile, n); hud.setCoinBalance(profile.coins); renderGarage(); return v; },
+  nitroFull() { player.charge = NITRO.segs; return player.charge; },
+  nitro() { player.charge = NITRO.segs; return tryNitro(); },
   start(opts) {
     startRace();
     if (opts && opts.skipCountdown) countdown = 0;
@@ -374,6 +469,9 @@ window.__TURBO = {
       t: +player.t.toFixed(4), lateral: +player.lateral.toFixed(3), speed: +player.speed.toFixed(2),
       lap: player.lap, running, countdown: +Math.max(0, countdown).toFixed(2),
       recoveries: player.recovered, roll: +roll.toFixed(4),
+      coinGot: player.coinGot, coinsEarned: player.coinsEarned,
+      charge: +player.charge.toFixed(2), nitroTimer: +player.nitroTimer.toFixed(2),
+      coinsBalance: profile.coins,
       drawCalls: stage.renderer.info.render.calls, triangles: stage.renderer.info.render.triangles,
     };
   },

@@ -232,6 +232,13 @@
   .tb:active{background:rgba(140,200,255,.38)}
   .tb-gas{background:rgba(60,220,160,.25);border-color:rgba(80,230,170,.7);color:#c8ffe8}
   .tb-gas:active{background:rgba(60,220,160,.5)}
+  /* 中间键 = 氮气（2D 是自动油门，这个键本来就不控油门） */
+  .tb-n2{flex-direction:column;gap:1px;background:rgba(6,12,22,.62);border-color:rgba(140,200,255,.32);color:#8fb6d4;font-family:'Courier New',monospace;transition:background .18s,border-color .18s,color .18s,box-shadow .18s}
+  .tb-n2 b{font-size:21px;font-weight:900;line-height:1}
+  .tb-n2 i{font-style:normal;font-size:8.5px;font-weight:800;letter-spacing:.5px;opacity:.82;font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif}
+  .tb-n2.ready{background:linear-gradient(160deg,#8ef7c8,#38d99a);border-color:rgba(180,255,230,.9);color:#04231a;box-shadow:0 0 22px rgba(90,240,200,.7),0 6px 22px rgba(0,0,0,.45)}
+  .tb-n2.fire{background:linear-gradient(160deg,#ffd166,#ff8a3c);border-color:rgba(255,190,80,.9);color:#2a1200;box-shadow:0 0 26px rgba(255,150,60,.85),0 6px 22px rgba(0,0,0,.45)}
+  .tb-n2:active{transform:scale(.95)}
   .tb-brake{background:rgba(255,90,110,.22);border-color:rgba(255,110,130,.6);color:#ffc8d0}
   .tb-brake:active{background:rgba(255,90,110,.45)}
   .tb-drift{background:rgba(255,190,80,.22);border-color:rgba(255,200,90,.65);color:#ffe0a0}
@@ -751,7 +758,7 @@
     <!-- 右转：屏幕右边 -->
     <div class="tb" id="a1r" style="position:absolute;right:16px;bottom:22px">▶</div>
     <!-- 起步/加速：中下 -->
-    <div class="tb tb-gas" id="a1g" style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%)">▲</div>
+    <div class="tb tb-n2" id="a1g" style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%)"><b>N₂</b><i>氮气</i></div>
     <!-- 手刹：左转上方偏内（留出空位，方便拇指上移） -->
     <div class="tb tb-brake" id="a1b" style="position:absolute;right:16px;bottom:118px">🅿️</div>
   </div>
@@ -4413,6 +4420,11 @@
     if (hint) hint.textContent = fire ? '喷射中' : (P1.charge >= 1 ? '点 ▲ 释放' : '漂移集气');
     el.classList.toggle('on', P1.charge > 0.02 || fire);
     el.classList.toggle('fire', fire);
+    var nb = document.getElementById('a1g');
+    if (nb) {
+      nb.classList.toggle('ready', P1.charge >= 1);
+      nb.classList.toggle('fire', fire);
+    }
   }
 
   /* ================= 分享成绩 ================= */
@@ -6279,9 +6291,15 @@
       }
       if (action === 'launch') {
         // 起步键：倒计时期间触发起步喷；比赛中「点一下」= 放氮气
-        if (!input[side].gas) gasDownAt[side] = performance.now();
-        pressLaunch(side === 'p1' ? P1 : P2);
-        input[side].gas = true;
+        // ⚠ 不能判断 input.gas —— 2D 是自动油门，gas 恒为 true，
+        //   原来 `if (!gas) 记时间` 永远不成立，氮气根本放不出来。
+        // 现在改成「按下即放」：点一下立刻喷，不用等抬手，
+        // 也不受点按窗口时长影响（原来 260ms 窗口稍微按久就失效）。
+        if (!gasDownAt[side]) {
+          gasDownAt[side] = performance.now();
+          pressLaunch(side === 'p1' ? P1 : P2);   // 倒计时期间 = 起步喷
+          tryNitro(side === 'p1' ? P1 : P2);      // 比赛中 = 放氮气（内部自判状态）
+        }
       } else {
         input[side][action] = true;
       }
@@ -6300,9 +6318,7 @@
     if (m) {
       var side = m[0], action = m[1];
       if (action === 'launch') {
-        input[side].gas = false;
-        var held = performance.now() - (gasDownAt[side] || 0);
-        if (held > 0 && held < NITRO_TAP_MS) tryNitro(side === 'p1' ? P1 : P2);
+        // 不设 gas = false：会把自动油门关掉，车就再也加不起速
         gasDownAt[side] = 0;
       } else input[side][action] = false;
       e.preventDefault();
@@ -6328,16 +6344,18 @@
     if (!el) return;
     var gasDown = 0;
     var set = function (v) { return function (ev) {
+      if (key === 'gas') {
+        // 自动油门：这个键不控油门（碰它会把 gas 关掉，车就滑停了），
+        // 按下去立刻放氮气，和桌面按 W / Shift 同一套
+        if (v && !gasDown) {
+          gasDown = performance.now();
+          tryNitro(side === 'p1' ? P1 : P2);
+        } else if (!v) gasDown = 0;
+        ev.preventDefault();
+        return;
+      }
       input[side][key] = v;
       if (key === 'brake' && v) handleBrakeTap(side);   // 手刹按下时检测双击
-      if (key === 'gas') {
-        // 加速键点一下 = 放氮气；按住 = 正常油门（手动挡）
-        if (v) gasDown = performance.now();
-        else if (gasDown) {
-          if (performance.now() - gasDown < NITRO_TAP_MS) tryNitro(side === 'p1' ? P1 : P2);
-          gasDown = 0;
-        }
-      }
       ev.preventDefault();
     }; };
     if (window.PointerEvent) {

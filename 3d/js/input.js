@@ -12,6 +12,7 @@ const KEYMAP = {
 
 export function createInput(hooks = {}) {
   const keys = { gas: false, brake: false, left: false, right: false };
+  let nitroHeld = false;   // Shift/N 长按只触发一次
   const state = {
     invert: true,          // 逆反模式：默认开（本版特色）
     unlocked: false,       // 跑完一局才解锁反转开关
@@ -29,10 +30,16 @@ export function createInput(hooks = {}) {
     if (e.code === 'KeyC') { hooks.onCamera && hooks.onCamera(); e.preventDefault(); }
     else if (e.code === 'KeyR') { hooks.onRestart && hooks.onRestart(); e.preventDefault(); }
     else if (e.code === 'Space') { hooks.onStart && hooks.onStart(); e.preventDefault(); }
+    else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyN') {
+      // 氮气：点一下放一格（长按不连发，抬手还能再点）
+      if (!nitroHeld) { nitroHeld = true; hooks.onNitro && hooks.onNitro(); }
+      e.preventDefault();
+    }
   }
   function onKeyUp(e) {
     const act = KEYMAP[e.code];
     if (act) { keys[act] = false; e.preventDefault(); }
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyN') nitroHeld = false;
   }
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);

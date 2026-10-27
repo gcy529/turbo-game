@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
-// hud.js · HUD 与所有 DOM 界面（速度/圈数/分数/技能条/结算面板/逆反开关/开放倒计时）
+// hud.js · HUD 与所有 DOM 界面（速度/圈数/分数/金币/氮气/结算面板/逆反开关）
 // ─────────────────────────────────────────────────────────────
-import { FX, RACE, KEYS, store } from './config.js';
+import { RACE, KEYS, store } from './config.js';
 
 export function createHud() {
   const el = {
@@ -15,9 +15,11 @@ export function createHud() {
     fps: document.getElementById('fpsBox'),
     overlay: document.getElementById('overlay'),
     panel: document.querySelector('#overlay .panel'),   // 必须是 overlay 里的面板（暂停面板也有 .panel）
-    skillUI: document.getElementById('skillUI3d'),
-    skillPts: document.getElementById('skillPts3d'),
-    skillBar: document.getElementById('skillBar3d'),
+    coinHud: document.getElementById('coinHud3d'),
+    coinGot: document.getElementById('coinGot3d'),
+    nitro: document.getElementById('nitro3d'),
+    nitroBar: document.getElementById('nitroBar3d'),
+    nitroHint: document.getElementById('nitroHint3d'),
     startBtn: document.getElementById('startBtn'),
     keyHints: document.getElementById('keyHints'),
     d3lock: document.getElementById('d3lock'),
@@ -26,6 +28,7 @@ export function createHud() {
   };
 
   let msgTimer = 0;
+  let running = false;   // 由 main.js 通过 setRunning 同步，用于显隐金币 HUD
   let onAgain = null;                       // 结算页「再来一局」回调（由 main.js 注入）
   const panelHome = el.panel ? el.panel.innerHTML : '';   // 首页面板原始 HTML
   function setMsg(text, dur) {
@@ -69,20 +72,8 @@ export function createHud() {
     if (el.t1) el.t1.textContent = Math.max(0, lapTime).toFixed(2);
     if (el.score) el.score.textContent = String(calcScore(p));
     if (el.who) el.who.textContent = getName();
-    if (el.skillPts) el.skillPts.textContent = '⭐ ' + p.skills.points;
-    const def = FX.skillDefs[p.skills.active];
-    if (el.skillBar) {
-      el.skillBar.style.display = def ? 'flex' : 'none';
-      if (def) {
-        const n = el.skillBar.querySelector('.skill-name');
-        const t = el.skillBar.querySelector('.skill-timer');
-        if (n) n.textContent = def.icon + ' ' + def.name;
-        if (t) t.textContent = Math.ceil(p.skills.timer) + 's';
-        el.skillBar.style.borderColor = '#' + def.color.toString(16).padStart(6, '0');
-      }
-    }
-    if (el.skillUI) el.skillUI.classList.toggle('show', p.skills.points > 0 || !!p.skills.active);
-    syncSkillButtons(p.skills);
+    syncCoins(p);
+    syncNitro(p);
     const rev = ensureRevEl();
     const show = p.speed < -15;
     if (show !== rev._shown) { rev.style.opacity = show ? '1' : '0'; rev._shown = show; }
@@ -99,15 +90,43 @@ export function createHud() {
     el.fps.style.color = v >= 45 ? '#8ef7c8' : (v >= 25 ? '#ffd166' : '#ff6b6b');
   }
 
-  function syncSkillButtons(skills) {
-    document.querySelectorAll('.skill-btn').forEach((btn) => {
-      const def = FX.skillDefs[btn.getAttribute('data-skill')];
-      if (!def) return;
-      const can = skills.points >= def.cost;
-      btn.style.opacity = can ? '1' : '0.4';
-      btn.style.cursor = can ? 'pointer' : 'not-allowed';
-      btn.classList.toggle('active', skills.active === btn.getAttribute('data-skill'));
-    });
+  // ── 金币：本局拾取数 + 余额 ──
+  function syncCoins(p) {
+    if (el.coinGot) el.coinGot.textContent = '+' + (p.coinGot || 0);
+    if (el.coinHud) el.coinHud.classList.toggle('show', running || (p.coinGot || 0) > 0);
+  }
+  // 由 main.js 直接设置余额文字（金币变化时调一次，不必每帧）
+  function setCoinBalance(n) {
+    const b = document.getElementById('coinBal3d');
+    if (b) b.textContent = String(n);
+  }
+
+  // ── 氮气：3 格气条 + 释放态 ──
+  let nitroSig = '';
+  function syncNitro(p) {
+    const fire = (p.nitroTimer || 0) > 0;
+    const sig = Math.round((p.charge || 0) * 20) + '|' + (fire ? 1 : 0);
+    if (sig === nitroSig) return;
+    nitroSig = sig;
+    if (el.nitroBar) {
+      const segs = el.nitroBar.children;
+      for (let i = 0; i < segs.length; i++) {
+        const v = (p.charge || 0) - i;
+        segs[i].className = v >= 0.995 ? 'full' : (v > 0.04 ? 'half' : '');
+      }
+    }
+    if (el.nitroHint) {
+      el.nitroHint.textContent = fire ? '喷射中' : ((p.charge || 0) >= 1 ? '点 N₂ / Shift' : '漂移集气');
+    }
+    if (el.nitro) {
+      el.nitro.classList.toggle('on', (p.charge || 0) > 0.02 || fire);
+      el.nitro.classList.toggle('fire', fire);
+    }
+    const btn = document.getElementById('nitroBtn3d');
+    if (btn) {
+      btn.classList.toggle('ready', (p.charge || 0) >= 1);
+      btn.classList.toggle('fire', fire);
+    }
   }
 
   function syncInvert(invert, unlocked) {
@@ -137,21 +156,6 @@ export function createHud() {
     });
   }
 
-  function bindSkillButtons(skills, onActivated) {
-    // HTML 里原来的 onclick="activateSkill3d(...)" 指向一个根本不存在的全局函数，
-    // 每次点击都是 ReferenceError，技能完全用不了。这里改成真正的监听。
-    document.querySelectorAll('.skill-btn').forEach((btn) => {
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        const type = btn.getAttribute('data-skill');
-        const res = skills.activate(type);
-        if (res && res.ok && onActivated) onActivated(type);
-        syncSkillButtons(skills);
-      });
-    });
-    syncSkillButtons(skills);
-  }
-
   function restorePanel() {
     if (!el.panel) return;
     el.panel.innerHTML = panelHome;
@@ -177,10 +181,17 @@ export function createHud() {
       '<div class="tag3d">RACE FINISHED</div>' +
       '<div class="title" style="font-size:30px">完成！</div>' +
       '<div class="sub" style="letter-spacing:3px">' + p.finishTime.toFixed(2) + ' 秒 · ' + p.totalLaps + ' 圈</div>' +
-      '<div style="margin:18px 0;padding:14px 18px;border-radius:14px;background:rgba(255,180,60,.12);border:1.5px solid rgba(255,190,80,.5);max-width:300px">' +
-      '<div style="font-size:14px;font-weight:900;color:#ffc078;letter-spacing:1px;margin-bottom:6px">🏆 解锁隐藏设置</div>' +
-      '<div style="font-size:11.5px;color:#cfe4f7;line-height:1.7">有个开关解锁了<br>' +
-      '<span style="color:#6f8db0;font-size:10.5px">下次开始前，试试换一种开法</span></div></div>' +
+      '<div style="margin:18px 0;padding:14px 18px;border-radius:14px;background:rgba(255,201,60,.12);border:1.5px solid rgba(255,201,60,.5);max-width:300px;text-align:left">' +
+      '<div style="font-size:12px;font-weight:900;color:#ffd166;letter-spacing:1px;margin-bottom:8px">本局金币</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:11.5px;color:#cfe4f7;line-height:1.95">' +
+      '<span>赛道拾取 ' + (p.coinGot || 0) + ' 枚</span><b style="color:#8ef7c8">+' + (p.coinsEarned || 0) + '</b></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:11.5px;color:#cfe4f7;line-height:1.95">' +
+      '<span>完赛奖励</span><b style="color:#8ef7c8">+' + (p.coinsRaceBonus || 0) + '</b></div>' +
+      '<div style="height:1px;background:rgba(255,201,60,.28);margin:7px 0"></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900">' +
+      '<span style="color:#ffd166">合计 +' + (p.coinTotal || 0) + '</span>' +
+      '<span style="color:#eaf2ff">余额 ' + (p.coinBalance || 0) + ' 币</span></div>' +
+      '<div style="margin-top:9px;font-size:10.5px;color:#8fa8c2;line-height:1.7">回车库可以解锁车漆，金币和 2D 版共用。</div></div>' +
       '<button class="go" id="againBtn">再来一局</button>' +
       '<div class="tip" style="margin-top:10px"><a href="../index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>' +
       '<div><a class="brandLock" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener"><span>deepseek v4.1-flash -1017</span><span class="amp">&amp;</span><span class="by">gcy529</span></a></div>';
@@ -195,12 +206,15 @@ export function createHud() {
   function applyLock() {
     // 内测倒计时下线：直接标为可用，不再弹「距正式版 N 天」
     if (el.d3lock) el.d3lock.style.display = 'none';
-    if (el.d3tag) el.d3tag.textContent = 'WEBGL · 3D 版';
+    // 版本号直接标在首页标签上：能一眼确认加载的是不是最新版（躲开旧缓存）
+    if (el.d3tag) el.d3tag.textContent = 'WEBGL · 3D 版 · 无技能 · v6';
   }
 
   return {
-    el, setMsg, tickMsg, update, setFps, syncSkillButtons, bindSkillButtons, syncInvert, bindInvertButtons,
+    el, setMsg, tickMsg, update, setFps, syncCoins, syncNitro, setCoinBalance,
+    syncInvert, bindInvertButtons,
     hideOverlay, showOverlay, restorePanel, showKeyHints, countdownPanel, applyLock, getName, calcScore,
     setOnAgain(fn) { onAgain = fn; },
+    setRunning(v) { running = !!v; },
   };
 }
