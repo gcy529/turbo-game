@@ -89,7 +89,7 @@ function spawnNpcs() {
     const oncoming = i % NPC.oncomingEvery === 0;
     const npc = {
       mesh: car,
-      t: Math.random(),
+      t: 0.06 + Math.random() * 0.88,   // 别生成在起步位置，否则第一帧就有一辆车糊在镜头上
       lateral: (Math.random() - 0.5) * 1.4,
       speed: oncoming ? -(NPC.oncomingMin + Math.random() * NPC.oncomingRange) : NPC.speedMin + Math.random() * NPC.speedRange,
       oncoming,

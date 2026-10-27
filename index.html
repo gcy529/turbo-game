@@ -1287,9 +1287,7 @@
 
     for (var j = 0; j < RUMBLE_LEN; j++) {
       segments[j].color = startFinishColor(j);
-      if (j === RUMBLE_LEN - 1) segments[j].checkerRow = 0;
       segments[segments.length - 1 - j].color = startFinishColor(segments.length - 1 - j);
-      if (j < 2) segments[segments.length - 1 - j].checkerRow = j;
     }
     smoothLoopSeam();
     trackLength = segments.length * SEG_LEN;
@@ -1376,9 +1374,7 @@
 
     for (var i = 0; i < RUMBLE_LEN; i++) {
       segments[i].color = startFinishColor(i);
-      if (i === RUMBLE_LEN - 1) segments[i].checkerRow = 0;
       segments[segments.length - 1 - i].color = startFinishColor(segments.length - 1 - i);
-      if (i < 2) segments[segments.length - 1 - i].checkerRow = i;
     }
     smoothLoopSeam();
     trackLength = segments.length * SEG_LEN;
@@ -1847,8 +1843,11 @@
     polygon(p1.x - p1.w, p1.y, p1.x + p1.w, p1.y, p2.x + p2.w, p2.y, p2.x - p2.w, p2.y, c.road);
 
     // ── 起终点线：只画一条窄带棋盘（占本段纵向 40%~62%），不再把整段路面刷白
-    if (seg.checkerRow !== undefined) {
-      var cols = 12, rows = 2, tA = 0.40, tB = 0.62;
+    // 起跑线：起点后第 3~4 段（贴地/驾驶舱/俯瞰三个视角都能进画面）
+    var isStartLine = (seg.index === 6 || seg.index === 7);
+    var isFinishLine = (seg.index >= segments.length - 2);   // 终点同样两条
+    if (isStartLine || isFinishLine) {
+      var cols = 12, rows = 3, tA = 0.12, tB = 0.88;
       for (var rr = 0; rr < rows; rr++) {
         var ta = tA + (tB - tA) * (rr / rows), tb = tA + (tB - tA) * ((rr + 1) / rows);
         var ya = p1.y + (p2.y - p1.y) * ta, yb = p1.y + (p2.y - p1.y) * tb;
@@ -1858,7 +1857,7 @@
         for (var ci = 0; ci < cols; ci++) {
           polygon(xa - wa + ci * cwa, ya, xa - wa + (ci + 1) * cwa, ya,
                   xb - wb + (ci + 1) * cwb, yb, xb - wb + ci * cwb, yb,
-                  ((ci + rr + seg.checkerRow) % 2) === 0 ? '#23262f' : '#eef3fa');
+                  ((ci + rr + seg.index) % 2) === 0 ? '#1b1e26' : '#f2f6fc');
         }
       }
     }
@@ -2801,7 +2800,8 @@
       x += dx;
       dx += seg.curve;
 
-      if (seg.p1.camera.z <= CAM_DEPTH || seg.p2.screen.y >= seg.p1.screen.y || seg.p2.screen.y >= maxy) continue;
+      if (seg.p1.camera.z <= CAM_DEPTH || seg.p2.screen.y >= seg.p1.screen.y) continue;
+      if (seg.p2.screen.y >= maxy) continue;
 
       drawSegment(seg);
       maxy = seg.p2.screen.y;
@@ -5100,7 +5100,9 @@
       return { camH: 280, carScale: 1.30, carY: 0, drawCar: true, fov: 0.92 };
     }
     // 3 俯瞰：高机位 + 小车 + 广角
-    return { camH: 1350, carScale: 0.58, carY: 0, drawCar: true, fov: 1.15 };
+    // 俯瞰：camH 原来 1350，相机太高 → 车脚下的段被投影到屏幕外，
+    // 起跑线/近处路面全都看不见。降到 980 仍是俯瞰，但能看到车前后各一段。
+    return { camH: 980, carScale: 0.62, carY: 0, drawCar: true, fov: 1.15 };
   }
 
   /* ================= 赛车数据 ================= */
@@ -5594,9 +5596,7 @@
     addDownhillToEnd(100);
     for (var j = 0; j < RUMBLE_LEN; j++) {
       segments[j].color = startFinishColor(j);
-      if (j === RUMBLE_LEN - 1) segments[j].checkerRow = 0;
       segments[segments.length - 1 - j].color = startFinishColor(segments.length - 1 - j);
-      if (j < 2) segments[segments.length - 1 - j].checkerRow = j;
     }
     smoothLoopSeam();
     trackLength = segments.length * SEG_LEN;

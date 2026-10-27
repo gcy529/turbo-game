@@ -222,19 +222,29 @@ export function buildTrack(scene) {
     color: 0xc3ccdb, roughness: 0.35, metalness: 0.85, side: THREE.DoubleSide,
   })));
 
-  // ── 起点/终点格子线 ──
-  const startP = frames[0].p, startTan = frames[0].tan;
-  const startPlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(ROAD_W, 2.6),
-    new THREE.MeshStandardMaterial({ map: checkerTexture(), roughness: 0.7 })
-  );
-  startPlane.material.map.repeat.set(6, 1);
-  startPlane.rotation.x = -Math.PI / 2;
-  const startHolder = new THREE.Group();
-  startHolder.add(startPlane);
-  startHolder.position.set(startP.x, startP.y + 0.05, startP.z);
-  startHolder.rotation.y = Math.atan2(startTan.x, startTan.z);
-  group.add(startHolder);
+  // ── 起点 / 终点格子线 ──
+  // 原来画在 frames[0]（玩家脚下偏后），起步时整条被车和相机挡住，
+  // 看起来就像「3D 没有起跑线」。改成放在车前方 3 段处 + 加宽加密，
+  // 终点线上再补一条，跑完一圈能看见冲线。
+  function addCheckerLine(frameIdx, wide) {
+    const f = frames[((frameIdx % SEG) + SEG) % SEG];
+    const plane = new THREE.Mesh(
+      new THREE.PlaneGeometry(ROAD_W - 0.5, wide || 4.2),
+      new THREE.MeshStandardMaterial({ map: checkerTexture(), roughness: 0.62, metalness: 0.05 })
+    );
+    plane.material.map.repeat.set(10, 2);
+    plane.rotation.x = -Math.PI / 2;
+    const holder = new THREE.Group();
+    holder.add(plane);
+    holder.position.set(f.p.x, f.p.y + 0.045, f.p.z);
+    holder.rotation.y = Math.atan2(f.tan.x, f.tan.z);
+    holder.receiveShadow = true;
+    group.add(holder);
+    return holder;
+  }
+  addCheckerLine(3);          // 起跑线：车前方约 9 米
+  addCheckerLine(-3);         // 终点线：回到 t=0 前的同一位置（环形）
+
 
   // ── 路边景物：树与路灯（InstancedMesh，控制 draw call）──
   const treeCount = TRACK.trees;
@@ -276,7 +286,7 @@ export function buildTrack(scene) {
     const p = curve.getPointAt(t);
     const tan = curve.getTangentAt(t).normalize();
     const side = new THREE.Vector3().crossVectors(UP, tan).normalize();
-    const pos = p.clone().addScaledVector(side, (j % 2 ? 1 : -1) * (ROAD_W / 2 + 2.6));
+    const pos = p.clone().addScaledVector(side, (j % 2 ? 1 : -1) * (ROAD_W / 2 + 4.8));   // 推远：原来贴路太近，正好戳在视野中央
     dummy.position.set(pos.x, pos.y + 3.5, pos.z);
     dummy.scale.setScalar(1);
     dummy.rotation.set(0, 0, 0);
