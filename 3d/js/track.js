@@ -91,7 +91,7 @@ export function buildTrack(scene) {
   roadGeo.computeVertexNormals();
   const asphalt = asphaltTexture();
   asphalt.repeat.set(3, 1);
-  const roadMat = new THREE.MeshStandardMaterial({ map: asphalt, color: 0x9aa0ad, roughness: 0.92, metalness: 0.03 });
+  const roadMat = new THREE.MeshStandardMaterial({ map: asphalt, color: 0x62687a, roughness: 0.92, metalness: 0.03, side: THREE.DoubleSide });
   const road = new THREE.Mesh(roadGeo, roadMat);
   road.receiveShadow = true;
   group.add(road);

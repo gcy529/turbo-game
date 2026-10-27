@@ -929,12 +929,20 @@
     return {
       LIGHT: { road: TH.road, grass: TH.grass, rumble: TH.rumble, lane: TH.lane },
       DARK:  { road: TH.roadDark, grass: TH.grassDark, rumble: TH.rumbleDark, lane: null },
-      START: { road: '#e8eef7', grass: TH.grass, rumble: '#e8eef7', lane: null },
-      FINISH:{ road: '#e8eef7', grass: TH.grass, rumble: '#e8eef7', lane: null }
+      // 起终点只画棋盘，不再把整段路面染成近白色（原来起步时下半屏一片纯白）
+      START: { road: TH.road, grass: TH.grass, rumble: '#f4f7fc', lane: null },
+      FINISH:{ road: TH.road, grass: TH.grass, rumble: '#f4f7fc', lane: null }
     };
   }
 
   var COLORS = themeColors();
+
+  // 起终点段：路面/车道线沿用正常交替色（原来是整段近白，起步时下半屏一片纯白），
+  // 只把路缘刷白 + 段上画一条棋盘起跑线
+  function startFinishColor(idx) {
+    var base = (Math.floor(idx / RUMBLE_LEN) % 2) ? COLORS.DARK : COLORS.LIGHT;
+    return { road: base.road, grass: base.grass, rumble: '#eef3fa', lane: base.lane };
+  }
 
   var ROAD = {
     LENGTH: { NONE: 0, SHORT: 12, MEDIUM: 22, LONG: 36 },
@@ -1069,8 +1077,10 @@
     addDownhillToEnd(120);
 
     for (var j = 0; j < RUMBLE_LEN; j++) {
-      segments[j].color = COLORS.START;
-      segments[segments.length - 1 - j].color = COLORS.FINISH;
+      segments[j].color = startFinishColor(j);
+      if (j === RUMBLE_LEN - 1) segments[j].checkerRow = 0;
+      segments[segments.length - 1 - j].color = startFinishColor(segments.length - 1 - j);
+      if (j < 2) segments[segments.length - 1 - j].checkerRow = j;
     }
     smoothLoopSeam();
     trackLength = segments.length * SEG_LEN;
@@ -1156,8 +1166,10 @@
     }
 
     for (var i = 0; i < RUMBLE_LEN; i++) {
-      segments[i].color = COLORS.START;
-      segments[segments.length - 1 - i].color = COLORS.FINISH;
+      segments[i].color = startFinishColor(i);
+      if (i === RUMBLE_LEN - 1) segments[i].checkerRow = 0;
+      segments[segments.length - 1 - i].color = startFinishColor(segments.length - 1 - i);
+      if (i < 2) segments[segments.length - 1 - i].checkerRow = i;
     }
     smoothLoopSeam();
     trackLength = segments.length * SEG_LEN;
@@ -1624,6 +1636,23 @@
     polygon(p1.x - p1.w - r1, p1.y, p1.x - p1.w, p1.y, p2.x - p2.w, p2.y, p2.x - p2.w - r2, p2.y, c.rumble);
     polygon(p1.x + p1.w + r1, p1.y, p1.x + p1.w, p1.y, p2.x + p2.w, p2.y, p2.x + p2.w + r2, p2.y, c.rumble);
     polygon(p1.x - p1.w, p1.y, p1.x + p1.w, p1.y, p2.x + p2.w, p2.y, p2.x - p2.w, p2.y, c.road);
+
+    // ── 起终点线：只画一条窄带棋盘（占本段纵向 40%~62%），不再把整段路面刷白
+    if (seg.checkerRow !== undefined) {
+      var cols = 12, rows = 2, tA = 0.40, tB = 0.62;
+      for (var rr = 0; rr < rows; rr++) {
+        var ta = tA + (tB - tA) * (rr / rows), tb = tA + (tB - tA) * ((rr + 1) / rows);
+        var ya = p1.y + (p2.y - p1.y) * ta, yb = p1.y + (p2.y - p1.y) * tb;
+        var wa = p1.w + (p2.w - p1.w) * ta, wb = p1.w + (p2.w - p1.w) * tb;
+        var xa = p1.x + (p2.x - p1.x) * ta, xb = p1.x + (p2.x - p1.x) * tb;
+        var cwa = (wa * 2) / cols, cwb = (wb * 2) / cols;
+        for (var ci = 0; ci < cols; ci++) {
+          polygon(xa - wa + ci * cwa, ya, xa - wa + (ci + 1) * cwa, ya,
+                  xb - wb + (ci + 1) * cwb, yb, xb - wb + ci * cwb, yb,
+                  ((ci + rr + seg.checkerRow) % 2) === 0 ? '#23262f' : '#eef3fa');
+        }
+      }
+    }
 
     if (c.lane) {
       var lanew1 = p1.w * 2 / LANES, lanew2 = p2.w * 2 / LANES;
@@ -5343,8 +5372,10 @@
 
     addDownhillToEnd(100);
     for (var j = 0; j < RUMBLE_LEN; j++) {
-      segments[j].color = COLORS.START;
-      segments[segments.length - 1 - j].color = COLORS.FINISH;
+      segments[j].color = startFinishColor(j);
+      if (j === RUMBLE_LEN - 1) segments[j].checkerRow = 0;
+      segments[segments.length - 1 - j].color = startFinishColor(segments.length - 1 - j);
+      if (j < 2) segments[segments.length - 1 - j].checkerRow = j;
     }
     smoothLoopSeam();
     trackLength = segments.length * SEG_LEN;

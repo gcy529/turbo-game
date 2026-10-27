@@ -193,23 +193,9 @@ export function createHud() {
 
   // ── 定时开放：2026-11-11 00:00（测试入口：网址加 #b）──
   function applyLock() {
-    const openAt = new Date(RACE.openAt[0], RACE.openAt[1], RACE.openAt[2], 0, 0, 0).getTime();
-    const beta = /=b$/.test((location.hash || '').replace(/^#/, '')) || /[#&]beta/.test(location.hash || '');
-    const unlockedByTime = Date.now() >= openAt || beta;
-    if (el.d3lock) el.d3lock.style.display = unlockedByTime ? 'none' : 'flex';
-    if (el.d3tag && unlockedByTime) el.d3tag.textContent = 'WEBGL · 正式版 🎉';
-    if (unlockedByTime || !el.d3cd) return;
-    const tick = () => {
-      const ms = openAt - Date.now();
-      if (ms <= 0) { applyLock(); return; }
-      const d = Math.floor(ms / 86400000);
-      const hh = String(Math.floor((ms % 86400000) / 3600000)).padStart(2, '0');
-      const mm = String(Math.floor((ms % 3600000) / 60000)).padStart(2, '0');
-      const ss = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
-      el.d3cd.textContent = d + '天 ' + hh + ':' + mm + ':' + ss;
-      requestAnimationFrame(tick);
-    };
-    tick();
+    // 内测倒计时下线：直接标为可用，不再弹「距正式版 N 天」
+    if (el.d3lock) el.d3lock.style.display = 'none';
+    if (el.d3tag) el.d3tag.textContent = 'WEBGL · 3D 版';
   }
 
   return {

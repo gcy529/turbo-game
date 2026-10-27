@@ -73,21 +73,22 @@ export const FX = {
 };
 
 export const THEME = {
+  // 黄昏：和 2D 版「黄昏海岸」同一套色感（深紫夜空 → 橙粉地平线）
   dark: {
-    sky: [0x0b1230, 0x1a2444],
-    fog: [0x1a2444, 110, 460],
-    sun: { color: 0xffddaa, intensity: 2.6 },
-    hemi: { sky: 0x99bbff, ground: 0x223311, intensity: 0.9 },
-    ground: 0x101a2a,
-    envIntensity: 0.55,
+    sky: [0x261f5c, 0xf0a878],
+    fog: [0x8f7f92, 210, 700],
+    sun: { color: 0xffc48f, intensity: 2.1 },
+    hemi: { sky: 0x8c86c8, ground: 0x2b3a2c, intensity: 0.55 },
+    ground: 0x28402f,
+    envIntensity: 0.6,
   },
   light: {
-    sky: [0x87b5e8, 0xc4d8ef],
-    fog: [0xc4d8ef, 160, 620],
-    sun: { color: 0xffffff, intensity: 3.1 },
-    hemi: { sky: 0xffffff, ground: 0x9db8cc, intensity: 1.3 },
-    ground: 0x6f8a63,
-    envIntensity: 0.9,
+    sky: [0x4f97e0, 0xdcecf8],
+    fog: [0xdcecf8, 180, 720],
+    sun: { color: 0xfff4e2, intensity: 3.0 },
+    hemi: { sky: 0xffffff, ground: 0x8fa878, intensity: 1.0 },
+    ground: 0x6f9a5c,
+    envIntensity: 0.95,
   },
 };
 
@@ -97,9 +98,9 @@ export const CAMERA = {
   near: 0.5,
   far: 900,
   modes: [
-    { name: '跟随', height: 3.4, dist: 8.5 },
-    { name: '车头', height: 1.7, dist: 1.2 },
-    { name: '远景', height: 8.5, dist: 15 },
+    { name: '跟随', height: 3.6, dist: 9.6 },
+    { name: '车头', height: 1.75, dist: 1.3 },
+    { name: '远景', height: 9.2, dist: 16 },
   ],
 };
 
