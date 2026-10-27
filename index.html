@@ -161,6 +161,23 @@
   body[data-theme='light'] .rBtn3d{background:linear-gradient(rgba(255,252,245,.9),rgba(255,252,245,.9)) padding-box,linear-gradient(120deg,#ff2d95,#7b2dff,#00e5ff) border-box;color:#3a1054}
   body[data-theme='light'] .rBtn3d:hover{background:linear-gradient(rgba(255,250,235,.98),rgba(255,250,235,.98)) padding-box,linear-gradient(120deg,#ff2d95,#7b2dff,#00e5ff) border-box}
   .rRow{display:flex;gap:9px;margin-top:20px}
+  /* 档案条 + 解锁标记 */
+  .rProfile{display:inline-flex;align-items:center;gap:8px;margin:-12px 0 16px;padding:7px 14px;border-radius:999px;
+    border:1px solid rgba(140,200,255,.22);background:rgba(140,200,255,.07);
+    font-family:'Courier New',monospace;font-size:11px;font-weight:800;letter-spacing:1px;color:#8fa8c2;
+    cursor:pointer;font-family:'Courier New',monospace;transition:border-color .2s,color .2s,background .2s}
+  .rProfile:hover{border-color:rgba(255,209,102,.5);color:#ffd166;background:rgba(255,209,102,.08)}
+  .rProfile .cid{color:#8ef7c8;letter-spacing:2.5px;font-size:12px}
+  .rProfile .divider{width:1px;height:11px;background:rgba(140,200,255,.25)}
+  .rProfile .coin{color:#ffd166}
+  .rProfile .coin b{color:#fff}
+  .carcard.locked,.mapcard.locked{opacity:.6;filter:saturate(.45);cursor:pointer}
+  .carcard.locked .ci{filter:grayscale(1)}
+  .lockTag{margin-top:5px;font-size:10px;font-weight:900;color:#ffd166;letter-spacing:.5px;text-shadow:0 0 8px rgba(255,209,102,.5)}
+  body[data-theme='light'] .rProfile{border-color:rgba(40,80,140,.25);background:rgba(40,80,140,.07);color:#4a6484}
+  body[data-theme='light'] .rProfile .cid{color:#0f7a68}
+  body[data-theme='light'] .rProfile .coin b{color:#12233a}
+  body[data-theme='light'] .lockTag{color:#a2610a;text-shadow:none}
   .rGit{margin-top:14px;font-size:10px;letter-spacing:1px;color:rgba(140,180,220,.45);text-decoration:none;font-family:'Courier New',monospace}
   .rGit:hover{color:#67c6ff}
   /* 品牌 / 版权 lockup：deepseek v4.1-flash -1017 & gcy529 */
@@ -509,6 +526,7 @@
   .achQuote{font-size:11px;color:#ffdf9e;font-style:italic;padding-left:26px}
   .achCheer{text-align:right;font-size:11px;color:#8ef7c8;margin-top:8px;font-weight:800;letter-spacing:1px}
   .totalScore{margin-top:6px;font-size:14px;color:#ffd166;font-weight:900}
+  .coinGain{margin-top:5px;font-size:12.5px;color:#8ef7c8;font-weight:800;letter-spacing:.5px}
   .bestLapLine{margin-top:6px;font-size:12.5px;color:#9dbdd8}
   .scoreBox{margin:12px 0;padding:10px 14px;border-radius:11px;background:rgba(140,200,255,.06);border:1px solid rgba(140,200,255,.2);text-align:left;max-width:300px;font-size:12px;line-height:2;color:#cfe4f7}
   .scRow{display:flex;justify-content:space-between}
@@ -631,6 +649,11 @@
     <div class="rTitle" id="homeTitle" data-i18n="gameTitle">极速狂飙</div>
     <div class="rSub" id="homeSub" data-i18n="gameSub">TURBO GAME</div>
     <div id="homeBest" class="rBest"></div>
+    <button class="rProfile" id="profBar" title="我的档案 / 存档码">
+      <span>ID</span><span class="cid" id="profId">------</span>
+      <span class="divider"></span>
+      <span class="coin"><b id="profCoins">0</b> 币</span>
+    </button>
     <div class="rMenu">
       <button class="rBtn" id="homeSolo"><i>▶</i><span data-i18n="r1p">1P 单人挑战</span></button>
       <button class="rBtn" id="homeDuo"><i>▶</i><span data-i18n="r2p">2P 双人对战</span></button>
@@ -775,6 +798,185 @@
   }
   function clearSave(key) {
     try { localStorage.removeItem(key); return true; } catch (e) { return false; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     玩家档案：六字 ID · 金币 · 解锁 · 存档码（纯本地，换设备靠存档码搬）
+     ═══════════════════════════════════════════════════════════════ */
+  var PROFILE_KEY = 'turbo-racer-profile';
+  var ID_CHARS = 'ACDEFGHJKLMNPQRSTUVWXYZ2345679';   // 去掉 0/O/1/I/B/8 等易混字符
+  var Profile = null;
+
+  function genAccountId() {
+    var s = '';
+    for (var i = 0; i < 6; i++) s += ID_CHARS.charAt(Math.floor(Math.random() * ID_CHARS.length));
+    return s;
+  }
+  function defaultProfile() {
+    return { v: 1, id: genAccountId(), coins: 0, cars: ['street'], maps: ['dusk'], races: 0, dist: 0, created: Date.now() };
+  }
+  function saveProfile() {
+    try { saveSave(PROFILE_KEY, JSON.stringify(Profile)); } catch (e) {}
+    syncProfileUi();
+    return Profile;
+  }
+  function loadProfile() {
+    var p = null;
+    try { p = JSON.parse(loadSave(PROFILE_KEY) || 'null'); } catch (e) { p = null; }
+    if (!p || typeof p !== 'object') p = defaultProfile();
+    if (!/^[A-Z0-9]{6}$/.test(String(p.id || ''))) p.id = genAccountId();
+    p.coins = Math.max(0, Math.floor(+p.coins || 0));
+    p.races = Math.max(0, Math.floor(+p.races || 0));
+    p.dist = Math.max(0, +p.dist || 0);
+    if (!Array.isArray(p.cars) || !p.cars.length) p.cars = ['street'];
+    if (!Array.isArray(p.maps) || !p.maps.length) p.maps = ['dusk'];
+    Profile = p;
+    try { saveSave(PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+    return Profile;
+  }
+  function isCarUnlocked(id) { return !Profile || Profile.cars.indexOf(id) >= 0; }
+  function isMapUnlocked(id) { return !Profile || Profile.maps.indexOf(id) >= 0; }
+  function addCoins(n) {
+    if (!Profile) loadProfile();
+    n = Math.round(n);
+    if (!n) return Profile.coins;
+    Profile.coins = Math.max(0, Profile.coins + n);
+    saveProfile();
+    return Profile.coins;
+  }
+  // 存档码：base64(JSON)，换设备粘一下就搬走
+  function profileCode() {
+    try { return btoa(unescape(encodeURIComponent(JSON.stringify(Profile)))).replace(/=+$/, ''); } catch (e) { return ''; }
+  }
+  function importProfileCode(code) {
+    try {
+      var str = String(code || '').trim().replace(/[\s]+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+      if (!str || str.length < 20) return '存档码太短';
+      while (str.length % 4) str += '=';
+      var p = JSON.parse(decodeURIComponent(escape(atob(str))));
+      if (!p || !p.id) return '不是有效的存档码';
+      // 先落到 localStorage，再走 loadProfile 做字段修补（否则会被旧存档覆盖回去）
+      try { saveSave(PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+      loadProfile();
+      return '';
+    } catch (e) { return '存档码解析失败'; }
+  }
+  // 定价：硬核节奏（一局 20~60 金币）
+  function carPrice(id) { var c = CARS.find(function (x) { return x.id === id; }); return c ? (c.price || 0) : 0; }
+
+  function askConfirm(title, sub, yesLabel, onYes) {
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;inset:0;z-index:80;background:rgba(4,8,16,.74);display:flex;align-items:center;justify-content:center;padding:22px;-webkit-backdrop-filter:blur(3px)';
+    d.innerHTML = '<div style="width:100%;max-width:310px;box-sizing:border-box;background:linear-gradient(180deg,#111f36,#0a1220);border:1.5px solid rgba(255,209,102,.45);border-radius:16px;padding:20px 18px;text-align:center;color:#eaf2ff;box-shadow:0 24px 60px rgba(0,0,0,.6)">' +
+      '<div style="font-size:16px;font-weight:900;letter-spacing:.5px;margin-bottom:9px">' + title + '</div>' +
+      '<div style="font-size:12px;color:#9dbdd8;line-height:1.75;margin-bottom:16px">' + sub + '</div>' +
+      '<div style="display:flex;gap:9px">' +
+      '<button id="cfNo" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid rgba(140,200,255,.3);background:rgba(255,255,255,.06);color:#cfe4f7;font-weight:900;font-size:13px;cursor:pointer;font-family:inherit">再想想</button>' +
+      '<button id="cfYes" style="flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(180deg,#ffd166,#eea825);color:#231400;font-weight:900;font-size:13px;cursor:pointer;font-family:inherit">' + yesLabel + '</button>' +
+      '</div></div>';
+    document.body.appendChild(d);
+    function close() { try { document.body.removeChild(d); } catch (e) {} }
+    d.querySelector('#cfNo').addEventListener('click', close);
+    d.querySelector('#cfYes').addEventListener('click', function () { close(); onYes(); });
+    return d;
+  }
+
+  function tryUnlock(kind, item) {
+    if (!Profile) loadProfile();
+    var price = item.price || 0;
+    var name = item.nameKey ? t(item.nameKey) : item.name;
+    if (price <= 0) return;
+    if (Profile.coins < price) {
+      flashTip('金币不足 · 还差 ' + (price - Profile.coins) + ' 币');
+      return;
+    }
+    askConfirm('解锁「' + name + '」',
+      '花费 <b style="color:#ffd166">' + price + ' 币</b><br>解锁后剩 ' + (Profile.coins - price) + ' 币',
+      '解锁', function () {
+        Profile.coins -= price;
+        var arr = kind === 'car' ? Profile.cars : Profile.maps;
+        if (arr.indexOf(item.id) < 0) arr.push(item.id);
+        saveProfile();
+        flashTip('已解锁「' + name + '」');
+        if (kind === 'car') { applyCar(item.id); renderCarList(); }
+        else {
+          selectedMap = item.id;
+          renderMapList();
+          renderLapList();
+          var cp = document.getElementById('customPanel');
+          if (cp) cp.style.display = (item.id === 'custom') ? 'block' : 'none';
+        }
+      });
+  }
+
+  function showProfile() {
+    if (!Profile) loadProfile();
+    var old = document.getElementById('pfModal');
+    if (old) { try { document.body.removeChild(old); } catch (e) {} }
+    var d = document.createElement('div');
+    d.id = 'pfModal';
+    d.style.cssText = 'position:fixed;inset:0;z-index:72;background:rgba(4,8,16,.8);display:flex;align-items:center;justify-content:center;padding:16px;-webkit-backdrop-filter:blur(4px)';
+    function box(label, val) {
+      return '<div style="flex:1;text-align:center;padding:9px 6px;border-radius:11px;background:rgba(140,200,255,.07);border:1px solid rgba(140,200,255,.18)">' +
+        '<div style="font-size:9.5px;color:#7f9ab6;letter-spacing:1px;margin-bottom:3px">' + label + '</div>' +
+        '<div style="font-size:14px;font-weight:900;color:#eaf2ff">' + val + '</div></div>';
+    }
+    d.innerHTML = '<div style="width:100%;max-width:330px;box-sizing:border-box;background:linear-gradient(180deg,#111f36,#080f1c);border:1.5px solid rgba(140,200,255,.28);border-radius:18px;padding:20px 18px;color:#eaf2ff;font-family:inherit;box-shadow:0 26px 70px rgba(0,0,0,.65);max-height:92vh;overflow:auto">' +
+      '<div style="text-align:center;font-size:10px;letter-spacing:4px;color:#7f9ab6;margin-bottom:7px">ACCOUNT ID</div>' +
+      '<div style="text-align:center;font-family:monospace;font-size:27px;font-weight:900;letter-spacing:7px;color:#8ef7c8;text-shadow:0 0 20px rgba(142,247,200,.45)">' + Profile.id + '</div>' +
+      '<div style="text-align:center;margin:14px 0 16px;font-size:15px;font-weight:900;color:#ffd166">' + Profile.coins + ' 币</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:14px">' +
+      box('赛车', Profile.cars.length + ' / ' + CARS.length) +
+      box('场地', Profile.maps.length + ' / ' + MAP_LIST.length) +
+      box('场次', Profile.races || 0) +
+      '</div>' +
+      '<div style="font-size:10.5px;color:#7f9ab6;line-height:1.7;margin-bottom:8px">存档码：换手机时把这串复制过去，粘在下面点「导入」。</div>' +
+      '<textarea id="pfCode" spellcheck="false" placeholder="粘贴存档码…" style="width:100%;box-sizing:border-box;height:64px;resize:none;padding:8px 10px;border-radius:9px;border:1px solid rgba(140,200,255,.25);background:rgba(0,0,0,.35);color:#9fc6e8;font-family:monospace;font-size:10px;line-height:1.5;word-break:break-all;outline:none"></textarea>' +
+      '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button id="pfCopy" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid rgba(140,200,255,.3);background:rgba(255,255,255,.07);color:#cfe4f7;font-weight:900;font-size:12.5px;cursor:pointer;font-family:inherit">复制存档码</button>' +
+      '<button id="pfImport" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid rgba(255,209,102,.45);background:rgba(255,209,102,.12);color:#ffd166;font-weight:900;font-size:12.5px;cursor:pointer;font-family:inherit">导入</button>' +
+      '</div>' +
+      '<button id="pfClose" style="width:100%;margin-top:12px;padding:12px;border-radius:11px;border:none;background:linear-gradient(180deg,#2fa98a,#1d7f68);color:#03211a;font-weight:900;font-size:13.5px;cursor:pointer;font-family:inherit">关闭</button>' +
+      '</div>';
+    document.body.appendChild(d);
+    var ta = d.querySelector('#pfCode');
+    function close() { try { document.body.removeChild(d); } catch (e) {} }
+    d.querySelector('#pfClose').addEventListener('click', close);
+    d.querySelector('#pfCopy').addEventListener('click', function () {
+      ta.value = profileCode();
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      if (!ok && navigator.clipboard) {
+        navigator.clipboard.writeText(ta.value).then(function () { flashTip('存档码已复制'); }, function () { flashTip('请手动长按复制'); });
+        return;
+      }
+      flashTip(ok ? '存档码已复制' : '请手动长按复制');
+    });
+    d.querySelector('#pfImport').addEventListener('click', function () {
+      var code = (ta.value || '').trim();
+      if (!code) { flashTip('先粘贴存档码'); return; }
+      askConfirm('导入存档？', '当前档案会被覆盖<br>金币 ' + Profile.coins + ' · ID ' + Profile.id, '导入', function () {
+        var err = importProfileCode(code);
+        if (err) { flashTip(err); return; }
+        syncProfileUi();
+        renderCarList();
+        renderMapList();
+        flashTip('已导入 · ID ' + Profile.id);
+        close();
+      });
+    });
+  }
+
+  function syncProfileUi() {
+    var idEl = document.getElementById('profId');
+    if (idEl) idEl.textContent = Profile ? Profile.id : '------';
+    var cEl = document.getElementById('profCoins');
+    if (cEl) cEl.textContent = String(Profile ? Profile.coins : 0);
+    var cnEl = document.getElementById('profCars');
+    if (cnEl) cnEl.textContent = (Profile ? Profile.cars.length : 1) + ' / ' + CARS.length;
+    var mnEl = document.getElementById('profMaps');
+    if (mnEl) mnEl.textContent = (Profile ? Profile.maps.length : 1) + ' / ' + MAP_LIST.length;
   }
 
   var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
@@ -4895,25 +5097,29 @@
       id: 'street', name: '街头小子', nameKey: 'cStreet', icon: '🚗', desc: '均衡入门 · 好开',
       speed: 0.90, accel: 1.00, steer: 1.00, grip: 1.00, boost: 1.00,
       color: '#ff2d7b',   // 霓虹粉
-      stats: { 速度: 3, 加速: 3, 操控: 3, 抓地: 3 }
+      stats: { 速度: 3, 加速: 3, 操控: 3, 抓地: 3 },
+      price: 0
     },
     {
       id: 'beast', name: '赛道猛兽', nameKey: 'cBeast', icon: '🏎️', desc: '极速最高 · 转向偏重',
       speed: 1.18, accel: 1.10, steer: 0.82, grip: 1.08, boost: 1.05,
       color: '#00e5ff',   // 赛博青
-      stats: { 速度: 5, 加速: 4, 操控: 2, 抓地: 4 }
+      stats: { 速度: 5, 加速: 4, 操控: 2, 抓地: 4 },
+      price: 1200
     },
     {
       id: 'drift', name: '漂移之王', nameKey: 'cDrift', icon: '🚙', desc: '转向极灵 · 高速不稳',
       speed: 0.96, accel: 0.95, steer: 1.32, grip: 0.78, boost: 1.15,
       color: '#bf00ff',   // 霓虹紫
-      stats: { 速度: 3, 加速: 2, 操控: 5, 抓地: 1 }
+      stats: { 速度: 3, 加速: 2, 操控: 5, 抓地: 1 },
+      price: 1800
     },
     {
       id: 'tank', name: '重装坦克', nameKey: 'cTank', icon: '🚛', desc: '极稳 · 撞不飞 · 慢',
       speed: 0.82, accel: 0.85, steer: 0.88, grip: 1.35, boost: 0.92,
       color: '#ff9100',   // 霓虹橙
-      stats: { 速度: 2, 加速: 1, 操控: 3, 抓地: 5 }
+      stats: { 速度: 2, 加速: 1, 操控: 3, 抓地: 5 },
+      price: 2500
     }
   ];
   var selectedCar = CONFIG.car.default;
@@ -4968,8 +5174,9 @@
     if (!el) return;
     el.innerHTML = '';
     CARS.forEach(function (c) {
+      var owned = isCarUnlocked(c.id);
       var d = document.createElement('div');
-      d.className = 'carcard' + (c.id === selectedCar ? ' sel' : '');
+      d.className = 'carcard' + (c.id === selectedCar ? ' sel' : '') + (owned ? '' : ' locked');
       var statsHtml = '';
       var keys = Object.keys(c.stats);
       keys.forEach(function (k) {
@@ -4979,8 +5186,10 @@
         var kMap = { 速度: 'stSpeed', 加速: 'stAccel', 操控: 'stSteer', 抓地: 'stGrip' };
         statsHtml += '<div class="cstat">' + (kMap[k] ? t(kMap[k]) : k) + '<span class="dots">' + dots + '</span></div>';
       });
-      d.innerHTML = '<div class="ci">' + c.icon + '</div><div class="cn">' + (c.nameKey ? t(c.nameKey) : c.name) + '</div><div class="cstats">' + statsHtml + '</div>';
+      d.innerHTML = '<div class="ci">' + c.icon + '</div><div class="cn">' + (c.nameKey ? t(c.nameKey) : c.name) + '</div><div class="cstats">' + statsHtml + '</div>' +
+        (owned ? '' : '<div class="lockTag">🔒 ' + (c.price || 0) + ' 币</div>');
       d.addEventListener('click', function () {
+        if (!isCarUnlocked(c.id)) { tryUnlock('car', c); return; }
         applyCar(c.id);
         renderCarList();
       });
@@ -5510,11 +5719,11 @@
 
   /* ================= 地图选择 ================= */
   var MAP_LIST = [
-    { id: 'dusk', name: '黄昏海岸', nameKey: 'mDusk', desc: '落日 · 暖调 · 中等' },
-    { id: 'night', name: '午夜都市', nameKey: 'mNight', desc: '霓虹 · 冷调 · 高速' },
-    { id: 'snow', name: '雪原山口', nameKey: 'mSnow', desc: '雪地 · 打滑 · 高难' },
-    { id: 'desert', name: '荒漠公路', nameKey: 'mDesert', desc: '沙丘 · 长直道 · 极速' },
-    { id: 'custom', name: '自定义赛道', nameKey: 'mCustom', desc: '自己拼弯道 · 编辑器' },
+    { id: 'dusk', name: '黄昏海岸', nameKey: 'mDusk', desc: '落日 · 暖调 · 中等', price: 0 },
+    { id: 'night', name: '午夜都市', nameKey: 'mNight', desc: '霓虹 · 冷调 · 高速', price: 800 },
+    { id: 'snow', name: '雪原山口', nameKey: 'mSnow', desc: '雪地 · 打滑 · 高难', price: 1200 },
+    { id: 'desert', name: '荒漠公路', nameKey: 'mDesert', desc: '沙丘 · 长直道 · 极速', price: 1800 },
+    { id: 'custom', name: '自定义赛道', nameKey: 'mCustom', desc: '自己拼弯道 · 编辑器', price: 2200 },
   ];
   var selectedMap = CONFIG.map.default;
   // 自定义赛道参数
@@ -5606,12 +5815,15 @@
     if (!el) return;
     el.innerHTML = '';
     MAP_LIST.forEach(function (m) {
+      var mOwned = isMapUnlocked(m.id);
       var d = document.createElement('div');
-      d.className = 'mapcard' + (m.id === selectedMap ? ' sel' : '');
+      d.className = 'mapcard' + (m.id === selectedMap ? ' sel' : '') + (mOwned ? '' : ' locked');
       var dispName = (m.id === 'custom' && TRACK_NAME) ? '⚙ ' + TRACK_NAME : (m.nameKey ? t(m.nameKey) : m.name);
       var dispDesc = (m.id === 'custom' && TRACK_PLAN.length > 0) ? TRACK_PLAN.length + ' 段规划' : m.desc;
-      d.innerHTML = '<div class="mn">' + dispName + '</div><div class="md">' + dispDesc + '</div>';
+      d.innerHTML = '<div class="mn">' + dispName + '</div><div class="md">' + dispDesc + '</div>' +
+        (mOwned ? '' : '<div class="lockTag">🔒 ' + (m.price || 0) + ' 币</div>');
       d.addEventListener('click', function () {
+        if (!isMapUnlocked(m.id)) { tryUnlock('map', m); return; }
         selectedMap = m.id;
         renderMapList();
         renderLapList();
@@ -5761,8 +5973,29 @@
     }
   }
 
+  var lastRaceCoins = 0;
+  // 一局金币：硬核节奏（20~60），跑得远/漂得多/少撞车才拿满
+  function settleCoins(p) {
+    if (!p || p._settled) return 0;
+    p._settled = true;
+    if (!Profile) loadProfile();
+    var dist = p.totalDistance || 0;
+    var base = 14;
+    var distB = Math.min(16, Math.floor(dist / 60000));
+    var driftB = Math.min(12, Math.floor((p.driftScore || 0) / 900));
+    var cleanB = Math.max(0, 6 - Math.floor((p.smashCount || 0) / 6));
+    var lapB = Math.max(0, (p.lap || 1) - 1) * 2;
+    var total = clamp(Math.round(base + distB + driftB + cleanB + lapB), 20, 60);
+    lastRaceCoins = total;
+    Profile.races = (Profile.races || 0) + 1;
+    Profile.dist = (Profile.dist || 0) + dist;
+    addCoins(total);
+    return total;
+  }
+
   function onPlayerFinish(p) {
-    if (GAME_MODE === 'solo') { showResult(); return; }
+    if (GAME_MODE === 'solo') { settleCoins(p); showResult(); return; }
+    if (p === P1) settleCoins(p);
     finishedCount++;
     if (finishedCount === 1) {
       var winner = p === P1 ? '玩家 1' : '玩家 2';
@@ -5933,6 +6166,7 @@
         '<div class="res">' +
         '<div>总时间 <b>' + formatTime(P1.finishTime) + '</b></div>' +
         '<div class="totalScore">🏅 总积分 ' + calcScore(P1) + '</div>' +
+        '<div class="coinGain">+' + lastRaceCoins + ' 金币 · 余额 ' + (Profile ? Profile.coins : 0) + '</div>' +
         '<div class="bestLapLine">最快单圈 ' + best + ' 秒</div>' +
         '</div>' +
         '<div class="scoreBox">' +
@@ -6258,6 +6492,11 @@
 
   var INVITE_JUMP = null;   // 邀请码跳转配置
   function boot() {
+    // 玩家档案（六字 ID / 金币 / 解锁）
+    loadProfile();
+    syncProfileUi();
+    var pb = document.getElementById('profBar');
+    if (pb) pb.addEventListener('click', showProfile);
     // 邀请码：#g=xx 直接进同款配置开跑
     try {
       var hm = (location.hash || '').match(/[#&]g=([A-Za-z0-9]+)/);
@@ -6399,6 +6638,12 @@
 
   // ── 调试钩子（供自动化测试/自检读取闭包内状态）──
   window.__T = {
+    // 档案调试：看/改金币与解锁（自动化测试用）
+    profile: function () { return Profile ? JSON.parse(JSON.stringify(Profile)) : null; },
+    setCoins: function (n) { if (!Profile) loadProfile(); Profile.coins = Math.max(0, Math.round(n)); saveProfile(); return Profile.coins; },
+    grantAll: function () { if (!Profile) loadProfile(); Profile.cars = CARS.map(function (c) { return c.id; }); Profile.maps = MAP_LIST.map(function (m) { return m.id; }); saveProfile(); renderCarList(); renderMapList(); return true; },
+    code: function () { return profileCode(); },
+    importCode: function (c) { var e = importProfileCode(c); if (!e) { syncProfileUi(); renderCarList(); renderMapList(); } return e || 'ok'; },
     view: function () { try { return { CAM_VIEW: CAM_VIEW, params: viewParams() }; } catch (e) { return { err: String(e) }; } },
     // 视角诊断：玩家所在段的投影 + 车辆屏幕位置
     diag: function () {

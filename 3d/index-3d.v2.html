@@ -39,6 +39,17 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 #invBadge.off{background:rgba(255,255,255,.06);border-color:rgba(140,200,255,.28);color:#8ba3bd;animation:none}
 @keyframes invPulse{0%,100%{opacity:1}50%{opacity:.6}}
 #fpsBox{position:fixed;right:12px;bottom:12px;z-index:13;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums}
+/* 车库：3D 入口免费，车漆用金币解锁（与 2D 共用存档） */
+#garage3d{margin:0 0 14px;width:100%;max-width:300px}
+#garage3d .gHead{font-size:10px;letter-spacing:1.5px;color:#7f9ab6;margin-bottom:8px;font-family:'Courier New',monospace}
+#garage3d .gHead b{color:#ffd166;font-weight:900}
+#garage3d .gHead b#g3id{color:#8ef7c8;letter-spacing:2px}
+#liveryRow3d{display:flex;gap:8px;justify-content:center}
+ .livery{flex:1;min-width:0;padding:8px 4px;border-radius:12px;border:1.5px solid rgba(140,200,255,.22);background:rgba(255,255,255,.05);color:#cfe4f7;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;transition:all .15s}
+ .livery .sw{display:block;width:100%;height:22px;border-radius:7px;margin-bottom:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+ .livery.on{border-color:rgba(255,209,102,.75);background:rgba(255,209,102,.12);color:#ffd166}
+ .livery.locked{opacity:.6}
+ .livery small{display:block;font-size:9px;opacity:.8;margin-top:2px;letter-spacing:0}
 #skillUI3d{position:fixed;right:14px;top:70px;z-index:10;display:flex;flex-direction:column;align-items:flex-end;gap:6px;opacity:0;transition:opacity .3s}
 #skillUI3d.show{opacity:1}
 #skillPts3d{font-size:16px;font-weight:900;color:#ffd166;text-shadow:0 0 12px rgba(255,209,102,.8)}
@@ -139,6 +150,10 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
     <div id="invLock" style="font-size:10.5px;color:#5f7a95;margin-bottom:14px;letter-spacing:.5px">跑完一局，解锁「逆反模式」</div>
     <div id="invExplain" style="display:none;font-size:11.5px;line-height:1.95;color:#a9c6e2;max-width:300px;margin:0 auto 16px;text-align:left">
       <div>↔ 你已经知道了，对吧？</div>
+    </div>
+    <div id="garage3d">
+      <div class="gHead">车库 · <b id="g3coins">0</b> 币 · ID <b id="g3id">------</b></div>
+      <div id="liveryRow3d"></div>
     </div>
     <button class="go" id="startBtn">开始比赛</button>
     <div class="tip">A/D 转向 · S 手刹 · C 切视角 · R 重开 · 手机用屏幕三键</div>

@@ -165,6 +165,38 @@ export function buildTrack(scene) {
   edgeGeo.computeVertexNormals();
   group.add(new THREE.Mesh(edgeGeo, new THREE.MeshStandardMaterial({ color: 0xd9b13f, roughness: 0.65, side: THREE.DoubleSide })));
 
+  // ── 草地边坡：贴着赛道往下铺，避免两侧直接看到很低的地面平面（生硬绿块）──
+  // 内沿压在路面下 0.15，不会盖住沥青；外沿向外 46 米、降 7 米
+  const slopePos = [], slopeCol = [], slopeIdx = [];
+  let si = 0;
+  const gA = new THREE.Color(0x2f5c3a), gB = new THREE.Color(0x264b30);
+  for (let i = 1; i <= SEG; i++) {
+    const a = frames[i - 1], b = frames[i];
+    const col = Math.floor(i / 5) % 2 ? gA : gB;
+    for (const sgn of [-1, 1]) {
+      const o1 = sgn * (ROAD_W / 2 + 0.85), o2 = sgn * (ROAD_W / 2 + 46);
+      slopePos.push(
+        a.p.x + a.side.x * o1, a.p.y - 0.15, a.p.z + a.side.z * o1,
+        a.p.x + a.side.x * o2, a.p.y - 7.0, a.p.z + a.side.z * o2,
+        b.p.x + b.side.x * o1, b.p.y - 0.15, b.p.z + b.side.z * o1,
+        b.p.x + b.side.x * o2, b.p.y - 7.0, b.p.z + b.side.z * o2
+      );
+      for (let k = 0; k < 4; k++) slopeCol.push(col.r, col.g, col.b);
+      slopeIdx.push(si, si + 1, si + 2, si + 1, si + 3, si + 2);
+      si += 4;
+    }
+  }
+  const slopeGeo = new THREE.BufferGeometry();
+  slopeGeo.setAttribute('position', new THREE.Float32BufferAttribute(slopePos, 3));
+  slopeGeo.setAttribute('color', new THREE.Float32BufferAttribute(slopeCol, 3));
+  slopeGeo.setIndex(slopeIdx);
+  slopeGeo.computeVertexNormals();
+  const slopeMesh = new THREE.Mesh(slopeGeo, new THREE.MeshStandardMaterial({
+    vertexColors: true, roughness: 1, metalness: 0, side: THREE.DoubleSide,
+  }));
+  slopeMesh.receiveShadow = true;
+  group.add(slopeMesh);
+
   // ── 护栏（双面金属带）──
   const railPos = [], railIdx = [];
   let ri = 0;

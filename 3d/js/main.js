@@ -10,6 +10,7 @@ import { createInput } from './input.js';
 import { createParticles, createSkillItems, createShield } from './fx.js';
 import { createSkills } from './skills.js';
 import { createHud } from './hud.js';
+import { readProfile, buyLivery, selectLivery } from './profile.js';
 
 const canvas = document.getElementById('game');
 const stage = createStage(canvas);
@@ -24,8 +25,53 @@ hud.bindSkillButtons(skills, (type) => {
   const def = FX.skillDefs[type];
   if (def) particles.burst(playerCar.position, def.color, 25, 4);
 });
-const playerCar = buildCar(0x00ffcc, 'high');
+// ── 车库：3D 入口免费，车漆用金币解锁（和 2D 共用同一份档案）──
+const profile = readProfile();
+const LIVERIES = [
+  { id: 'mint',   name: '薄荷', color: 0x00ffcc, price: 0 },
+  { id: 'violet', name: '紫电', color: 0xbf00ff, price: 1500 },
+  { id: 'gold',   name: '赤金', color: 0xffc93c, price: 3000 },
+];
+function liveryById(id) { return LIVERIES.find(l => l.id === id) || LIVERIES[0]; }
+
+let playerCar = buildCar(liveryById(profile.livery).color, 'high');
 stage.scene.add(playerCar);
+
+function applyLivery() {
+  const l = liveryById(profile.livery);
+  if (playerCar.parent) playerCar.parent.remove(playerCar);
+  playerCar = buildCar(l.color, 'high');
+  stage.scene.add(playerCar);
+  renderGarage();
+}
+
+function renderGarage() {
+  const coinEl = document.getElementById('g3coins');
+  const idEl = document.getElementById('g3id');
+  const row = document.getElementById('liveryRow3d');
+  if (coinEl) coinEl.textContent = String(profile.coins);
+  if (idEl) idEl.textContent = profile.id;
+  if (!row) return;
+  row.innerHTML = '';
+  LIVERIES.forEach((l) => {
+    const owned = profile.liveries.indexOf(l.id) >= 0;
+    const on = profile.livery === l.id;
+    const b = document.createElement('button');
+    b.className = 'livery' + (on ? ' on' : '') + (owned ? '' : ' locked');
+    b.innerHTML = '<span class="sw" style="background:#' + l.color.toString(16).padStart(6, '0') + '"></span>' +
+      l.name + (owned ? '' : '<small>🔒 ' + l.price + ' 币</small>');
+    b.addEventListener('click', () => {
+      if (profile.liveries.indexOf(l.id) < 0) {
+        const res = buyLivery(profile, l);
+        if (res === 'poor') { hud.setMsg('金币不足 · 还差 ' + (l.price - profile.coins) + ' 币', 1.6); return; }
+        hud.setMsg('已解锁「' + l.name + '」', 1.4);
+      }
+      if (selectLivery(profile, l)) applyLivery();
+    });
+    row.appendChild(b);
+  });
+}
+renderGarage();
 const npcs = [];
 
 const player = {
