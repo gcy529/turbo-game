@@ -1,0 +1,25 @@
+{
+  "name": "逆反 3D · 极速狂飙",
+  "short_name": "逆反 3D",
+  "description": "真 3D 赛车 · 手机竖屏单手可玩 · 跑圈捡金币 · 智驾 · 电门氮气",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#05070e",
+  "theme_color": "#0b1230",
+  "icons": [
+    {
+      "src": "../icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
