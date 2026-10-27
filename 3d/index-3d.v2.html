@@ -43,7 +43,19 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 #skillUI3d.show{opacity:1}
 #skillPts3d{font-size:16px;font-weight:900;color:#ffd166;text-shadow:0 0 12px rgba(255,209,102,.8)}
 #skillBtns3d{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.skill-btn{padding:5px 10px;border-radius:8px;border:1.5px solid rgba(140,200,255,.3);background:rgba(6,12,22,.6);color:#e8f4ff;font-size:11px;font-weight:800;cursor:pointer;backdrop-filter:blur(6px);transition:all .15s}
+.skill-btn{padding:6px 10px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(6,12,22,.6);color:#e8f4ff;font-size:11px;font-weight:800;cursor:pointer;backdrop-filter:blur(6px);transition:all .15s;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.skill-btn b{font-size:14px;line-height:1}
+.skill-btn i{font-style:normal;font-size:10px;opacity:.72;letter-spacing:0}
+/* 手机：技能改成 2×2 大钮，贴在右下触控键上方 —— 原来 24px 高的小胶囊手指点不到 */
+@media (pointer:coarse){
+  #skillUI3d{left:auto;right:10px;top:auto;bottom:126px;align-items:flex-end;gap:6px}
+  #skillPts3d{font-size:11px;padding:3px 8px}
+  #skillBtns3d{display:grid;grid-template-columns:repeat(2,56px);gap:8px;justify-content:end}
+  .skill-btn{width:56px;height:56px;border-radius:15px;padding:0;flex-direction:column;gap:1px;justify-content:center;font-size:10px;background:rgba(6,12,22,.72)}
+  .skill-btn b{font-size:21px}
+  .skill-btn i{font-size:9px;opacity:.8}
+  .skill-btn:active{transform:scale(.94)}
+}
 .skill-btn:hover{background:rgba(140,200,255,.2)}
 .skill-btn.active{border-color:#ffd166;box-shadow:0 0 10px rgba(255,209,102,.5)}
 #skillBar3d{display:none;align-items:center;gap:8px;padding:6px 12px;border-radius:10px;background:rgba(6,12,22,.8);border:1.5px solid rgba(140,200,255,.4);backdrop-filter:blur(8px)}
@@ -79,10 +91,10 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
   <div id="skillPts3d">⭐ 0</div>
   <div id="skillBar3d"><span class="skill-name"></span><span class="skill-timer"></span></div>
   <div id="skillBtns3d">
-    <button class="skill-btn" data-skill="shield">🛡️ 护盾 (50)</button>
-    <button class="skill-btn" data-skill="magnet">🧲 磁力 (40)</button>
-    <button class="skill-btn" data-skill="slow">⏳ 缓时 (60)</button>
-    <button class="skill-btn" data-skill="megaboost">🔥 氮气 (80)</button>
+    <button class="skill-btn" data-skill="shield"><b>🛡️</b><i>护盾 50</i></button>
+    <button class="skill-btn" data-skill="magnet"><b>🧲</b><i>磁力 40</i></button>
+    <button class="skill-btn" data-skill="slow"><b>⏳</b><i>缓时 60</i></button>
+    <button class="skill-btn" data-skill="megaboost"><b>🔥</b><i>氮气 80</i></button>
   </div>
 </div>
 <div id="pauseBtn" title="暂停 / 设置">⏸</div>
