@@ -1,12 +1,12 @@
-// Turbo Racer Service Worker v6 — 网络优先，缓存兜底
-const CACHE = 'turbo-racer-v6';
+// Turbo Racer Service Worker v7 — 网络优先，缓存兜底
+const CACHE = 'turbo-racer-v7';
 
 // 预缓存：2D 主站 + 3D 版（three.js 已本地化，离线也能跑 3D）
 const PRECACHE = [
   './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
   './index-3d.html', './3d/index-3d.v2.html',
   './3d/js/config.js', './3d/js/profile.js', './3d/js/scene.js', './3d/js/track.js', './3d/js/car.js',
-  './3d/js/fx.js', './3d/js/input.js', './3d/js/hud.js', './3d/js/main.js',
+  './3d/js/fx.js', './3d/js/input.js', './3d/js/hud.js', './3d/js/audio.js', './3d/js/main.js',
   './3d/vendor/three.module.js',
   './3d/vendor/addons/utils/BufferGeometryUtils.js',
   './3d/vendor/addons/environments/RoomEnvironment.js'

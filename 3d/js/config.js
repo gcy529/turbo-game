@@ -99,6 +99,16 @@ export const THEME = {
   },
 };
 
+// ── 驾驶辅助：自动油门常开（手机单手不用管油门），智驾 = 自动走线 + 避车 ──
+export const DRIVE = {
+  autopilot: false,      // 默认手动转向；HUD 上「智驾」一按就托管
+  lookAhead: 0.055,      // 弯道前瞻（占整圈比例）
+  innerLine: 0.55,       // 走内线的横向幅度
+  avoidSide: 0.7,        // 避车时让开的横向距离
+  avoidRange: 80,        // 避车前瞻（米）——96 速下 80 米≈0.8 秒，够打一次方向
+  avoidGap: 0.9,         // 横向多近才需要躲
+};
+
 export const CAMERA = {
   fov: 70,
   fovBoost: 16,
@@ -106,7 +116,9 @@ export const CAMERA = {
   far: 900,
   modes: [
     { name: '跟随', height: 3.6, dist: 9.6 },
-    { name: '车头', height: 1.75, dist: 1.3 },
+    // 车头视角：dist 为负 = 相机挪到车头前面，真正第一人称；
+    // 原来是 +1.3（在车尾后面贴着），半屏都被自己的车顶挡住。
+    { name: '车头', height: 1.3, dist: -2.5 },
     { name: '远景', height: 9.2, dist: 16 },
   ],
 };
@@ -118,6 +130,7 @@ export const KEYS = {
   gyro: 'turbo-racer-gyro',
   invert: 'turbo3d-invert',
   unlocked: 'turbo3d-unlocked',
+  autopilot: 'turbo3d-autopilot',
 };
 
 export function store(key, value) {

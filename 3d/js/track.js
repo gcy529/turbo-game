@@ -27,20 +27,28 @@ function asphaltTexture() {
   return tex;
 }
 
-function checkerTexture() {
-  const size = 64, cells = 8;
+// 棋盘格：按「列 × 行」直接生成，格子尺寸可控。
+// 老版本用 8×8 贴图再 repeat(10,2)，起点线在远处被压成一条纯白横杠，
+// 玩家根本认不出那是起跑线 —— 现在改成一次性铺满，格子大而清楚。
+function checkerTexture(cols = 16, rows = 4, cell = 32) {
   const c = document.createElement('canvas');
-  c.width = c.height = size;
+  c.width = cols * cell;
+  c.height = rows * cell;
   const g = c.getContext('2d');
-  const step = size / cells;
-  for (let y = 0; y < cells; y++) {
-    for (let x = 0; x < cells; x++) {
-      g.fillStyle = (x + y) % 2 ? '#12141a' : '#f2f5fa';
-      g.fillRect(x * step, y * step, step, step);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      g.fillStyle = (x + y) % 2 ? '#14161c' : '#f6f9ff';
+      g.fillRect(x * cell, y * cell, cell, cell);
     }
   }
   const tex = new THREE.CanvasTexture(c);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;    // 不标 sRGB 的话白格会发灰、黑格会发白，远看就是一条白杠
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  // 关掉 mipmap：起跑线只有两行格子，远处一开 mip 就被平均成一条灰白杠
+  tex.generateMipmaps = false;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.anisotropy = 8;
   return tex;
 }
 
@@ -104,10 +112,10 @@ export function buildTrack(scene) {
     const a = frames[i - 1], b = frames[i];
     const y = 0.035;
     dashPos.push(
-      a.p.x - a.side.x * 0.13, a.p.y + y, a.p.z - a.side.z * 0.13,
-      a.p.x + a.side.x * 0.13, a.p.y + y, a.p.z + a.side.z * 0.13,
-      b.p.x - b.side.x * 0.13, b.p.y + y, b.p.z - b.side.z * 0.13,
-      b.p.x + b.side.x * 0.13, b.p.y + y, b.p.z + b.side.z * 0.13
+      a.p.x - a.side.x * 0.07, a.p.y + y, a.p.z - a.side.z * 0.07,
+      a.p.x + a.side.x * 0.07, a.p.y + y, a.p.z + a.side.z * 0.07,
+      b.p.x - b.side.x * 0.07, b.p.y + y, b.p.z - b.side.z * 0.07,
+      b.p.x + b.side.x * 0.07, b.p.y + y, b.p.z + b.side.z * 0.07
     );
     dashIdx.push(dvi, dvi + 1, dvi + 2, dvi + 1, dvi + 3, dvi + 2);
     dvi += 4;
@@ -222,28 +230,78 @@ export function buildTrack(scene) {
     color: 0xc3ccdb, roughness: 0.35, metalness: 0.85, side: THREE.DoubleSide,
   })));
 
-  // ── 起点 / 终点格子线 ──
-  // 原来画在 frames[0]（玩家脚下偏后），起步时整条被车和相机挡住，
-  // 看起来就像「3D 没有起跑线」。改成放在车前方 3 段处 + 加宽加密，
-  // 终点线上再补一条，跑完一圈能看见冲线。
-  function addCheckerLine(frameIdx, wide) {
+  // ── 起点 / 终点 ──
+  // 之前：线画在 frames[3]（车前 9 米），贴图 repeat(10,2) 让远处糊成白条，
+  // 玩家既看不出是起跑线，GO 之后又立刻被甩到车后 —— 观感就成了「车在线前面」。
+  // 现在：线放回车前 6 米（frames[2]）、格子放大到一眼可辨，并且加一座起跑门架，
+  // 起步和冲刺时都清清楚楚。
+  function addCheckerLine(frameIdx, len = 6, cols = 9, rows = 3) {
     const f = frames[((frameIdx % SEG) + SEG) % SEG];
     const plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(ROAD_W - 0.5, wide || 4.2),
-      new THREE.MeshStandardMaterial({ map: checkerTexture(), roughness: 0.62, metalness: 0.05 })
+      new THREE.PlaneGeometry(ROAD_W - 0.4, len),
+      // 用 MeshBasic + toneMapped:false：起跑线要像贴纸一样恒亮，
+      // 走 Standard 会被黄昏强光 + ACES 压成一片灰白，格子就看不见了
+      new THREE.MeshBasicMaterial({ map: checkerTexture(cols, rows), toneMapped: false })
     );
-    plane.material.map.repeat.set(10, 2);
     plane.rotation.x = -Math.PI / 2;
     const holder = new THREE.Group();
     holder.add(plane);
-    holder.position.set(f.p.x, f.p.y + 0.045, f.p.z);
+    holder.position.set(f.p.x, f.p.y + 0.05, f.p.z);
     holder.rotation.y = Math.atan2(f.tan.x, f.tan.z);
     holder.receiveShadow = true;
     group.add(holder);
     return holder;
   }
-  addCheckerLine(3);          // 起跑线：车前方约 9 米
-  addCheckerLine(-3);         // 终点线：回到 t=0 前的同一位置（环形）
+
+  // 起跑门架：两根立柱 + 横梁 + 一条棋盘横幅（纯视觉，不参与碰撞）
+  function addGate(frameIdx, banner) {
+    const f = frames[((frameIdx % SEG) + SEG) % SEG];
+    const holder = new THREE.Group();
+    holder.position.set(f.p.x, f.p.y, f.p.z);
+    holder.rotation.y = Math.atan2(f.tan.x, f.tan.z);
+
+    const postH = 7.2, off = ROAD_W / 2 + 1.5;
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x9aa6b8, roughness: 0.4, metalness: 0.75 });
+    for (const s of [-1, 1]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, postH, 8), postMat);
+      post.position.set(s * off, postH / 2, 0);
+      holder.add(post);
+      // 柱顶红点，远处也能认出来
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8),
+        new THREE.MeshStandardMaterial({ color: 0xe8474f, emissive: 0xe8474f, emissiveIntensity: 0.9, roughness: 0.4 }));
+      cap.position.set(s * off, postH + 0.15, 0);
+      holder.add(cap);
+    }
+    const beam = new THREE.Mesh(
+      new THREE.BoxGeometry(off * 2 + 0.7, 0.5, 0.5),
+      new THREE.MeshStandardMaterial({ color: 0x7c8798, roughness: 0.45, metalness: 0.7 })
+    );
+    beam.position.set(0, postH, 0);
+    holder.add(beam);
+
+    // 横幅：面向来车，双面可见
+    const banner3 = new THREE.Mesh(
+      new THREE.PlaneGeometry(off * 2 - 1.2, 1.7),
+      new THREE.MeshStandardMaterial({
+        map: checkerTexture(banner === 'finish' ? 18 : 12, 2), side: THREE.DoubleSide,
+        roughness: 0.5, metalness: 0.05,
+        emissive: banner === 'finish' ? 0x3a2a2a : 0x22303f, emissiveIntensity: 0.5,
+      })
+    );
+    banner3.position.set(0, postH - 1.35, 0);
+    holder.add(banner3);
+
+    holder.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+    group.add(holder);
+    return holder;
+  }
+
+  // 起跑线：车头前 4 米左右起（frames[3]≈9 米），格子做大，
+  // 远看是黑白块而不是一条白杠；门架再往后放，别压在线头上。
+  addCheckerLine(3, 6, 6, 2);
+  addCheckerLine(-3, 6, 6, 2);   // 终点线：环形回绕的同一处
+  addGate(8, 'start');           // 起跑门架 ≈25 米
+  addGate(-8, 'finish');         // 终点门架
 
 
   // ── 路边景物：树与路灯（InstancedMesh，控制 draw call）──

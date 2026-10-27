@@ -2,19 +2,21 @@
 // main.js · 装配与主循环（状态机 / 圈数 / NPC / 碰撞 / 相机 / 测试接口）
 // ─────────────────────────────────────────────────────────────
 import * as THREE from 'three';
-import { CAR, RACE, NPC, CAMERA, FX, NITRO } from './config.js';
+import { CAR, RACE, NPC, CAMERA, FX, NITRO, DRIVE, KEYS, store } from './config.js';
 import { createStage } from './scene.js';
 import { buildTrack } from './track.js';
 import { buildCar, poseCar, headingOf, updateWheels, applyEnvIntensity, setBrake } from './car.js';
 import { createInput } from './input.js';
 import { createParticles, createCoins } from './fx.js';
 import { createHud } from './hud.js';
+import { createAudio } from './audio.js';
 import { readProfile, buyLivery, selectLivery, addCoins, bumpStats } from './profile.js';
 
 const canvas = document.getElementById('game');
 const stage = createStage(canvas);
 const track = buildTrack(stage.scene);
 const hud = createHud();
+const audio = createAudio();
 const particles = createParticles(stage.scene);
 // ── 车库：3D 入口免费，车漆用金币解锁（和 2D 共用同一份档案）──
 const profile = readProfile();
@@ -70,7 +72,7 @@ renderGarage();
 const npcs = [];
 
 const player = {
-  t: 0, lateral: 0.15, speed: 0, lap: 1, totalLaps: RACE.laps, lastT: 0,
+  t: 0, lateral: 0.34, speed: 0, lap: 1, totalLaps: RACE.laps, lastT: 0,
   finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0,
   driftScore: 0, pushLateral: 0, recovered: 0,
   // ── 金币 / 氮气 ──
@@ -82,6 +84,55 @@ const player = {
 };
 let running = false, camMode = 0, clock = 0, countdown = 0, raceClock = 0, lapStartClock = 0, shake = 0, roll = 0;
 let paused = false;
+
+// ── 智驾（自动驾驶）：自动走内线 + 避让 NPC，玩家一按方向就临时接管 ──
+let autopilot = store(KEYS.autopilot) === '1';
+
+/** 返回 -1..1 的转向量，和手动输入同一条通道 */
+function autoSteer() {
+  // 1) 前瞻：只取「最近的显著弯」，远处最急弯不该让车一路贴边
+  let curve = 0, bestScore = 0;
+  const N = 8;
+  for (let i = 1; i <= N; i++) {
+    const c = track.curvatureAt(player.t + DRIVE.lookAhead * (i / N));
+    const score = Math.abs(c) * (1 - (i / N) * 0.55);      // 近处权重更高
+    if (score > bestScore) { bestScore = score; curve = c; }
+  }
+  let target = Math.max(-DRIVE.innerLine, Math.min(DRIVE.innerLine, curve * 13));
+
+  // 2) 避车：只躲「同一纵向走廊」里前方 2~80 米的车，往空的一侧让
+  //    （原来按 target 算 gap，几乎每辆车都算「要躲」，于是左右横跳把自己甩到墙上）
+  for (const n of npcs) {
+    let dt2 = n.t - player.t;
+    if (dt2 < -0.5) dt2 += 1;
+    if (dt2 > 0.5) dt2 -= 1;
+    const along = dt2 * track.trackLen;
+    if (along < 2 || along > DRIVE.avoidRange) continue;
+    if (Math.abs(n.lateral - player.lateral) > DRIVE.avoidGap) continue;
+    target = n.lateral > player.lateral ? n.lateral - DRIVE.avoidSide : n.lateral + DRIVE.avoidSide;
+    break;
+  }
+  // 3) 快贴墙了先回中，避车让位不能把人顶到护栏上
+  if (Math.abs(player.lateral) > 0.86) target *= 0.25;
+  target = Math.max(-0.86, Math.min(0.86, target));
+
+  // 3) 方向控制：偏差越大打得越狠，进死区不打方向
+  const diff = target - player.lateral;
+  if (Math.abs(diff) < 0.045) return 0;
+  return Math.sign(diff) * Math.min(1, Math.abs(diff) * 5.5);
+}
+
+function setAutopilot(v, silent) {
+  autopilot = !!v;
+  store(KEYS.autopilot, autopilot ? '1' : '0');
+  const ab = document.getElementById('autoBtn3d');
+  if (ab) {
+    ab.textContent = autopilot ? '智驾' : '手动';
+    ab.classList.toggle('on', autopilot);
+    ab.title = autopilot ? '智驾中：自动走线避车（按方向键可临时接管）' : '手动驾驶：自己打方向';
+  }
+  if (!silent) hud.setMsg(autopilot ? '智驾开启 · 自动走线避车' : '切回手动驾驶', 1.4);
+}
 
 function spawnNpcs() {
   for (let i = 0; i < NPC.count; i++) {
@@ -107,7 +158,7 @@ function refreshEnvIntensity() {
 spawnNpcs();
 
 const input = createInput({
-  onCamera: () => { camMode = (camMode + 1) % CAMERA.modes.length; hud.setMsg(CAMERA.modes[camMode].name, 0.7); },
+  onCamera: () => { camMode = (camMode + 1) % CAMERA.modes.length; hud.setMsg(CAMERA.modes[camMode].name, 0.7); if (window.__syncSettings) window.__syncSettings(); },
   onRestart: () => restart(),
   onStart: () => { if (!running) startRace(); },
   onNitro: () => tryNitro(),
@@ -151,19 +202,22 @@ function tryNitro() {
   player.nitroTimer = Math.min(NITRO.time * 2, player.nitroTimer + NITRO.time);
   player.nitroFlash = 0.4;
   shake = Math.max(shake, 0.32);
+  audio.nitro();
   hud.setMsg('🔥 氮气释放', 0.9);
   return true;
 }
 
 // ── 玩法更新 ──
 function update(dt) {
-  if (!running || paused) { hud.tickMsg(dt); return; }
+  if (!running || paused) { hud.tickMsg(dt); audio.engineOff(); return; }
   clock += dt;
   if (countdown > 0) {
     const before = Math.ceil(countdown);
     countdown -= dt;
+    if (Math.ceil(countdown) !== before) audio.beep(before === 1);
     hud.setMsg(String(Math.max(1, before)), 0.5);
-    if (countdown <= 0) { hud.setMsg('GO!', 0.8); raceClock = 0; lapStartClock = 0; }
+    if (countdown <= 0) { hud.setMsg('GO!', 0.8); raceClock = 0; lapStartClock = 0; audio.beep(true); }
+    audio.engine(0, false);
     hud.tickMsg(dt);
     return;
   }
@@ -181,7 +235,9 @@ function update(dt) {
   const speedCap = player.nitroTimer > 0 ? CAR.maxSpeed * NITRO.boost : CAR.maxSpeed;
   player.speed = Math.min(speedCap, player.speed);
 
-  const steer = input.steerAxis(dt);
+  // 智驾时自动打方向；玩家一碰方向键/倾斜手机就临时接管
+  const manualSteer = input.steerAxis(dt);
+  const steer = (autopilot && Math.abs(manualSteer) < 0.02) ? autoSteer() : manualSteer;
   if (Math.abs(steer) > 0.5 && player.speed > CAR.maxSpeed * 0.5) player.driftScore += dt * 60;
   // ── 集气：漂移是本作唯一的主动操作，气从这里来（和 2D 同一套）──
   if (Math.abs(steer) > 0.5 && player.speed > CAR.maxSpeed * 0.45) {
@@ -214,10 +270,13 @@ function update(dt) {
       hud.setRunning(false);
       input.unlock();
       settleRace();
+      audio.finish();
+      audio.engineOff();
       hud.setMsg('完成！' + player.finishTime.toFixed(2) + 's', 4);
       setTimeout(() => { hud.syncInvert(input.state.invert, true); hud.countdownPanel(player); }, 700);
     } else {
       coins.reshuffle();        // 新一圈，金币重新铺出来
+      audio.beep(true);
       hud.setMsg('第 ' + (player.lap - 1) + ' 圈 ' + lapTime.toFixed(2) + 's', 1.6);
     }
   }
@@ -250,10 +309,12 @@ function update(dt) {
       player.hitCooldown = RACE.hitCooldown;
       hud.setMsg(rel > 40 ? '迎面撞！' : '碰撞！', 0.8);
       shake = Math.max(shake, rel > 40 ? 0.5 : 0.26);
+      audio.hit(Math.min(1, rel / 80));
     }
   }
 
   setBrake(playerCar, input.keys.brake || player.speed < 0);
+  audio.engine(player.speed, true);
 
   // ── 拾取金币：直接进钱包（与 2D 共用同一份档案）──
   const got = coins.collect(playerCar.position);
@@ -267,6 +328,7 @@ function update(dt) {
   }
   // 连吃一串金币时不要每枚都闪提示，0.7 秒内只闪一次
   if (got.length) {
+    audio.coin();
     const now = clock;
     if (!player._lastCoinMsg || now - player._lastCoinMsg > 0.7) {
       player._lastCoinMsg = now;
@@ -348,7 +410,8 @@ function poseAndRender(dt, doRender) {
 }
 
 function startRace() {
-  Object.assign(player, { t: 0, lateral: 0.15, speed: 0, lap: 1, lastT: 0, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0, coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins });
+  audio.init();          // 必须由用户手势触发，否则移动端 AudioContext 起不来
+  Object.assign(player, { t: 0, lateral: 0.34, speed: 0, lap: 1, lastT: 0, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0, coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins });
   player._settled = false;
   coins.reset();
   particles.reset();
@@ -370,6 +433,7 @@ function restart() {
   paused = false;
   hud.setRunning(false);
   player.speed = 0;
+  audio.engineOff();
   const pp = document.getElementById('pausePanel');
   if (pp) pp.classList.remove('show');
   hud.restorePanel();      // 结算面板换回首页，否则「R 重开」会回到成绩页
@@ -389,6 +453,7 @@ function quitToMenu() {
   paused = false;
   hud.setRunning(false);
   player.speed = 0;
+  audio.engineOff();
   const pp = document.getElementById('pausePanel');
   if (pp) pp.classList.remove('show');
   hud.restorePanel();
@@ -426,8 +491,49 @@ hud.setOnAgain(() => startRace());   // 结算页「再来一局」原地重开�
   if (pst) pst.addEventListener('click', () => { setPaused(false); startRace(); });
   const pq = document.getElementById('pauseQuit');
   if (pq) pq.addEventListener('click', quitToMenu);
+
+  // 智驾开关：HUD 上那个「智驾 / 手动」，点一下切换（第一次点会提示）
+  const ab = document.getElementById('autoBtn3d');
+  if (ab) ab.addEventListener('click', () => setAutopilot(!autopilot));
+  setAutopilot(autopilot, true);
+
+  // 设置区：音效 / 主题 / 陀螺仪 / 视角（和 2D 共用同一个主题键）
+  const sb = document.getElementById('soundBtn3d');
+  const tb = document.getElementById('themeBtn3d');
+  const gb = document.getElementById('gyroBtn3d');
+  const cb = document.getElementById('camBtn3d');
+  const syncSettings = () => {
+    if (sb) { sb.textContent = audio.isOn() ? '🔊 音效' : '🔇 静音'; sb.className = 'setMini ' + (audio.isOn() ? 'on' : 'off'); }
+    if (tb) tb.textContent = stage.theme.name === 'light' ? '☀️ 白天' : '🌗 黄昏';
+    if (gb) { gb.textContent = '📱 陀螺仪'; gb.className = 'setMini ' + (input.state.gyro.enabled ? 'on' : 'off'); }
+    if (cb) cb.textContent = '🎥 ' + CAMERA.modes[camMode].name;
+  };
+  if (sb) sb.addEventListener('click', () => { audio.setOn(!audio.isOn()); syncSettings(); audio.click(); });
+  if (tb) tb.addEventListener('click', () => {
+    const next = stage.theme.name === 'light' ? 'dark' : 'light';
+    stage.applyTheme(next);
+    store(KEYS.theme, next);
+    refreshEnvIntensity();
+    syncSettings();
+  });
+  if (gb) gb.addEventListener('click', () => {
+    const g = input.state.gyro;
+    g.enabled = !g.enabled;
+    store(KEYS.gyro, g.enabled ? '1' : '0');
+    if (g.enabled) input.armGyro(); else { g.steer = 0; g.raw = 0; g.base = null; }
+    syncSettings();
+  });
+  if (cb) cb.addEventListener('click', () => {
+    camMode = (camMode + 1) % CAMERA.modes.length;
+    hud.setMsg(CAMERA.modes[camMode].name, 0.7);
+    syncSettings();
+  });
+  syncSettings();
+  window.__syncSettings = syncSettings;
+
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Escape') { setPaused(!paused); e.preventDefault(); }
+    else if (e.code === 'KeyT') { setAutopilot(!autopilot); e.preventDefault(); }
   });
 }
 hud.applyLock(); hud.update(player, 0);
@@ -447,6 +553,8 @@ window.__TURBO = {
   addCoins(n) { const v = addCoins(profile, n); hud.setCoinBalance(profile.coins); renderGarage(); return v; },
   nitroFull() { player.charge = NITRO.segs; return player.charge; },
   nitro() { player.charge = NITRO.segs; return tryNitro(); },
+  auto(on) { setAutopilot(on === undefined ? !autopilot : on, true); return autopilot; },
+  autoState() { return autopilot; },
   start(opts) {
     startRace();
     if (opts && opts.skipCountdown) countdown = 0;
@@ -472,6 +580,7 @@ window.__TURBO = {
       coinGot: player.coinGot, coinsEarned: player.coinsEarned,
       charge: +player.charge.toFixed(2), nitroTimer: +player.nitroTimer.toFixed(2),
       coinsBalance: profile.coins,
+      autopilot,
       drawCalls: stage.renderer.info.render.calls, triangles: stage.renderer.info.render.triangles,
     };
   },
