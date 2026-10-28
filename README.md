@@ -172,7 +172,9 @@ turbo-game/
 ├── manifest.json    PWA 配置
 ├── sw.js            Service Worker（离线缓存，含 3D 资源）
 ├── icon-192.png     PWA 图标
-├── icon-512.png     PWA 图标
+├── icon-512.png     PWA 图标（any）
+├── icon-maskable-512.png  PWA 图标（maskable，安卓桌面不裁边）
+├── og-image.png     分享卡片图 1200×630（微信 / QQ / X 抓这张）
 ├── netlify.toml     Netlify 配置
 ├── _headers         Cloudflare / Netlify 通用响应头
 ├── _redirects       Cloudflare Pages 重定向

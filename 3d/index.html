@@ -12,10 +12,11 @@
 <title>TURBO 3D · 极速狂飙（模块化重构版）</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
 html,body{width:100%;height:100%;overflow:hidden;background:#05070e;
   transition:background .4s;font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:#eaf2ff;user-select:none;-webkit-tap-highlight-color:transparent}
 #game{display:block;width:100vw;height:100vh}
-#hud{position:fixed;left:14px;top:12px;z-index:10;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:13px;background:rgba(6,12,22,.6);border:1px solid rgba(120,190,255,.25);backdrop-filter:blur(8px)}
+#hud{position:fixed;left:14px;top:calc(12px + var(--sat));z-index:10;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:13px;background:rgba(6,12,22,.6);border:1px solid rgba(120,190,255,.25);backdrop-filter:blur(8px)}
 #spd{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
 .u{font-size:10px;color:#7fb6e8;font-weight:700;letter-spacing:1px}
 #meta{font-size:11.5px;color:#9dbdd8;line-height:1.5;font-variant-numeric:tabular-nums}
@@ -45,12 +46,12 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 .tb-nitro.ready{color:#04231a;background:linear-gradient(160deg,#8ef7c8,#38d99a);border-color:rgba(180,255,230,.9);box-shadow:0 0 20px rgba(90,240,200,.7),0 6px 20px rgba(0,0,0,.45)}
 .tb-nitro.fire{color:#2a1200;background:linear-gradient(160deg,#ffd166,#ff8a3c);border-color:rgba(255,190,80,.9);box-shadow:0 0 24px rgba(255,150,60,.85),0 6px 20px rgba(0,0,0,.45)}
 @media (hover:none) and (pointer:coarse){
-  #touch{display:flex;align-items:flex-end;justify-content:center;gap:16px;padding-bottom:20px}
+  #touch{display:flex;align-items:flex-end;justify-content:center;gap:16px;padding-bottom:calc(20px + var(--sab))}
 }
 #invBadge{display:inline-block;font-size:11px;font-weight:900;letter-spacing:1.5px;padding:6px 16px;border-radius:999px;background:rgba(255,180,60,.18);border:1.5px solid rgba(255,190,80,.6);color:#ffc078;margin-bottom:14px;animation:invPulse 1.6s ease-in-out infinite}
 #invBadge.off{background:rgba(255,255,255,.06);border-color:rgba(140,200,255,.28);color:#8ba3bd;animation:none}
 @keyframes invPulse{0%,100%{opacity:1}50%{opacity:.6}}
-#fpsBox{position:fixed;right:12px;bottom:12px;z-index:13;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums}
+#fpsBox{position:fixed;right:12px;bottom:calc(12px + var(--sab));z-index:13;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums}
 #keyHints b{color:#fff;font-weight:800}
 /* 车库：3D 入口免费，车漆用金币解锁（与 2D 共用存档） */
 #garage3d{margin:0 0 14px;width:100%;max-width:300px}
@@ -64,7 +65,7 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
  .livery.locked{opacity:.6}
  .livery small{display:block;font-size:9px;opacity:.8;margin-top:2px;letter-spacing:0}
 /* ── 金币 HUD：本局拾取数 + 余额（技能系统已下线）── */
-#coinHud3d{position:fixed;left:14px;top:74px;z-index:11;display:flex;align-items:center;gap:7px;
+#coinHud3d{position:fixed;left:14px;top:calc(74px + var(--sat));z-index:11;display:flex;align-items:center;gap:7px;
   padding:5px 11px;border-radius:999px;background:rgba(6,12,22,.66);border:1px solid rgba(255,201,60,.34);
   backdrop-filter:blur(6px);opacity:0;transition:opacity .25s;pointer-events:none}
 #coinHud3d.show{opacity:1}
@@ -91,10 +92,10 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 #nitro3d.fire .nbar u:not(.full):not(.half){background:rgba(255,255,255,.08);border-color:rgba(255,150,90,.3);box-shadow:none}
 #nitro3d.fire .nhead b{color:#ffd166;text-shadow:0 0 14px rgba(255,180,60,.9)}
 
-#pauseBtn{position:fixed;right:14px;top:14px;z-index:14;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#cfe8ff;background:rgba(6,12,22,.7);border:1px solid rgba(120,190,255,.28);cursor:pointer;backdrop-filter:blur(6px);user-select:none}
+#pauseBtn{position:fixed;right:14px;top:calc(14px + var(--sat));z-index:14;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#cfe8ff;background:rgba(6,12,22,.7);border:1px solid rgba(120,190,255,.28);cursor:pointer;backdrop-filter:blur(6px);user-select:none}
 #pauseBtn:active{background:rgba(140,200,255,.25)}
 /* 智驾开关：手动 / 智驾（自动走线避车）一眼可辨 */
-#autoBtn3d{position:fixed;right:62px;top:14px;z-index:14;height:40px;padding:0 13px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+#autoBtn3d{position:fixed;right:62px;top:calc(14px + var(--sat));z-index:14;height:40px;padding:0 13px;border-radius:11px;display:flex;align-items:center;justify-content:center;
   font-size:11.5px;font-weight:900;letter-spacing:1.2px;color:#9dbdd8;background:rgba(6,12,22,.7);
   border:1px solid rgba(120,190,255,.28);cursor:pointer;backdrop-filter:blur(6px);user-select:none;
   font-family:inherit;transition:all .18s}

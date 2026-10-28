@@ -12,8 +12,23 @@
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="manifest" href="manifest.json" />
 <title>极速狂飙 Turbo Game</title>
+<!-- 分享卡片：微信 / QQ / X / Discord 抓的就是这几行，之前一个都没有，分享出去是白板。
+     og:image 必须是绝对地址（微信只认绝对 URL）；换域名的话记得同步改这一行。 -->
+<meta name="description" content="极速狂飙 Turbo Game · 纯前端伪 3D 赛车，手机竖屏单手可玩，离线可跑。" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="极速狂飙 Turbo Game" />
+<meta property="og:title" content="极速狂飙 Turbo Game · 伪 3D 赛车" />
+<meta property="og:description" content="纯前端伪 3D 赛车 · 手机竖屏单手可玩 · 4 车 4 图 4 天气 · 双人同屏 · 离线可跑" />
+<meta property="og:image" content="https://gcy529.github.io/turbo-game/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://gcy529.github.io/turbo-game/" />
+<meta name="twitter:card" content="summary_large_image" />
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
+  /* 全面屏安全区：iPhone 刘海 / 灵动岛 / 底部 Home 条。viewport 是 viewport-fit=cover，
+     不加这个的话触摸键下半截会压进系统手势区（上滑直接退到桌面）。 */
+  :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
   .hide{display:none!important}
   /* ── 日间主题 ── */
   body[data-theme='light']{background:#f4f1ea;color:#12233a}
@@ -26,6 +41,8 @@
   body[data-theme='light'] .meta b{color:#12233a}
   body[data-theme='light'] #msg{color:#12233a;text-shadow:0 0 40px rgba(47,127,208,.5)}
   body[data-theme='light'] #settingsBtn,body[data-theme='light'] .vbtn,body[data-theme='light'] #viewBtn,body[data-theme='light'] #restartBtn{background:rgba(255,255,255,.85);border-color:rgba(40,80,140,.3);color:#2a4562}
+  /* 选中态要在同一层级重新声明，否则被上面那条 (0,2,1) 压掉，浅色下看不出当前视角 */
+  body[data-theme='light'] .vbtn.sel{background:rgba(42,157,143,.20);border-color:rgba(42,157,143,.85);color:#0f5a4e;box-shadow:0 0 10px rgba(42,157,143,.3)}
   body[data-theme='light'] #pace{background:rgba(255,255,255,.88);border-color:rgba(200,150,40,.4)}
   body[data-theme='light'] #pace .txt{color:#1a2434}
   body[data-theme='light'] #drift .val{color:#12233a;text-shadow:none}
@@ -41,7 +58,7 @@
   body[data-theme='light'] .setlabel small{color:#5a7695}
   body[data-theme='light'] #settingsPanel{background:rgba(244,241,234,.94)}
   body[data-theme='light'] #lbPanel{background:rgba(40,80,140,.06);border-color:rgba(200,150,40,.35)}
-  #trackLabel{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:12;display:none;padding:4px 14px;border-radius:9px;background:rgba(6,12,22,.6);border:1px solid rgba(140,200,255,.25);font-size:11px;font-weight:800;letter-spacing:2px;color:#9dbdd8;-webkit-backdrop-filter: backdrop-filter:blur(6px);white-space:nowrap;pointer-events:none}
+  #trackLabel{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:12;display:none;padding:4px 14px;border-radius:9px;background:rgba(6,12,22,.6);border:1px solid rgba(140,200,255,.25);font-size:11px;font-weight:800;letter-spacing:2px;color:#9dbdd8;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);white-space:nowrap;pointer-events:none}
   body[data-theme='light'] #trackLabel{color:rgba(40,80,140,.5);background:rgba(255,255,255,.82)}
   body[data-theme='light'] .keys{color:#3a5570}
   body[data-theme='light'] .keys b{background:rgba(40,80,140,.1);border-color:rgba(40,80,140,.25);color:#12233a}
@@ -65,7 +82,7 @@
   body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent;color:#eaf2ff}
   #game{display:block;width:100vw;height:100vh}
   .hud{position:fixed;pointer-events:none;z-index:10}
-  .pbox{position:fixed;pointer-events:none;z-index:10;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 12px;border-radius:12px;background:rgba(6,12,22,.55);border:1px solid rgba(120,190,255,.22);-webkit-backdrop-filter: backdrop-filter:blur(8px)}
+  .pbox{position:fixed;pointer-events:none;z-index:10;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 12px;border-radius:12px;background:rgba(6,12,22,.55);border:1px solid rgba(120,190,255,.22);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
   .p1box{left:14px;top:12px;border-color:rgba(255,90,110,.45)}
   .p2box{left:14px;top:calc(50% + 12px);border-color:rgba(90,200,255,.45)}
   .tag{font-size:12px;font-weight:900;letter-spacing:2px;padding:3px 9px;border-radius:7px}
@@ -199,7 +216,7 @@
   body[data-theme='light'] .rBtnDaily{color:#b05a10;border-color:rgba(200,140,30,.5)}
     #overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(18,36,72,.9),rgba(4,6,14,.97));z-index:20;transition:opacity .35s;padding:20px}
   #overlay.hide{opacity:0;pointer-events:none}
-  .panel{text-align:center;padding:24px 30px;width:100%;box-sizing:border-box;border-radius:22px;background:rgba(10,18,34,.8);border:1px solid rgba(120,190,255,.22);box-shadow:0 24px 90px rgba(0,0,0,.7);-webkit-backdrop-filter: backdrop-filter:blur(16px);max-width:94vw}
+  .panel{text-align:center;padding:24px 30px;width:100%;box-sizing:border-box;border-radius:22px;background:rgba(10,18,34,.8);border:1px solid rgba(120,190,255,.22);box-shadow:0 24px 90px rgba(0,0,0,.7);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);max-width:94vw}
   .title{font-size:34px;font-weight:900;letter-spacing:4px;background:linear-gradient(180deg,#fff,#67c6ff 70%,#2f7fd0);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
   .sub{font-size:11px;letter-spacing:4px;color:#5f86ad;margin-bottom:20px;font-weight:700}
   .cols{display:flex;gap:34px;justify-content:center;margin-bottom:22px}
@@ -228,7 +245,7 @@
   .res{font-size:15px;color:#cfe4f7;margin-bottom:20px;line-height:1.9}
   .res b{color:#7ef0c0;font-size:19px}
   #touch{position:fixed;inset:0;z-index:11;pointer-events:none;display:none}
-  .tb{width:96px;height:96px;border-radius:50%;background:rgba(140,200,255,.22);border:3px solid rgba(140,200,255,.55);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#e8f4ff;pointer-events:auto;-webkit-backdrop-filter: backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0;box-shadow:0 6px 22px rgba(0,0,0,.45);margin:0 3px}
+  .tb{width:96px;height:96px;border-radius:50%;background:rgba(140,200,255,.22);border:3px solid rgba(140,200,255,.55);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#e8f4ff;pointer-events:auto;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0;box-shadow:0 6px 22px rgba(0,0,0,.45);margin:0 3px}
   .tb:active{background:rgba(140,200,255,.38)}
   .tb-gas{background:rgba(60,220,160,.25);border-color:rgba(80,230,170,.7);color:#c8ffe8}
   .tb-gas:active{background:rgba(60,220,160,.5)}
@@ -246,14 +263,14 @@
   /* ── 竖屏模式（默认）── */
   @media (orientation:portrait){
     /* 双人模式改为上下分屏（本来就是上下）*/
-    .p1box{top:8px;left:8px}
+    .p1box{top:calc(8px + var(--sat));left:8px}
     .p2box{top:calc(50% + 8px);left:8px}
     .pbox{padding:5px 10px;gap:6px}
     .spd{font-size:26px}
     .u{font-size:9px}
     .meta{font-size:10px}
     #pace{top:4px;padding:4px 12px}
-    #trackLabel{top:44px;font-size:10px;padding:3px 11px}
+    #trackLabel{top:calc(44px + var(--sat));font-size:10px;padding:3px 11px}
     #pace .ico{font-size:16px}
     #pace .txt{font-size:11.5px;letter-spacing:1px}
     #drift{right:8px;top:calc(50% - 34px)}
@@ -262,14 +279,14 @@
     #launch .q{font-size:32px;letter-spacing:3px}
     #launch .s{font-size:11px}
     #shortcut{bottom:calc(50% + 34px);font-size:12px;padding:4px 12px}
-    #settingsBtn{right:8px;top:8px;width:32px;height:32px;font-size:15px}
-    #restartBtn{right:48px;top:8px;width:38px;height:38px;font-size:21px}
-    #viewBar{left:8px;top:70px;gap:4px}
-    #autoWheelBtn{right:8px;top:44px;width:46px;height:46px}
+    #settingsBtn{right:8px;top:calc(8px + var(--sat));width:32px;height:32px;font-size:15px}
+    #restartBtn{right:48px;top:calc(8px + var(--sat));width:38px;height:38px;font-size:21px}
+    #viewBar{left:8px;top:calc(70px + var(--sat));gap:4px}
+    #autoWheelBtn{right:8px;top:calc(44px + var(--sat));width:46px;height:46px}
     #autoWheelBtn canvas{width:38px;height:38px}
-    #autoDriveTag{right:8px;top:96px;font-size:9px}
+    #autoDriveTag{right:8px;top:calc(96px + var(--sat));font-size:9px}
     .vbtn{width:29px;height:29px;font-size:11.5px;border-radius:8px}
-    #fpsBox{right:8px;bottom:8px;font-size:9.5px;padding:3px 7px}
+    #fpsBox{right:8px;bottom:calc(8px + var(--sab));font-size:9.5px;padding:3px 7px}
     .tb{width:92px;height:92px;font-size:33px}
     .panel{padding:16px 14px;max-height:96vh;overflow-y:auto}
     .title{font-size:24px;letter-spacing:3px}
@@ -332,7 +349,7 @@
     .cols{margin-bottom:12px}
   }
   /* 路书 */
-  #pace{position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:13;pointer-events:none;text-align:center;opacity:0;transition:opacity .3s;background:rgba(6,12,22,.6);padding:5px 16px;border-radius:10px;border:1px solid rgba(255,209,102,.3);-webkit-backdrop-filter: backdrop-filter:blur(6px)}
+  #pace{position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:13;pointer-events:none;text-align:center;opacity:0;transition:opacity .3s;background:rgba(6,12,22,.6);padding:5px 16px;border-radius:10px;border:1px solid rgba(255,209,102,.3);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
   #pace.on{opacity:1}
   #pace .ico{font-size:19px;line-height:1;color:#ffd166;text-shadow:0 0 12px rgba(255,209,102,.8);display:inline-block;margin-right:6px;vertical-align:middle}
   #pace .txt{display:inline-block;vertical-align:middle;font-size:13px;font-weight:800;letter-spacing:1.5px;color:#fff;white-space:nowrap}
@@ -401,8 +418,8 @@
   .cslider input[type=range]{-webkit-appearance:none;height:4px;border-radius:99px;background:rgba(255,255,255,.16);outline:none}
   .cslider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#8ef7c8;cursor:pointer;box-shadow:0 0 10px rgba(110,247,200,.6)}
   #viewBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
-  #settingsBtn{position:fixed;right:14px;top:14px;z-index:15;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#cfe8ff;-webkit-backdrop-filter: backdrop-filter:blur(8px);transition:background .15s,border-color .15s}
-  .vbtn{width:34px;height:34px;border-radius:9px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#8ba3bd;-webkit-backdrop-filter: backdrop-filter:blur(8px);transition:all .15s;user-select:none}
+  #settingsBtn{position:fixed;right:14px;top:14px;z-index:21;width:38px;height:38px;border-radius:11px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#cfe8ff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background .15s,border-color .15s}
+  .vbtn{width:34px;height:34px;border-radius:9px;background:rgba(10,18,34,.7);border:1px solid rgba(140,200,255,.28);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#8ba3bd;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:all .15s;user-select:none}
   .vbtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
   .vbtn.sel{background:rgba(60,220,160,.25);border-color:rgba(60,220,160,.75);color:#8ef7c8;box-shadow:0 0 14px rgba(60,220,160,.35)}
   #restartBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
@@ -413,7 +430,7 @@
   #settingsBtn:hover .gear.spin{animation-duration:1.1s}
   @keyframes gearSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   #settingsBtn:hover{background:rgba(30,50,90,.85);border-color:rgba(140,200,255,.55)}
-  #settingsPanel{position:fixed;inset:0;background:rgba(4,7,14,.86);z-index:30;display:none;align-items:center;justify-content:center;-webkit-backdrop-filter: backdrop-filter:blur(10px);padding:20px}
+  #settingsPanel{position:fixed;inset:0;background:rgba(4,7,14,.86);z-index:30;display:none;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);padding:20px}
   #settingsPanel.on{display:flex}
   .setbox{background:rgba(12,20,36,.96);border:1px solid rgba(120,190,255,.25);border-radius:20px;padding:28px 34px;min-width:320px;max-width:92vw;box-shadow:0 30px 90px rgba(0,0,0,.8)}
   .settitle{font-size:20px;font-weight:900;letter-spacing:3px;color:#fff;margin-bottom:22px;text-align:center}
@@ -584,9 +601,9 @@
 </div>
 <div id="autoDriveTag" style="position:fixed;right:14px;top:114px;z-index:15;display:none;padding:4px 10px;border-radius:8px;background:rgba(10,18,34,.75);border:1px solid rgba(140,200,255,.25);font-size:9.5px;font-weight:800;letter-spacing:1px;color:#8ba3bd;pointer-events:none">手动驾驶</div>
 <div id="viewBar" style="position:fixed;left:14px;top:82px;z-index:15;display:flex;flex-direction:column;gap:5px"><div class="vbtn" data-v="0" title="第一人称">1</div><div class="vbtn" data-v="1" title="默认视角">2</div><div class="vbtn" data-v="2" title="俯视视角">3</div></div>
-<div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:16;width:44px;height:44px;border-radius:12px;background:rgba(20,40,70,.85);border:2px solid rgba(140,200,255,.5);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:900;color:#8ef7c8;-webkit-backdrop-filter: backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);transition:background .15s">↻</div>
+<div id="restartBtn" title="重新开始 (R)" style="position:fixed;right:56px;top:14px;z-index:16;width:44px;height:44px;border-radius:12px;background:rgba(20,40,70,.85);border:2px solid rgba(140,200,255,.5);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:900;color:#8ef7c8;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.4);transition:background .15s">↻</div>
 <a id="elGitMark" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener" style="position:fixed;left:10px;bottom:3px;z-index:13;font-family:'Courier New',monospace;font-size:9px;font-weight:700;color:rgba(140,180,220,.4);text-decoration:none;letter-spacing:.7px;pointer-events:auto;white-space:nowrap">deepseek v4.1-flash -1017 <span style="color:rgba(142,247,200,.55)">&amp;</span> gcy529</a>
-<div id="fpsBox" style="position:fixed;right:14px;bottom:14px;z-index:14;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums;-webkit-backdrop-filter: backdrop-filter:blur(6px);pointer-events:none;letter-spacing:.5px">-- FPS</div>
+<div id="fpsBox" style="position:fixed;right:14px;bottom:14px;z-index:14;padding:4px 9px;border-radius:8px;background:rgba(6,12,22,.7);border:1px solid rgba(140,200,255,.22);font-size:10.5px;font-weight:800;color:#8ef7c8;font-variant-numeric:tabular-nums;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:none;letter-spacing:.5px">-- FPS</div>
 <div id="settingsBtn" title="设置"><span class="gear">⚙</span></div>
 <div id="settingsPanel">
   <div class="setbox">
@@ -754,13 +771,13 @@
   <!-- 单人：中下方三键 -->
   <div id="soloPad" style="position:fixed;inset:auto 0 0 0;height:190px;pointer-events:none">
     <!-- 左转：屏幕左边 -->
-    <div class="tb" id="a1l" style="position:absolute;left:16px;bottom:22px">◀</div>
+    <div class="tb" id="a1l" style="position:absolute;left:16px;bottom:calc(22px + var(--sab))">◀</div>
     <!-- 右转：屏幕右边 -->
-    <div class="tb" id="a1r" style="position:absolute;right:16px;bottom:22px">▶</div>
+    <div class="tb" id="a1r" style="position:absolute;right:16px;bottom:calc(22px + var(--sab))">▶</div>
     <!-- 起步/加速：中下 -->
-    <div class="tb tb-n2" id="a1g" style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%)"><b>N₂</b><i>氮气</i></div>
+    <div class="tb tb-n2" id="a1g" style="position:absolute;left:50%;bottom:calc(22px + var(--sab));transform:translateX(-50%)"><b>N₂</b><i>氮气</i></div>
     <!-- 手刹：左转上方偏内（留出空位，方便拇指上移） -->
-    <div class="tb tb-brake" id="a1b" style="position:absolute;right:16px;bottom:118px">🅿️</div>
+    <div class="tb tb-brake" id="a1b" style="position:absolute;right:16px;bottom:calc(128px + var(--sab))">🅿️</div>
   </div>
   <!-- 双人：上下各一组，都在中下方 -->
   <div id="duoPad" style="position:fixed;inset:0;pointer-events:none">
@@ -769,7 +786,7 @@
       <div class="tb tb-gas" id="d1g">▲</div>
       <div class="tb" id="d1r">▶</div>
     </div>
-    <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:18px;pointer-events:auto">
+    <div style="position:absolute;left:50%;bottom:calc(16px + var(--sab));transform:translateX(-50%);display:flex;gap:18px;pointer-events:auto">
       <div class="tb" id="a2l">◀</div>
       <div class="tb" id="a2g">▲</div>
       <div class="tb" id="a2r">▶</div>
@@ -6307,6 +6324,8 @@
   function onKeyDown(e) {
     // 设置面板打开时：Esc 关闭
     if (e.code === 'Escape' && elSetPanel.classList.contains('on')) { closeSettings(); e.preventDefault(); return; }
+    // 比赛中：Esc 暂停（以前只有面板打开时 Esc 才有用，键鼠玩家想暂停只能去点右上角齿轮）
+    if (e.code === 'Escape' && running && !paused) { openSettings(); e.preventDefault(); return; }
     // 自动驾驶模式下玩家输入不干扰（仍可开关设置）
     var m = keymap()[e.code];
     if (CFG.auto && m && m[1] !== 'launch') { e.preventDefault(); return; }
@@ -6507,14 +6526,18 @@
 
   var fpsAccum = 0, fpsFrames = 0;
   var frameErrLogged = false;
+  var elHomeRef = null, idleTick = 0;
   function frame(ts) {
+    // rawDt 是真实帧间隔，dt 是给物理用的（上限 0.05，防止切后台回来跳一大步）。
+    // FPS 统计必须用 rawDt：用 dt 的话任何低于 20fps 的机器都会恒定显示 20 FPS，红黄绿降级就废了。
+    var rawDt = lastTs ? (ts - lastTs) / 1000 : 0.016;
     if (!lastTs) lastTs = ts;
-    var dt = Math.min((ts - lastTs) / 1000, 0.05);
+    var dt = Math.min(rawDt, 0.05);
     lastTs = ts;
     // 单帧异常绝不能让循环停掉：原来 render 里一抛错，下一帧就不再排，
     // 画面定格 + 提示语不消失，表现就是"卡死"。
     try {
-      fpsAccum += dt; fpsFrames++;
+      fpsAccum += rawDt; fpsFrames++;
       if (fpsAccum >= 0.5) {
         var fv = Math.round(fpsFrames / fpsAccum);
         var fb = document.getElementById('fpsBox');
@@ -6526,6 +6549,16 @@
       update(dt);
       // 每帧为两个视角分别分配车流
       assignCars(P1);
+      // 首页 / 选车页把画面完全盖住了（#home 是 92%~98% 不透明的径向渐变），
+      // 这时候再 60fps 全量渲染就是纯烧电。降到 ~20fps 保持背景动效。
+      if (!elHomeRef) elHomeRef = document.getElementById('home');
+      var overlayOn = document.getElementById('overlay');
+      var covered = (elHomeRef && !elHomeRef.classList.contains('hide')) ||
+                    (overlayOn && !overlayOn.classList.contains('hide') && !running);
+      if (covered) {
+        idleTick = (idleTick + 1) % 3;
+        if (idleTick) { requestAnimationFrame(frame); return; }
+      }
       render();
     } catch (e) {
       if (!frameErrLogged) {
@@ -6586,6 +6619,19 @@
     window.addEventListener('resize', resize);
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    // 切到后台 / 锁屏：自动暂停 + 松掉所有按住的键。
+    // 以前什么都不做，回来时人已经撞在墙上了（尤其切微信回个消息）。
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) return;
+      try {
+        // 只松方向/手刹/氮气；gas 是自动油门的开关，动了车就不走了
+        [input.p1, input.p2].forEach(function (p) {
+          if (!p) return;
+          p.left = false; p.right = false; p.brake = false; p.launch = false;
+        });
+      } catch (e) {}
+      if (running && !paused) openSettings();
+    });
     bindTouch('a1l', 'p1', 'left');
     bindTouch('a1r', 'p1', 'right');
     bindTouch('a1g', 'p1', 'gas');
@@ -6813,7 +6859,6 @@
           pixelArt: false,
           smoothing: ctx.imageSmoothingEnabled,
           canvasW: canvas.width,
-          padBoost: P1 ? Number((P1.padBoost || 0).toFixed(2)) : 0,
           padShake: P1 ? Number((P1.padShake || 0).toFixed(2)) : 0,
           drift: P1 ? Number((P1.drift || 0).toFixed(2)) : 0,
           driftScore: P1 ? Math.round(P1.driftScore || 0) : 0,
