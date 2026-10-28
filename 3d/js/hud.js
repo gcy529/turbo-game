@@ -30,6 +30,7 @@ export function createHud() {
   let msgTimer = 0;
   let running = false;   // 由 main.js 通过 setRunning 同步，用于显隐金币 HUD
   let onAgain = null;                       // 结算页「再来一局」回调（由 main.js 注入）
+  let onMenu = null;                        // 结算页「回到菜单/车库」回调（由 main.js 注入）
   const panelHome = el.panel ? el.panel.innerHTML : '';   // 首页面板原始 HTML
   function setMsg(text, dur) {
     if (!el.msg) return;
@@ -163,8 +164,14 @@ export function createHud() {
     showOverlay();
   }
 
-  function hideOverlay() { if (el.overlay) el.overlay.classList.add('hide'); }
-  function showOverlay() { if (el.overlay) el.overlay.classList.remove('hide'); }
+  // 面板打开时把底部触摸键收起来：以前首页/结算页下面还浮着左右箭头，
+  // 被遮罩压暗后像「点了没反应的残影」。
+  function syncTouch(show) {
+    const t = document.getElementById('touch');
+    if (t) t.style.display = show ? '' : 'none';
+  }
+  function hideOverlay() { if (el.overlay) el.overlay.classList.add('hide'); syncTouch(true); }
+  function showOverlay() { if (el.overlay) el.overlay.classList.remove('hide'); syncTouch(false); }
 
   function showKeyHints() {
     if (!el.keyHints) return;
@@ -192,12 +199,20 @@ export function createHud() {
       '<span style="color:#ffd166">合计 +' + (p.coinTotal || 0) + '</span>' +
       '<span style="color:#eaf2ff">余额 ' + (p.coinBalance || 0) + ' 币</span></div>' +
       '<div style="margin-top:9px;font-size:10.5px;color:#8fa8c2;line-height:1.7">回车库可以解锁车漆，金币和 2D 版共用。</div></div>' +
+      '<div class="btnRow" style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">' +
       '<button class="go" id="againBtn">再来一局</button>' +
+      '<button class="go" id="menuBtn3d" style="background:rgba(140,200,255,.16);color:#cfe8ff;box-shadow:none;border:1.5px solid rgba(140,200,255,.4)">回到车库</button>' +
+      '</div>' +
       '<div class="tip" style="margin-top:10px"><a href="../index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>' +
       '<div><a class="brandLock" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener"><span>deepseek v4.1-flash -1017</span><span class="amp">&amp;</span><span class="by">gcy529</span></a></div>';
     const again = document.getElementById('againBtn');
     if (again) again.addEventListener('click', () => {
       if (onAgain) onAgain(); else location.reload();
+    });
+    // 跑完一局想换车/看车漆，以前只能刷页面或去点 2D 版链接
+    const menuB = document.getElementById('menuBtn3d');
+    if (menuB) menuB.addEventListener('click', () => {
+      if (onMenu) onMenu(); else location.href = 'index.html';
     });
     showOverlay();
   }
@@ -215,6 +230,7 @@ export function createHud() {
     syncInvert, bindInvertButtons,
     hideOverlay, showOverlay, restorePanel, showKeyHints, countdownPanel, applyLock, getName, calcScore,
     setOnAgain(fn) { onAgain = fn; },
+    setOnMenu(fn) { onMenu = fn; },
     setRunning(v) { running = !!v; },
   };
 }

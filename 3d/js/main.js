@@ -295,34 +295,62 @@ function update(dt) {
   player.lastT = tp;
 
   if (player.hitCooldown > 0) player.hitCooldown -= dt;
-  // ── 碰撞：把两车位移分解到「沿赛道」与「垂直赛道」两个轴，
-  //    按车体椭圆判定。原来是 t 距离 + lateral 参数阈值，
-  //    弯道里 t 的刻度会被拉长/压缩，导致隔空撞、贴脸不撞。
+  // ── 碰撞：把两车位移分解到「沿赛道」与「垂直赛道」两个轴，按车体椭圆判定。
+  //    v9 修了三个手感问题：
+  //    ① 矩形判定（along<4.3 && side<1.85）在斜角上是 √2 倍虚胖区，视觉没碰到就掉速
+  //       → 改成椭圆 (along/hitAlong)² + (side/hitSide)² < 1
+  //    ② 迎面 / 追尾 / 侧擦一律同等削速，蹭一下和迎面对撞一样疼
+  //       → 分三档，侧擦只掉一点速并把人推开
+  //    ③ 冷却 1.1 秒内直接 continue，能整个穿过车流
+  //       → 冷却期仍做横向分离，只不削速
   const pNow = track.posAt(player.t, player.lateral);
   const pPos = pNow.pos, pTan = pNow.tan;
   for (const n of npcs) {
     n.t += (n.speed * dt) / track.trackLen;
     if (n.t > 1) n.t -= 1;
     if (n.t < 0) n.t += 1;
-    if (player.hitCooldown > 0) continue;
+
     const nPos = track.posAt(n.t, n.lateral).pos;
     const dx = nPos.x - pPos.x, dz = nPos.z - pPos.z;
-    const along = Math.abs(dx * pTan.x + dz * pTan.z);       // 前后
-    const side = Math.abs(-dx * pTan.z + dz * pTan.x);       // 左右
-    if (along < RACE.hitAlong && side < RACE.hitSide) {
-      // 迎面撞按相对速度削，追尾按速度差削；低速贴着走不会掉速
-      const rel = Math.abs(player.speed - n.speed);
-      const loss = Math.min(player.speed, rel * RACE.hitSlow + 6);
-      player.speed = Math.max(0, player.speed - loss);
-      const dir = n.lateral > player.lateral ? -1 : 1;
-      n.lateral = Math.max(-1.15, Math.min(1.15, n.lateral + dir * 0.32));
-      player.pushLateral = dir * 0.42;
-      player.smashCount++;
-      player.hitCooldown = RACE.hitCooldown;
-      hud.setMsg(rel > 40 ? '迎面撞！' : '碰撞！', 0.8);
-      shake = Math.max(shake, rel > 40 ? 0.5 : 0.26);
-      audio.hit(Math.min(1, rel / 80));
+    const along = Math.abs(dx * pTan.x + dz * pTan.z);       // 前后距离
+    const side = Math.abs(-dx * pTan.z + dz * pTan.x);       // 左右距离
+    const ra = along / RACE.hitAlong, rb = side / RACE.hitSide;
+    if (ra * ra + rb * rb >= 1) continue;
+
+    // 分离方向：玩家该往哪边躲（NPC 在右 → 玩家往左 = -1），两车反向弹开
+    const sep = n.lateral > player.lateral ? -1 : 1;
+
+    if (player.hitCooldown > 0) {
+      // 冷却期只分离不削速：既不会连环掉速，也不会直接穿过整列车
+      player.pushLateral = sep * 0.16;
+      n.lateral = Math.max(-1.15, Math.min(1.15, n.lateral - sep * 0.04));
+      continue;
     }
+
+    const closing = player.speed - n.speed;                  // 接近速度
+    const head = n.oncoming || closing > 60;                 // 迎面
+    const graze = !head && along < RACE.hitAlong * 0.5;      // 侧面擦碰
+    let loss, cool, msg, shk, spark;
+    if (head) {
+      // 迎面撞：几乎停住，但留 8% 速度，避免「钉在原地」被后面车流反复怼
+      loss = Math.min(player.speed * 0.92, Math.abs(closing) * 0.72 + 4);
+      cool = RACE.hitCooldown; msg = '迎面撞！'; shk = 0.5; spark = 10;
+    } else if (graze) {
+      loss = Math.min(player.speed * 0.16, 4 + Math.abs(closing) * 0.1);
+      cool = RACE.hitCooldown * 0.3; msg = ''; shk = 0.14; spark = 4;
+    } else {
+      loss = Math.min(player.speed, Math.abs(closing) * RACE.hitSlow + 3);
+      cool = RACE.hitCooldown * 0.65; msg = '碰撞！'; shk = 0.24; spark = 6;
+    }
+    player.speed = Math.max(0, player.speed - loss);
+    n.lateral = Math.max(-1.15, Math.min(1.15, n.lateral - sep * (head ? 0.36 : 0.22)));
+    player.pushLateral = sep * (head ? 0.6 : graze ? 0.46 : 0.32);
+    player.smashCount++;
+    player.hitCooldown = cool;
+    if (msg) hud.setMsg(msg, 0.8);
+    shake = Math.max(shake, shk);
+    audio.hit(Math.min(1, Math.abs(closing) / 85));
+    particles.burst(nPos, head ? 0xffd166 : 0xffb066, spark, 2.4);
   }
 
   setBrake(playerCar, input.keys.brake || player.speed < 0);
@@ -463,6 +491,8 @@ function setPaused(v) {
   paused = !!v;
   const pp = document.getElementById('pausePanel');
   if (pp) pp.classList.toggle('show', paused);
+  const tch = document.getElementById('touch');
+  if (tch) tch.style.display = paused ? 'none' : '';
 }
 function quitToMenu() {
   running = false;
@@ -498,6 +528,7 @@ function frame(ts) {
 
 bindStartBtn();
 hud.setOnAgain(() => startRace());   // 结算页「再来一局」原地重开，不整页刷新
+hud.setOnMenu(() => quitToMenu());   // 结算页「回到车库」
 {
   const pb = document.getElementById('pauseBtn');
   if (pb) pb.addEventListener('click', () => setPaused(!paused));
@@ -553,6 +584,7 @@ hud.setOnAgain(() => startRace());   // 结算页「再来一局」原地重开�
   });
 }
 hud.applyLock(); hud.update(player, 0);
+hud.showOverlay();   // 启动时首页是开着的：顺手把底部触摸键收起（showOverlay 内部同步）
 rafId = requestAnimationFrame(frame);
 // 停止主循环（无头验证用，避免 rAF 空转把虚拟时间耗尽）
 function pauseLoop() {

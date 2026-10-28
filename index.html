@@ -6246,6 +6246,7 @@
         '<button class="go goGold" id="achBtn">🏆 成就</button>' +
         '<button class="go" id="againBtn">再来一局</button>' +
         '<button class="go goGhost" id="shareBtn">分享</button>' +
+        '<button class="go goGhost" id="homeBtn">返回首页</button>' +
         '</div>';
       overlay.classList.remove('hide');
       var ab = document.getElementById('againBtn');
@@ -6253,6 +6254,9 @@
       if (ab) ab.addEventListener('click', function () { ensureSubmit(); againRace(); });
       var shb = document.getElementById('shareBtn');
       if (shb) shb.addEventListener('click', function () { ensureSubmit(); shareScore(P1.finishTime); });
+      // 结算页也要能退出去：以前只有「再来一局」，跑完一局想换车换图只能刷新页面
+      var hb2 = document.getElementById('homeBtn');
+      if (hb2) hb2.addEventListener('click', function () { ensureSubmit(); quitToMenu(); });
       // 名字：回车/失焦即提交上榜（程序化 blur 不触发事件，用 change + 显式调用）
       var ni = document.getElementById('nameInput');
       if (ni) {
@@ -6295,10 +6299,15 @@
       '<div style="color:#6cc4ff">玩家 2：' + (P2.finished ? fmt(P2.finishTime) + ' 秒' : '未完赛') + '</div>' +
       '<div style="margin-top:12px">🏆 <b>' + win + '</b> 获胜</div>' +
       '</div>' +
-      '<button class="go" id="againBtn">再来一局</button>';
+      '<div class="btnRow" style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:6px">' +
+      '<button class="go" id="againBtn">再来一局</button>' +
+      '<button class="go goGhost" id="homeBtn">返回首页</button>' +
+      '</div>';
     overlay.classList.remove('hide');
     var ab = document.getElementById('againBtn');
     if (ab) ab.addEventListener('click', againRace);
+    var hb3 = document.getElementById('homeBtn');
+    if (hb3) hb3.addEventListener('click', quitToMenu);
   }
 
   function keymap() {
@@ -6757,6 +6766,8 @@
     },
     setView: function (v) { try { setView(v); return true; } catch (e) { return String(e); } },
     daily: function () { try { return { mode: DAILY_MODE, cfg: dailyConfig(), lb: loadDailyLb() }; } catch (e) { return { err: String(e) }; } },
+    // 自动化测试用：直接弹出结算面板（真跑一局太慢，测按钮绑定就靠它）
+    result: function () { try { showResult(); return true; } catch (e) { return String(e); } },
     submitName: function (n) {
       try {
         var ni = document.getElementById('nameInput');
