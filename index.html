@@ -3223,26 +3223,37 @@
     // 4) 直道回中
     if (Math.abs(maxCurve) < 0.8 && targetX === 0) targetX = 0;
 
-    // 5) 转向控制：按偏差打方向
-    var diff = targetX - p.playerX;
-    var steerDead = 0.045;
+    // 5) 目标平滑：弯道判定是「跳变」的（一进弯目标就从 0 甩到 ±0.55），
+    //    直接跟会让方向盘一下打满、车被甩到墙上。做一阶低通，转向才有过渡。
+    if (p.autoTx === undefined || p.autoTx === null) p.autoTx = p.playerX;
+    p.autoTx += (targetX - p.autoTx) * Math.min(1, dt * 6);
+
+    // 6) 转向控制：按偏差打方向
+    var diff = p.autoTx - p.playerX;
+    var steerDead = 0.05;
     var out = { gas: true, brake: false, left: false, right: false };
     if (diff < -steerDead) out.left = true;
     else if (diff > steerDead) out.right = true;
 
-    // 6) 速度控制：急弯提前松油（这里用刹车微调）
-    var needSlow = Math.abs(maxCurve) > 4.2 && maxAt < 12;
-    if (needSlow && p.speed > MAX_SPEED * 0.72) out.brake = true;
-
-    // 7) 出界救车：强制回中
-    if (Math.abs(p.playerX) > 0.95) {
+    // 7) 贴墙保护：越靠近边线，目标越往中线拉；已经压到 0.8 以上就只回中不打别处
+    var edge = Math.abs(p.playerX);
+    if (edge > 0.8) {
       out.left = p.playerX > 0;
       out.right = p.playerX < 0;
-      out.brake = false;
+      p.autoTx = 0;
     }
 
-    // 8) 智驾自动氮气：攒满 3 格、且前方是直道才放（弯里把气留着）
-    if (p.charge >= NITRO_SEGS && Math.abs(maxCurve) < 1.0 && !(p.nitroTimer > 0) && !p.finished) {
+    // 8) 速度控制：急弯提前松油（这里用刹车微调）
+    var needSlow = Math.abs(maxCurve) > 4.2 && maxAt < 12;
+    if (needSlow && p.speed > MAX_SPEED * 0.72) out.brake = true;
+    //    氮气期速度顶到 1.35 倍，转向完全跟不上：横向一跑偏就收油，
+    //    宁可浪费半秒氮气，也别一头撞上护栏减速三秒。
+    if (p.nitroTimer > 0 && Math.abs(p.playerX) > 0.55) out.brake = true;
+
+    // 9) 智驾自动氮气：攒满 3 格、前方确认是直道才放。
+    //    阈值从 1.0 收到 0.5：原来「有点弯也照放」，喷完 1.35 倍速冲进弯里，
+    //    转向根本来不及，实测直接压到墙上（playerX 冲到 1.9+）。
+    if (p.charge >= NITRO_SEGS && Math.abs(maxCurve) < 0.5 && !(p.nitroTimer > 0) && !p.finished) {
       tryNitro(p, true);
     }
     return out;
