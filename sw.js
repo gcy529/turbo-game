@@ -1,5 +1,5 @@
-// Turbo Racer Service Worker v11 — 网络优先，缓存兜底
-const CACHE = 'turbo-racer-v11';
+// Turbo Racer Service Worker v12 — 网络优先，缓存兜底
+const CACHE = 'turbo-racer-v12';
 
 // 预缓存：2D 主站 + 3D 版（three.js 已本地化，离线也能跑 3D）
 const PRECACHE = [

@@ -177,6 +177,35 @@
   @keyframes r3dPulse{0%,100%{box-shadow:inset 0 0 0 2px rgba(0,0,0,.4),0 4px 0 rgba(0,0,0,.55),0 0 14px rgba(255,45,149,.3)}50%{box-shadow:inset 0 0 0 2px rgba(0,0,0,.4),0 4px 0 rgba(0,0,0,.55),0 0 26px rgba(0,229,255,.55)}}
   body[data-theme='light'] .rBtn3d{background:linear-gradient(rgba(255,252,245,.9),rgba(255,252,245,.9)) padding-box,linear-gradient(120deg,#ff2d95,#7b2dff,#00e5ff) border-box;color:#3a1054}
   body[data-theme='light'] .rBtn3d:hover{background:linear-gradient(rgba(255,250,235,.98),rgba(255,250,235,.98)) padding-box,linear-gradient(120deg,#ff2d95,#7b2dff,#00e5ff) border-box}
+  /* ── 逆反 3D 独立入口：一张「新赛季」卡，不再混在菜单队列里 ── */
+  .entry3d{position:relative;display:flex;align-items:center;gap:12px;width:280px;max-width:88vw;margin-top:13px;
+    padding:13px 15px;border-radius:16px;text-decoration:none;overflow:hidden;border:2px solid transparent;
+    background:linear-gradient(115deg,rgba(46,8,52,.92),rgba(16,10,54,.94) 52%,rgba(4,26,44,.92)) padding-box,
+               linear-gradient(120deg,#ff2d95,#7b2dff 48%,#00e5ff) border-box;
+    box-shadow:0 10px 30px rgba(123,45,255,.26),inset 0 0 0 1px rgba(0,0,0,.45);
+    animation:e3dBreath 3.2s ease-in-out infinite}
+  @keyframes e3dBreath{0%,100%{box-shadow:0 10px 26px rgba(123,45,255,.22),inset 0 0 0 1px rgba(0,0,0,.45)}50%{box-shadow:0 12px 38px rgba(0,229,255,.42),inset 0 0 0 1px rgba(0,0,0,.45)}}
+  .entry3d::after{content:'';position:absolute;top:0;bottom:0;width:46%;pointer-events:none;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.16) 45%,transparent);
+    transform:translateX(-150%) skewX(-12deg);animation:e3dSweep 3.8s ease-in-out infinite}
+  @keyframes e3dSweep{0%,52%{transform:translateX(-150%) skewX(-12deg)}88%,100%{transform:translateX(330%) skewX(-12deg)}}
+  .e3dTitleRow{display:flex;align-items:center;gap:8px}
+  .e3dTag{flex:0 0 auto;font-style:normal;font-size:8.5px;font-weight:900;letter-spacing:1.4px;padding:2.5px 7px;
+    border-radius:6px;background:linear-gradient(120deg,#ff2d95,#ff8a3c);color:#fff;
+    font-family:'Courier New',monospace;box-shadow:0 2px 10px rgba(255,45,149,.45)}
+  .e3dMain{flex:1;min-width:0;text-align:left;line-height:1.15}
+  .e3dMain b{display:block;font-family:'Courier New',ui-monospace,Consolas,monospace;font-size:19px;font-weight:900;
+    letter-spacing:3px;color:#fff;text-shadow:0 2px 14px rgba(255,45,149,.55)}
+  .e3dMain em{display:block;font-style:normal;font-size:10px;letter-spacing:2.4px;color:#9fd3ff;margin-top:6px;
+    text-shadow:0 1px 8px rgba(0,120,200,.5)}
+  .e3dGo{flex:0 0 auto;font-size:11.5px;font-weight:900;letter-spacing:1px;color:#04231a;
+    background:linear-gradient(160deg,#8ef7c8,#38d99a);padding:9px 13px;border-radius:11px;white-space:nowrap;
+    box-shadow:0 6px 18px rgba(60,220,160,.32)}
+  .entry3d:active{transform:scale(.985)}
+  body[data-theme='light'] .entry3d{background:linear-gradient(115deg,rgba(255,250,252,.96),rgba(245,240,255,.97) 52%,rgba(238,252,255,.96)) padding-box,linear-gradient(120deg,#ff2d95,#7b2dff 48%,#00e5ff) border-box}
+  body[data-theme='light'] .e3dMain b{color:#2a0b3e;text-shadow:none}
+  body[data-theme='light'] .e3dMain em{color:#5b3c7d;text-shadow:none}
+  body[data-theme='light'] .entry3d::after{background:linear-gradient(100deg,transparent,rgba(123,45,255,.10) 45%,transparent)}
   .rRow{display:flex;gap:9px;margin-top:20px}
   /* 档案条 + 解锁标记 */
   .rProfile{display:inline-flex;align-items:center;gap:8px;margin:-12px 0 16px;padding:7px 14px;border-radius:999px;
@@ -682,9 +711,16 @@
       <button class="rBtn" id="homeSolo"><i>▶</i><span data-i18n="r1p">1P 单人挑战</span></button>
       <button class="rBtn" id="homeDuo"><i>▶</i><span data-i18n="r2p">2P 双人对战</span></button>
       <button class="rBtn rBtnDaily" id="homeDaily"><i>★</i><span data-i18n="rDaily">今日打卡</span><small id="dailyInfo"></small></button>
-      <a class="rBtn rBtn3d" id="home3d" href="3d/"><i>▶</i><span data-i18n="r3d">逆反 3D · 勇往直前</span></a>
       <button class="rBtn" id="toSettingsHome"><i>▶</i><span data-i18n="rSettings">设 置</span></button>
     </div>
+    <!-- 3D 独立入口：从菜单列表里拿出来单独做一张卡，跟三个主玩法平级但不混在一起 -->
+    <a class="entry3d" id="home3d" href="3d/">
+      <span class="e3dMain">
+        <span class="e3dTitleRow"><b data-i18n="r3dTitle">逆反 3D</b><i class="e3dTag">BETA</i></span>
+        <em data-i18n="r3dSub">新赛季 · 新体验</em>
+      </span>
+      <span class="e3dGo" data-i18n="r3dGo">进入 ▶</span>
+    </a>
     <div class="rRow">
       <button class="homeMini" id="soundBtn" title="开启声音">🔇 开启声音</button>
       <button class="homeMini" id="langBtn">中/EN</button>
@@ -3204,6 +3240,11 @@
       out.right = p.playerX < 0;
       out.brake = false;
     }
+
+    // 8) 智驾自动氮气：攒满 3 格、且前方是直道才放（弯里把气留着）
+    if (p.charge >= NITRO_SEGS && Math.abs(maxCurve) < 1.0 && !(p.nitroTimer > 0) && !p.finished) {
+      tryNitro(p, true);
+    }
     return out;
   }
 
@@ -3813,10 +3854,10 @@
   }
 
   // ── 氮气：点一下消耗 1 格，喷 2 秒 ──
-  function tryNitro(p) {
+  function tryNitro(p, auto) {
     if (!running || paused || countdown > 0 || !p || p.finished) return false;
     if (p.charge < 1) {
-      if (p === P1) flashTip('氮气不足 · 漂移集气');
+      if (p === P1 && !auto) flashTip('氮气不足 · 漂移集气');
       return false;
     }
     p.charge -= 1;
@@ -3825,7 +3866,11 @@
     p.shake = Math.max(p.shake, 0.35);
     p.zoomPunch = Math.max(p.zoomPunch || 0, 0.55);
     playNitroSound();
-    if (p === P1) flashTip('🔥 氮气释放！');
+    if (p === P1) {
+      // 智驾自动放气可能每隔几秒就来一次，只提示第一回，别把屏幕刷满
+      if (!auto) flashTip('🔥 氮气释放！');
+      else if (!p._autoNitroTip) { p._autoNitroTip = true; flashTip('🤖 智驾 · 攒满自动放气'); }
+    }
     return true;
   }
 
@@ -4535,7 +4580,7 @@
   var STR = {
     zh: {
       gameTitle: '极速狂飙', gameSub: 'TURBO GAME',
-      r1p: '1P 单人挑战', r2p: '2P 双人对战', rDaily: '今日打卡', r3d: '逆反 3D · 勇往直前', rSettings: '设 置',
+      r1p: '1P 单人挑战', r2p: '2P 双人对战', rDaily: '今日打卡', r3d: '逆反 3D · 勇往直前', r3dTitle: '逆反 3D', r3dSub: '新赛季 · 新体验', r3dGo: '进入 ▶', rSettings: '设 置',
       backHome: '← 返回', prevBtn: '← 上一步',
       wzT1: '① 选择你的赛车', wzT2: '② 选择赛道', wzT3: '③ 出发！',
       wzS1: '挑一辆适合你手感的车', wzS2: '4 张地图，各有各的脾气', wzS3: '调整圈数与天气，然后冲刺',
@@ -4563,7 +4608,7 @@
     },
     en: {
       gameTitle: 'TURBO', gameSub: '极速狂飙 · TURBO GAME',
-      r1p: '1P CHALLENGE', r2p: '2P VERSUS', rDaily: 'DAILY CHECK-IN', r3d: 'INVERSE 3D · JUST GO', rSettings: 'SETTINGS',
+      r1p: '1P CHALLENGE', r2p: '2P VERSUS', rDaily: 'DAILY CHECK-IN', r3d: 'INVERSE 3D · JUST GO', r3dTitle: 'INVERSE 3D', r3dSub: 'NEW SEASON · NEW FEEL', r3dGo: 'PLAY ▶', rSettings: 'SETTINGS',
       backHome: '← BACK', prevBtn: '← BACK',
       wzT1: '① PICK YOUR CAR', wzT2: '② CHOOSE TRACK', wzT3: '③ GO!',
       wzS1: 'Find one that fits your style', wzS2: '4 tracks, each with a temper', wzS3: 'Set laps & weather, then race',
