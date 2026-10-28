@@ -79,7 +79,10 @@
   body[data-theme='light'] .bsbtn.on,body[data-theme='light'] .vmbtn.on,body[data-theme='light'] .pxbtn.on{background:rgba(42,157,143,.25);color:#0f5a4e;border-color:rgba(42,157,143,.7)}
   body[data-theme='light'] .homeMini{background:rgba(40,80,140,.08);border-color:rgba(40,80,140,.25);color:#2a4562}
   html,body{width:100%;height:100%;overflow:hidden;background:#05070e}
-  body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent;color:#eaf2ff}
+  body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;user-select:none;-webkit-user-select:none;-ms-user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;-webkit-tap-highlight-color:transparent;color:#eaf2ff}
+  /* 长按不弹菜单：手机自带浏览器长按触控键会进选择模式并补发 pointercancel，
+     按键当场松开；长按画布还会弹「保存图片」。*/
+  #game,#touch,.tb,.hud,.pbox{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
   #game{display:block;width:100vw;height:100vh}
   .hud{position:fixed;pointer-events:none;z-index:10}
   .pbox{position:fixed;pointer-events:none;z-index:10;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 12px;border-radius:12px;background:rgba(6,12,22,.55);border:1px solid rgba(120,190,255,.22);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -274,7 +277,7 @@
   .res{font-size:15px;color:#cfe4f7;margin-bottom:20px;line-height:1.9}
   .res b{color:#7ef0c0;font-size:19px}
   #touch{position:fixed;inset:0;z-index:11;pointer-events:none;display:none}
-  .tb{width:96px;height:96px;border-radius:50%;background:rgba(140,200,255,.22);border:3px solid rgba(140,200,255,.55);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#e8f4ff;pointer-events:auto;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;flex-shrink:0;box-shadow:0 6px 22px rgba(0,0,0,.45);margin:0 3px}
+  .tb{width:96px;height:96px;border-radius:50%;background:rgba(140,200,255,.22);border:3px solid rgba(140,200,255,.55);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#e8f4ff;pointer-events:auto;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;flex-shrink:0;box-shadow:0 6px 22px rgba(0,0,0,.45);margin:0 3px}
   .tb:active{background:rgba(140,200,255,.38)}
   .tb-gas{background:rgba(60,220,160,.25);border-color:rgba(80,230,170,.7);color:#c8ffe8}
   .tb-gas:active{background:rgba(60,220,160,.5)}
@@ -286,6 +289,13 @@
   .tb-n2.fire{background:linear-gradient(160deg,#ffd166,#ff8a3c);border-color:rgba(255,190,80,.9);color:#2a1200;box-shadow:0 0 26px rgba(255,150,60,.85),0 6px 22px rgba(0,0,0,.45)}
   .tb-n2:active{transform:scale(.95)}
   .tb-brake{background:rgba(255,90,110,.22);border-color:rgba(255,110,130,.6);color:#ffc8d0}
+  /* 触控键字形改由伪元素生成：裸文本节点长按会被手机自带浏览器选中、
+     弹「复制 / 全选」并把 pointer 判成 cancel；emoji（🅿️）更糟，长按还会放大预览。
+     伪元素不进文本节点，长按无从命中。 */
+  #a1l::before,#d1l::before,#a2l::before{content:'◀'}
+  #a1r::before,#d1r::before,#a2r::before{content:'▶'}
+  #d1g::before,#a2g::before{content:'▲'}
+  #a1b::before{content:'P';font-family:'Courier New',ui-monospace,monospace;font-size:30px;font-weight:900;letter-spacing:0}
   .tb-brake:active{background:rgba(255,90,110,.45)}
   .tb-drift{background:rgba(255,190,80,.22);border-color:rgba(255,200,90,.65);color:#ffe0a0}
   @media (hover:none) and (pointer:coarse){#touch{display:block}}
@@ -807,25 +817,25 @@
   <!-- 单人：中下方三键 -->
   <div id="soloPad" style="position:fixed;inset:auto 0 0 0;height:190px;pointer-events:none">
     <!-- 左转：屏幕左边 -->
-    <div class="tb" id="a1l" style="position:absolute;left:16px;bottom:calc(22px + var(--sab))">◀</div>
+    <div class="tb" id="a1l" style="position:absolute;left:16px;bottom:calc(22px + var(--sab))"></div>
     <!-- 右转：屏幕右边 -->
-    <div class="tb" id="a1r" style="position:absolute;right:16px;bottom:calc(22px + var(--sab))">▶</div>
+    <div class="tb" id="a1r" style="position:absolute;right:16px;bottom:calc(22px + var(--sab))"></div>
     <!-- 起步/加速：中下 -->
     <div class="tb tb-n2" id="a1g" style="position:absolute;left:50%;bottom:calc(22px + var(--sab));transform:translateX(-50%)"><b>N₂</b><i>氮气</i></div>
     <!-- 手刹：左转上方偏内（留出空位，方便拇指上移） -->
-    <div class="tb tb-brake" id="a1b" style="position:absolute;right:16px;bottom:calc(128px + var(--sab))">🅿️</div>
+    <div class="tb tb-brake" id="a1b" style="position:absolute;right:16px;bottom:calc(128px + var(--sab))"></div>
   </div>
   <!-- 双人：上下各一组，都在中下方 -->
   <div id="duoPad" style="position:fixed;inset:0;pointer-events:none">
     <div style="position:absolute;left:50%;bottom:calc(50% + 16px);transform:translateX(-50%);display:flex;gap:18px;pointer-events:auto">
-      <div class="tb" id="d1l">◀</div>
-      <div class="tb tb-gas" id="d1g">▲</div>
-      <div class="tb" id="d1r">▶</div>
+      <div class="tb" id="d1l"></div>
+      <div class="tb tb-gas" id="d1g"></div>
+      <div class="tb" id="d1r"></div>
     </div>
     <div style="position:absolute;left:50%;bottom:calc(16px + var(--sab));transform:translateX(-50%);display:flex;gap:18px;pointer-events:auto">
-      <div class="tb" id="a2l">◀</div>
-      <div class="tb" id="a2g">▲</div>
-      <div class="tb" id="a2r">▶</div>
+      <div class="tb" id="a2l"></div>
+      <div class="tb" id="a2g"></div>
+      <div class="tb" id="a2r"></div>
     </div>
   </div>
 </div>
@@ -5456,7 +5466,9 @@
   function applyBrakeBtnVisual() {
     var el = document.getElementById('a1b');
     if (!el) return;
-    el.textContent = '🅿️';
+    // 字形由 #a1b::before 生成（content:'P'）。
+    // 原来这里写 el.textContent = '🅿️'，等于每次调用都把 emoji 重新塞回 DOM，
+    // 手机长按会放大预览并弹「复制」——正是按键按不住的原因之一。
     el.className = 'tb tb-brake';
     el.title = '手刹';
   }
@@ -6479,11 +6491,28 @@
       if (key === 'brake' && v) handleBrakeTap(side);   // 手刹按下时检测双击
       ev.preventDefault();
     }; };
+    // 长按手势：手机自带浏览器长按 500ms 会抢走触摸（弹「复制 / 保存图片」），
+    // 抢的那一刻补发 pointercancel，按键当场松开。CSS 已经用
+    // user-select:none + -webkit-touch-callout:none 压过一轮，这里再拦一遍事件，
+    // 不同内核（尤其国产自带浏览器）吃的不一样。
+    ['contextmenu', 'selectstart', 'dragstart', 'gesturestart'].forEach(function (name) {
+      el.addEventListener(name, function (ev) { ev.preventDefault(); }, { passive: false });
+    });
+
     if (window.PointerEvent) {
-      el.addEventListener('pointerdown', set(true), { passive: false });
+      el.addEventListener('pointerdown', function (ev) {
+        set(true)(ev);
+        // 抓住这根手指：拇指按下去很难完全不抖，原来的 pointerleave 会把
+        // 一丝滑动判成「松开」，长按途中也可能被系统半途改判。
+        try { el.setPointerCapture(ev.pointerId); } catch (err) { /* 老内核不支持 */ }
+      }, { passive: false });
       el.addEventListener('pointerup', set(false), { passive: false });
       el.addEventListener('pointercancel', set(false), { passive: false });
-      el.addEventListener('pointerleave', set(false), { passive: false });
+      // capture 之后 pointerleave 不再触发，用 lostpointercapture 兜底防卡键
+      el.addEventListener('lostpointercapture', set(false), { passive: false });
+      el.addEventListener('pointerleave', function (ev) {
+        if (!el.hasPointerCapture || !el.hasPointerCapture(ev.pointerId)) set(false)(ev);
+      }, { passive: false });
     } else {
       // 老设备（iOS < 13 / iPad 4）：touch + mouse 兜底
       el.addEventListener('touchstart', set(true), { passive: false });
@@ -6719,6 +6748,15 @@
     bindTouch('a2r', 'p2', 'right');
     bindTouch('a2g', 'p2', 'gas');
     bindTouch('a2b', 'p2', 'brake');
+    // 触控层与画布整体再锁一遍：长按赛道会弹「保存图片」，长按 HUD 会选中数字，
+    // 两者都会让浏览器补发 pointercancel，按着的键当场松开。
+    ['touch', 'game'].forEach(function (gid) {
+      var ge = document.getElementById(gid);
+      if (!ge) return;
+      ['contextmenu', 'selectstart', 'dragstart', 'gesturestart'].forEach(function (name) {
+        ge.addEventListener(name, function (ev) { ev.preventDefault(); }, { passive: false });
+      });
+    });
     var sb = document.getElementById('startBtn');
     if (sb) sb.addEventListener('click', startRace);
     renderModeList();
