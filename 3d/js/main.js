@@ -166,41 +166,73 @@ let paused = false;
 let autopilot = store(KEYS.autopilot) === '1';
 
 /** 返回 -1..1 的转向量，和手动输入同一条通道 */
-function autoSteer() {
-  // 1) 前瞻：只取「最近的显著弯」，远处最急弯不该让车一路贴边
-  let curve = 0, bestScore = 0;
-  const N = 8;
+// ── 智驾：走线 + 避车 + 贴墙保护 ──
+// 旧版三个坑：
+//  ① 只取「前方最急弯」，一个远处的大弯就把车一路拽到边上；
+//  ② 避车目标是「从 NPC 位置往外推」，车本身已经在更外侧时，反而被推向 NPC；
+//  ③ 只有比例反馈、没有前馈，弯道离心力全靠死区外的偏差去追，追上时已经压墙。
+let autoTarget = 0;    // 智驾目标的平滑值：S 弯里曲率来回变号，不能让方向盘跟着甩
+let autoBrake = false; // 智驾收油标志：让不开又贴得近时轻刹，由 update 消费
+
+function autoSteer(dt) {
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // 1) 前瞻曲率：按距离加权平均（近处权重高），比取极值稳得多
+  let sum = 0, wSum = 0;
+  const N = 10;
   for (let i = 1; i <= N; i++) {
-    const c = track.curvatureAt(player.t + DRIVE.lookAhead * (i / N));
-    const score = Math.abs(c) * (1 - (i / N) * 0.55);      // 近处权重更高
-    if (score > bestScore) { bestScore = score; curve = c; }
+    const f = i / N;
+    const w = 1 - f * 0.55;
+    sum += track.curvatureAt(player.t + DRIVE.lookAhead * f) * w;
+    wSum += w;
   }
-  let target = Math.max(-DRIVE.innerLine, Math.min(DRIVE.innerLine, curve * 13));
+  const curveAhead = sum / wSum;
+  const curveNow = track.curvatureAt(player.t);
 
-  // 2) 避车：只躲「同一纵向走廊」里前方 2~80 米的车，往空的一侧让
-  //    （原来按 target 算 gap，几乎每辆车都算「要躲」，于是左右横跳把自己甩到墙上）
+  // 2) 走线：往弯心偏，但只走 innerLine 的幅度，永远留出避车/救车的余量
+  let target = clamp(curveAhead * 6, -1, 1) * DRIVE.innerLine;
+
+  // 3) 避车：从「自己当前位置」往反侧让，而不是从 NPC 位置往外推
+  //    多辆车同时在走廊里时，只让「最近那辆」，避免一次算出一堆目标互相打架
+  let bestAlong = Infinity, bestTarget = null, threatAlong = Infinity;
   for (const n of npcs) {
-    let dt2 = n.t - player.t;
-    if (dt2 < -0.5) dt2 += 1;
-    if (dt2 > 0.5) dt2 -= 1;
-    const along = dt2 * track.trackLen;
-    if (along < 2 || along > DRIVE.avoidRange) continue;
+    let d = n.t - player.t;
+    if (d < -0.5) d += 1;
+    if (d > 0.5) d -= 1;
+    const along = d * track.trackLen;
+    const range = n.oncoming ? DRIVE.avoidRange * 1.8 : DRIVE.avoidRange;   // 对向车相对速度高，要更早让
+    if (along < 1 || along > range) continue;
     if (Math.abs(n.lateral - player.lateral) > DRIVE.avoidGap) continue;
-    target = n.lateral > player.lateral ? n.lateral - DRIVE.avoidSide : n.lateral + DRIVE.avoidSide;
-    break;
+    if (along < threatAlong) threatAlong = along;
+    if (along >= bestAlong) continue;
+    const away = player.lateral <= n.lateral ? -1 : 1;
+    const next = player.lateral + away * DRIVE.avoidSide;
+    if (Math.abs(next) > 0.86) continue;      // 没余量就别硬让，先保命回中
+    bestAlong = along; bestTarget = next;
   }
-  // 3) 快贴墙了先回中，避车让位不能把人顶到护栏上
-  if (Math.abs(player.lateral) > 0.86) target *= 0.25;
-  target = Math.max(-0.86, Math.min(0.86, target));
+  if (bestTarget !== null) target = bestTarget;
+  // 让不开又贴得很近 → 收油，宁慢不撞（旧版智驾永远全油门，是撞车的最大来源）
+  autoBrake = bestTarget === null && threatAlong < 26;
 
-  // 3) 方向控制：偏差越大打得越狠，进死区不打方向
-  const diff = target - player.lateral;
-  if (Math.abs(diff) < 0.045) return 0;
-  return Math.sign(diff) * Math.min(1, Math.abs(diff) * 5.5);
+  // 4) 目标平滑：一阶低通，避免在 S 弯里把车左右甩
+  autoTarget += (target - autoTarget) * Math.min(1, (dt || 1 / 60) * 7);
+  target = autoTarget;
+
+  // 5) 贴墙保护：越靠边，越把目标瞬间往中线拽（这一步不参与平滑，要立刻生效）
+  const edge = Math.abs(player.lateral);
+  if (edge > 0.7) target *= Math.max(0, 1 - (edge - 0.7) / 0.3);
+
+  // 6) 前馈抵消离心漂移 + 反馈拉向目标
+  const rate = CAR.steerRate * (CAR.steerSpeedGain + Math.abs(player.speed) / CAR.maxSpeed);
+  const driftRate = curveNow * (player.speed / CAR.maxSpeed) * CAR.driftSpeedGain / stage.grip();
+  const feedForward = driftRate / (rate || 1);
+  const feedBack = clamp((target - player.lateral) * 6, -1, 1);
+  return clamp(feedForward + feedBack, -1, 1);
 }
 
 function setAutopilot(v, silent) {
   autopilot = !!v;
+  autoTarget = 0;                    // 重新开启时从当前位置重新收敛，别沿用上一段的目标
   store(KEYS.autopilot, autopilot ? '1' : '0');
   const ab = document.getElementById('autoBtn3d');
   if (ab) {
@@ -320,15 +352,20 @@ function settleRace() {
 }
 
 // ── 氮气：点一下消耗 1 格，喷 2 秒 ──
-function tryNitro() {
+// auto=true 时由智驾自动释放，提示文案换一套，免得和手动喷混淆
+function tryNitro(auto) {
   if (!running || paused || countdown > 0 || player.finished) return false;
-  if (player.charge < 1) { hud.setMsg('氮气不足 · 漂移集气', 1.2); return false; }
+  if (player.charge < 1) {
+    if (!auto) hud.setMsg('氮气不足 · 漂移集气', 1.2);
+    return false;
+  }
   player.charge -= 1;
   player.nitroTimer = Math.min(NITRO.time * 2, player.nitroTimer + NITRO.time);
   player.nitroFlash = 0.4;
   shake = Math.max(shake, 0.32);
   audio.nitro();
-  hud.setMsg('🔥 氮气释放', 0.9);
+  if (!auto) hud.setMsg('🔥 氮气释放', 0.9);
+  else if (!player._autoNitroTip) { player._autoNitroTip = true; hud.setMsg('🤖 智驾 · 攒满自动放气', 1.2); }
   return true;
 }
 
@@ -357,12 +394,23 @@ function update(dt) {
     player.speed = Math.min(CAR.maxSpeed * NITRO.boost, player.speed + CAR.maxSpeed * 0.8 * dt);
   }
   if (player.nitroFlash > 0) player.nitroFlash = Math.max(0, player.nitroFlash - dt);
+  // 智驾收油：前方让不开就轻刹，保持不低于 34，避免停在赛道上挡自己
+  if (autopilot && autoBrake && player.nitroTimer <= 0) {
+    player.speed = Math.max(34, player.speed - CAR.brakeDecel * 0.55 * dt);
+  }
   const speedCap = (player.nitroTimer > 0 ? CAR.maxSpeed * NITRO.boost : CAR.maxSpeed) * stage.grip();
   player.speed = Math.min(speedCap, player.speed);
 
   // 智驾时自动打方向；玩家一碰方向键/倾斜手机就临时接管
   const manualSteer = input.steerAxis(dt);
-  const steer = (autopilot && Math.abs(manualSteer) < 0.02) ? autoSteer() : manualSteer;
+  const useAuto = autopilot && Math.abs(manualSteer) < 0.02;
+  if (!useAuto) autoBrake = false;      // 玩家一接管，立刻收回智驾的刹车权
+  const steer = useAuto ? autoSteer(dt) : manualSteer;
+  // 智驾自动氮气：攒满 3 格、且前方是直道才放；弯里把气留着，出弯一口气甩出去
+  if (autopilot && player.charge >= NITRO.segs && player.nitroTimer <= 0) {
+    const near = Math.abs(track.curvatureAt(player.t + DRIVE.lookAhead * 0.3));
+    if (near < 0.24) tryNitro(true);
+  }
   if (Math.abs(steer) > 0.5 && player.speed > CAR.maxSpeed * 0.5) player.driftScore += dt * 60;
   // ── 集气：漂移是本作唯一的主动操作，气从这里来（和 2D 同一套）──
   if (Math.abs(steer) > 0.5 && player.speed > CAR.maxSpeed * 0.45) {

@@ -61,7 +61,32 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 .trackChip{padding:7px 11px;border-radius:10px;border:1.5px solid rgba(140,200,255,.25);background:rgba(255,255,255,.05);color:#9dbdd8;font-size:11.5px;font-weight:800;font-family:inherit;cursor:pointer;transition:all .15s}
 .trackChip.on{background:rgba(255,180,60,.18);border-color:rgba(255,190,80,.6);color:#ffc078}
 body.light3d .trackChip{background:rgba(40,80,140,.06);border-color:rgba(40,80,140,.25);color:#2a4562}
-body.light3d .trackChip.on{background:rgba(200,120,20,.16);border-color:rgba(190,140,20,.6);color:#7a4a00}#garage3d .gHead{font-size:10px;letter-spacing:1.5px;color:#7f9ab6;margin-bottom:8px;font-family:'Courier New',monospace}
+body.light3d .trackChip.on{background:rgba(200,120,20,.16);border-color:rgba(190,140,20,.6);color:#7a4a00}
+/* ── 日间主题：面板要跟着转浅。
+   原来只把遮罩换成浅色，面板还是深蓝（rgba(10,18,34,.86)），
+   而 light3d 的文字规则又都是「深字配浅底」——深字压深底，赛道/环境选项直接看不见。
+   这里把面板、卡片、文字一次性配套改浅。 */
+body.light3d .panel{background:rgba(250,252,255,.95);border-color:rgba(60,110,170,.22);box-shadow:0 24px 90px rgba(28,58,104,.26)}
+body.light3d .sub{color:#3d6a9c}
+body.light3d .tag3d{background:rgba(200,120,20,.14);border-color:rgba(190,140,20,.55);color:#7a4a00}
+body.light3d #bestLap3d{color:#42658c}
+body.light3d #garage3d .gHead{color:#42658c}
+body.light3d #garage3d .gHead b{color:#8a5a00}
+body.light3d #garage3d .gHead b#g3id{color:#0a6a4a}
+body.light3d .livery{background:rgba(40,80,140,.07);border-color:rgba(40,80,140,.22);color:#1e3a58}
+body.light3d .livery .sw{box-shadow:inset 0 0 0 1px rgba(20,50,90,.26)}
+body.light3d .livery.on{background:rgba(200,120,20,.16);border-color:rgba(190,140,20,.65);color:#7a4a00}
+body.light3d .livery.locked{opacity:.72}
+/* 环境行选中项：原来是浅蓝字 + 浅蓝底（#envRow3d 的 id 选择器压过了 light3d 规则），几乎不可见 */
+body.light3d #envRow3d .trackChip.on{background:rgba(40,110,190,.16);border-color:rgba(40,110,190,.62);color:#0b3560}
+body.light3d .brandLock{background:rgba(40,80,140,.06);border-color:rgba(40,80,140,.18);color:rgba(30,58,88,.72)}
+body.light3d .brandLock .amp{color:#0a6a4a}
+body.light3d .brandLock .by{color:#1f4f7a}
+body.light3d .brandLock:hover{color:#14304e;border-color:rgba(40,80,140,.4)}
+body.light3d .setMini{background:rgba(40,80,140,.10);border-color:rgba(40,80,140,.28);color:#1e3a58}
+body.light3d .setMini.on{color:#04231a;background:linear-gradient(160deg,#8ef7c8,#38d99a);border-color:rgba(40,160,120,.7)}
+body.light3d .setMini.off{color:#7f96ad;background:rgba(40,80,140,.05);border-color:rgba(40,80,140,.16)}
+#garage3d .gHead{font-size:10px;letter-spacing:1.5px;color:#7f9ab6;margin-bottom:8px;font-family:'Courier New',monospace}
 #garage3d .gHead b{color:#ffd166;font-weight:900}
 #garage3d .gHead b#g3id{color:#8ef7c8;letter-spacing:2px}
 #liveryRow3d{display:flex;gap:8px;justify-content:center}
@@ -213,7 +238,7 @@ body.light3d .trackChip.on{background:rgba(200,120,20,.16);border-color:rgba(190
     </div>
     <div id="trackRow3d"></div>
     <div id="envRow3d"></div>
-    <div id="bestLap3d" style="font-size:10.5px;color:#7f9ab6;margin:-2px 0 10px;letter-spacing:.5px">本赛道最佳圈 --</div>
+    <div id="bestLap3d" style="font-size:10.5px;margin:-2px 0 10px;letter-spacing:.5px">本赛道最佳圈 --</div>
     <div id="garage3d">
       <div class="gHead">车库 · <b id="g3coins">0</b> 币 · ID <b id="g3id">------</b></div>
       <div id="liveryRow3d"></div>
