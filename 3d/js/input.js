@@ -44,18 +44,45 @@ export function createInput(hooks = {}) {
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
 
+  // ── 掐掉手机浏览器的「长按手势」──
+  // 手机自带浏览器长按 500ms 会抢走触摸：安卓弹「复制 / 保存图片」，
+  // iOS 进选择模式并显示放大镜。被抢的那一刻浏览器会补发 pointercancel，
+  // 于是按键当场松开 —— 表现就是「一直按着，车却一顿一顿 / 根本跑不起来」。
+  // CSS 侧已经用 user-select:none + -webkit-touch-callout:none 压了一轮，
+  // 这几类事件再兜一层：不同内核（尤其国产自带浏览器）吃的不一样。
+  function blockNativeGesture(el) {
+    if (!el) return;
+    const block = (e) => { e.preventDefault(); };
+    ['contextmenu', 'selectstart', 'dragstart', 'gesturestart'].forEach((name) => {
+      el.addEventListener(name, block, { passive: false });
+    });
+  }
+
   function bindTouch(id, act) {
     const el = document.getElementById(id);
     if (!el) return;
+    blockNativeGesture(el);
     const set = (v) => (ev) => { keys[act] = v; ev.preventDefault(); };
     if (window.PointerEvent) {
-      el.addEventListener('pointerdown', set(true), { passive: false });
+      el.addEventListener('pointerdown', (ev) => {
+        keys[act] = true;
+        ev.preventDefault();
+        // 抓住这根手指：手指按住后轻微滑动（拇指很难完全不抖）
+        // 不会再因为滑出圆盘而判定松开，长按途中也不会被系统半途改判。
+        try { el.setPointerCapture(ev.pointerId); } catch (err) { /* 老内核不支持就算了 */ }
+      }, { passive: false });
       el.addEventListener('pointerup', set(false), { passive: false });
       el.addEventListener('pointercancel', set(false), { passive: false });
-      el.addEventListener('pointerleave', set(false), { passive: false });
+      // capture 之后 pointerleave 不会再来，用 lostpointercapture 兜底防「卡键」
+      el.addEventListener('lostpointercapture', set(false), { passive: false });
+      el.addEventListener('pointerleave', (ev) => {
+        // 没有 capture 的内核仍按「滑出即松」处理；有 capture 时这条不会触发
+        if (!el.hasPointerCapture || !el.hasPointerCapture(ev.pointerId)) set(false)(ev);
+      }, { passive: false });
     } else {
       el.addEventListener('touchstart', set(true), { passive: false });
       el.addEventListener('touchend', set(false), { passive: false });
+      el.addEventListener('touchcancel', set(false), { passive: false });
       el.addEventListener('mousedown', set(true), { passive: false });
       el.addEventListener('mouseup', set(false), { passive: false });
     }
@@ -63,6 +90,12 @@ export function createInput(hooks = {}) {
   bindTouch('tl', 'left');
   bindTouch('tr', 'right');
   bindTouch('tg', 'gas');
+
+  // 画布与整页也一起锁：长按赛道会弹「保存图片」，长按 HUD 会选中数字
+  blockNativeGesture(document.getElementById('touch'));
+  blockNativeGesture(document.getElementById('game'));
+  blockNativeGesture(document.getElementById('hud'));
+  blockNativeGesture(document.body);
 
   // ── 陀螺仪倾斜转向（与 2D 版同逻辑）──
   function gyroAxis(e) {
