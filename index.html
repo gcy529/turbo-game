@@ -889,6 +889,15 @@
     p.liveries = lv;
     p.livery = p.livery || 'gold';
     p.god = 1;
+    // ── 满血：不只解锁车和地图，把「要跑一局才给」的东西也一并点亮 ──
+    // ① 成就墙：全部标记已解锁（成就是独立 key，不在 profile 里）
+    try {
+      if (typeof ACHIEVEMENTS !== 'undefined' && ACHIEVEMENTS.length) {
+        saveAch(ACHIEVEMENTS.map(function (a) { return a.id; }));
+      }
+    } catch (e) {}
+    // ② 3D「逆反模式」：本来跑完一局才解锁，满血档直接给
+    try { saveSave('turbo3d-unlocked', '1'); } catch (e) {}
     return p;
   }
 
@@ -899,7 +908,7 @@
         var gp = godProfile();
         try { saveSave(PROFILE_KEY, JSON.stringify(gp)); } catch (e) {}
         loadProfile();
-        try { flashTip('YYDS · 全解锁已开启'); } catch (e2) {}
+        try { flashTip('YYDS · 满血档案已加载（全解锁 / 成就 / 逆反）'); } catch (e2) {}
         return '';
       }
       var str = raw.replace(/[\s]+/g, '').replace(/-/g, '+').replace(/_/g, '/');
