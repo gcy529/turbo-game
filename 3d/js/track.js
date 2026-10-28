@@ -52,6 +52,49 @@ function checkerTexture(cols = 16, rows = 4, cell = 32) {
   return tex;
 }
 
+// 门架横幅：深色底 + 上下棋盘条 + 中间白字。
+// 只用英文数字：Canvas 里的中文在缺字体的机器上会渲染成方块，而横幅是要跨设备看的。
+function bannerTexture() {
+  const W = 1024, H = 128;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+
+  const grd = g.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, '#1a2536');
+  grd.addColorStop(0.5, '#0b131f');
+  grd.addColorStop(1, '#1a2536');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, W, H);
+
+  // 上下两条棋盘格：远处一眼能认出这是「起终点」
+  const cell = 16;
+  for (let row = 0; row < 2; row++) {
+    const y = row === 0 ? 0 : H - cell;
+    for (let x = 0; x * cell < W; x++) {
+      g.fillStyle = ((x + row) % 2) ? '#0a0d12' : '#f4f8ff';
+      g.fillRect(x * cell, y, cell, cell);
+    }
+  }
+
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.font = '900 52px "Arial Black", Impact, "Arial", sans-serif';
+  g.shadowColor = 'rgba(255,201,77,.85)';
+  g.shadowBlur = 18;
+  g.fillStyle = '#fff9ec';
+  g.fillText('START  /  FINISH', W / 2, H / 2 - 2);
+  g.shadowBlur = 0;
+
+  g.fillStyle = '#ffc94d';
+  g.fillRect(W / 2 - 250, H / 2 + 30, 500, 4);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
 // ── 三条赛道：形状都是「极坐标 + 正弦扰动」，参数不同 → 弯道密度/半径不同 ──
 // 注意：振幅 a1+a2 不能超过 R 太多，否则 CatmullRom 会自交（路面穿帮）。
 export const TRACK_SHAPES = {
@@ -159,7 +202,9 @@ export function buildTrack(scene, trackId) {
     const col = Math.floor(i / 4) % 2 ? cRed : cWhite;
     const y = 0.06;
     for (const s of [-1, 1]) {
-      const o1 = s * (ROAD_W / 2 + 0.02), o2 = s * (ROAD_W / 2 + 0.85);
+      // 外沿一直铺到护栏基座里（9.14 > 护栏中心 9.1）：原来只到 8.85，
+      // 与护栏之间空出 25 厘米，斜看就是一条能望见草坡的黑缝。
+      const o1 = s * (ROAD_W / 2 + 0.02), o2 = s * (ROAD_W / 2 + 1.14);
       curbPos.push(
         a.p.x + a.side.x * o1, a.p.y + y, a.p.z + a.side.z * o1,
         a.p.x + a.side.x * o2, a.p.y + y * 2.2, a.p.z + a.side.z * o2,
@@ -203,7 +248,8 @@ export function buildTrack(scene, trackId) {
     const a = frames[i - 1], b = frames[i];
     const col = Math.floor(i / 5) % 2 ? gA : gB;
     for (const sgn of [-1, 1]) {
-      const o1 = sgn * (ROAD_W / 2 + 0.85), o2 = sgn * (ROAD_W / 2 + 46);
+      // 内沿从护栏基座外侧（9.12）才开始铺，和路肩、基座严丝合缝
+      const o1 = sgn * (ROAD_W / 2 + 1.12), o2 = sgn * (ROAD_W / 2 + 46);
       slopePos.push(
         a.p.x + a.side.x * o1, a.p.y - 0.15, a.p.z + a.side.z * o1,
         a.p.x + a.side.x * o2, a.p.y - 7.0, a.p.z + a.side.z * o2,
@@ -226,30 +272,80 @@ export function buildTrack(scene, trackId) {
   slopeMesh.receiveShadow = true;
   group.add(slopeMesh);
 
-  // ── 护栏（双面金属带）──
-  const railPos = [], railIdx = [];
-  let ri = 0;
-  for (let i = 0; i <= SEG; i++) {
-    const { p, side } = frames[i];
-    for (const s of [-1, 1]) {
-      const b = p.clone().addScaledVector(side, s * (ROAD_W / 2 + 1.1));
-      railPos.push(b.x, b.y + 0.45, b.z, b.x, b.y + 0.45 + TRACK.railHeight, b.z);
-    }
-    if (i > 0) {
-      for (let k = 0; k < 2; k++) {
-        const r0 = ri + k * 2, r1 = ri - 4 + k * 2;
-        railIdx.push(r1, r1 + 1, r0, r1 + 1, r0 + 1, r0);
+  // ── 护栏：混凝土基座 + 金属护栏带 + 立柱 ──
+  // 老版只有一条悬空的金属带：底边在路面之上 0.45 米，而护栏所在位置的地面
+  // （草坡外沿）比路面低约 0.19 米 —— 侧面看就是「一条飘在草地上方的带子」，
+  // 底下一条 0.6 米宽的缝，车一过弯就露馅。
+  // 现在拆成两段：基座从路面下 0.65 米一路砌到 0.42 米（草坡再起伏也被埋住），
+  // 上面才是金属带；另外每 6 段压一根立柱，把「基座 / 地面 / 护栏」三层缝死。
+  const RAIL_OFF = ROAD_W / 2 + 1.1;
+  const BASE_TOP = 0.42;
+  const BASE_BOT = -0.65;          // 沉到草坡之下，任何坡段都不会漏缝
+  const RAIL_H = TRACK.railHeight;
+
+  // 竖直带：给定上下两个相对路面的高度，沿整条曲线扫出双面四边形
+  function buildBand(y0, y1) {
+    const pos = [], idx = [];
+    let ii = 0;
+    for (let i = 0; i <= SEG; i++) {
+      const { p, side } = frames[i];
+      for (const s of [-1, 1]) {
+        const b = p.clone().addScaledVector(side, s * RAIL_OFF);
+        pos.push(b.x, b.y + y0, b.z, b.x, b.y + y1, b.z);
       }
+      if (i > 0) {
+        for (let k = 0; k < 2; k++) {
+          const r0 = ii + k * 2, r1 = ii - 4 + k * 2;
+          idx.push(r1, r1 + 1, r0, r1 + 1, r0 + 1, r0);
+        }
+      }
+      ii += 4;
     }
-    ri += 4;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
   }
-  const railGeo = new THREE.BufferGeometry();
-  railGeo.setAttribute('position', new THREE.Float32BufferAttribute(railPos, 3));
-  railGeo.setIndex(railIdx);
-  railGeo.computeVertexNormals();
-  group.add(new THREE.Mesh(railGeo, new THREE.MeshStandardMaterial({
+
+  // 基座（水泥矮墙）：粗糙、几乎不反光，才能把护栏「压」在地面上
+  group.add(new THREE.Mesh(buildBand(BASE_BOT, BASE_TOP), new THREE.MeshStandardMaterial({
+    color: 0xa9b2be, roughness: 0.96, metalness: 0.02, side: THREE.DoubleSide,
+  })));
+  // 金属带（波形板）
+  group.add(new THREE.Mesh(buildBand(BASE_TOP, BASE_TOP + RAIL_H), new THREE.MeshStandardMaterial({
     color: 0xc3ccdb, roughness: 0.35, metalness: 0.85, side: THREE.DoubleSide,
   })));
+
+  // 立柱：每 6 段一根（约 17 米），从地基撑到护栏顶
+  {
+    const step = 6;
+    const list = [];
+    for (let i = 0; i < SEG; i += step) list.push(i);
+    const postTop = BASE_TOP + RAIL_H + 0.08;
+    const postH = postTop - BASE_BOT;
+    const postMesh = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(0.17, postH, 0.17),
+      new THREE.MeshStandardMaterial({ color: 0x8b95a4, roughness: 0.55, metalness: 0.55 }),
+      list.length * 2
+    );
+    const pd = new THREE.Object3D();
+    let pi = 0;
+    for (const i of list) {
+      const { p, side, tan } = frames[i];
+      const rotY = Math.atan2(tan.x, tan.z);
+      for (const s of [-1, 1]) {
+        const b = p.clone().addScaledVector(side, s * RAIL_OFF);
+        pd.position.set(b.x, b.y + (postTop + BASE_BOT) / 2, b.z);
+        pd.rotation.set(0, rotY, 0);
+        pd.scale.setScalar(1);
+        pd.updateMatrix();
+        postMesh.setMatrixAt(pi++, pd.matrix);
+      }
+    }
+    postMesh.instanceMatrix.needsUpdate = true;
+    group.add(postMesh);
+  }
 
   // ── 起点 / 终点 ──
   // 之前：线画在 frames[3]（车前 9 米），贴图 repeat(10,2) 让远处糊成白条，
@@ -275,42 +371,60 @@ export function buildTrack(scene, trackId) {
   }
 
   // 起跑门架：两根立柱 + 横梁 + 一条棋盘横幅（纯视觉，不参与碰撞）
-  function addGate(frameIdx, banner) {
+  // 老版立柱落在 ±6.4（路面之内），第三人称视角下两根柱子正好被裁到画面外，
+  // 只剩一根 0.5 米粗的横梁悬在头顶 —— 玩家会以为「没有杆子」。
+  // 现在立柱外移到路肩外侧、和护栏对齐，横梁加长，横幅换成带字的贴图。
+  function addGate(frameIdx) {
     const f = frames[((frameIdx % SEG) + SEG) % SEG];
     // 横梁必须垂直于「它自己那一段」的赛道，立柱才会左右等距地落在路肩外
     const holder = new THREE.Group();
     holder.position.set(f.p.x, f.p.y, f.p.z);
     holder.rotation.y = Math.atan2(f.tan.x, f.tan.z);
 
-    const postH = 8.6, off = ROAD_W / 2 - 1.6;
+    const postH = 9.2;
+    const off = ROAD_W / 2 + 1.0;        // 立在护栏基座上，不再戳在沥青里
     const postMat = new THREE.MeshStandardMaterial({ color: 0x9aa6b8, roughness: 0.4, metalness: 0.75 });
+    const capMat = new THREE.MeshStandardMaterial({
+      color: 0xff5560, emissive: 0xff3344, emissiveIntensity: 1.1, roughness: 0.4, toneMapped: false,
+    });
     for (const s of [-1, 1]) {
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, postH, 8), postMat);
-      post.position.set(s * off, postH / 2, 0);
+      // 柱底往下多埋 0.5 米，坡道上也不会露出柱脚的缝
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, postH + 0.5, 10), postMat);
+      post.position.set(s * off, (postH - 0.5) / 2, 0);
       holder.add(post);
-      // 柱顶红点，远处也能认出来
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8),
-        new THREE.MeshStandardMaterial({ color: 0xe8474f, emissive: 0xe8474f, emissiveIntensity: 0.9, roughness: 0.4 }));
-      cap.position.set(s * off, postH + 0.15, 0);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), capMat);
+      cap.position.set(s * off, postH + 0.18, 0);
       holder.add(cap);
     }
     const beam = new THREE.Mesh(
-      new THREE.BoxGeometry(off * 2 + 0.7, 0.5, 0.5),
+      new THREE.BoxGeometry(off * 2 + 0.8, 0.55, 0.55),
       new THREE.MeshStandardMaterial({ color: 0x7c8798, roughness: 0.45, metalness: 0.7 })
     );
     beam.position.set(0, postH, 0);
     holder.add(beam);
 
-    // 横幅：面向来车，双面可见。宽度按「路宽 - 0.6」算，两边留一样的边
+    // 横梁下沿的灯带：夜赛 / 雨战里远远就能看见这条门架（toneMapped:false 保证不被压暗）
+    const lamp = new THREE.Mesh(
+      new THREE.BoxGeometry(off * 2 + 0.6, 0.12, 0.16),
+      new THREE.MeshBasicMaterial({ color: 0xfff2c4, toneMapped: false })
+    );
+    lamp.position.set(0, postH - 0.36, 0);
+    holder.add(lamp);
+
+    // 横幅：正面朝来车。
+    // PlaneGeometry 的正面朝 +Z，而 holder 已经把 +Z 转到「行进方向」，
+    // 于是从车上看过去看到的是背面 —— 文字整个镜像（HNISIF / TRATS）。
+    // 转 180° 让正面朝向来车，双面材质保证从终点往回看也不透。
     const banner3 = new THREE.Mesh(
-      new THREE.PlaneGeometry(11, 1.5),
+      new THREE.PlaneGeometry(off * 2 - 0.4, 2.1),
       new THREE.MeshStandardMaterial({
-        map: checkerTexture(16, 3), side: THREE.DoubleSide,
-        roughness: 0.5, metalness: 0.05,
-        emissive: 0x22303f, emissiveIntensity: 0.5,
+        map: bannerTexture(), side: THREE.DoubleSide,
+        roughness: 0.45, metalness: 0.05,
+        emissive: 0x1a2431, emissiveIntensity: 0.55,
       })
     );
-    banner3.position.set(0, postH - 1.25, 0);
+    banner3.position.set(0, postH - 1.55, 0);
+    banner3.rotation.y = Math.PI;
     holder.add(banner3);
 
     holder.traverse((o) => { if (o.isMesh) o.castShadow = false; });
@@ -322,7 +436,7 @@ export function buildTrack(scene, trackId) {
   // 之前起点线在 frames[3]、终点线在 frames[-3]，两条线夹着车只隔 18 米，
   // 俯视一眼就能看出是两套重复的标线；玩家起步时也分不清哪条是起跑线。
   addCheckerLine(0, 6, 6, 2);
-  addGate(0, 'start');           // 门架就架在起终点线上，两样是一体的
+  addGate(0);                    // 门架就架在起终点线上，两样是一体的
 
 
   // ── 路边景物：树与路灯（InstancedMesh，控制 draw call）──

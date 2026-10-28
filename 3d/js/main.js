@@ -132,10 +132,14 @@ renderEnvRow();
 applyTrackTint();
 const npcs = [];
 
-// 起终点线在 t=0（计圈点），车停在它后面 4.5 米 —— 和真赛道一样：
-// 车趴在起跑格上，前方就是那条黑白线和门架。
+// 起终点线在 t=0（计圈点），车停在它后面 30 米。
+// 早先是 7.5 米「贴着线起步」，看似更像真赛道，实际观感是「没有门架」：
+// 第三人称相机在车后 9.6 米、离地 3.6 米，门架只在前方 7.5 米时，
+// 9.2 米高的横梁会顶到画面上沿之外，两根立柱（±9 米）更是超出竖屏
+// 约 ±17° 的水平视野被直接裁掉，只剩一根细横梁从头顶掠过。
+// 退到 30 米，整座门架完整落在画面里；起步冲过去也更有发车仪式感。
 // t 为负不影响渲染（posAt/curvatureAt 都做过归一化），只需跳过「起步出线」这一下。
-const START_BACK = 7.5;
+const START_BACK = 30;
 let START_T = -START_BACK / track.trackLen;
 function startT() { return -START_BACK / track.trackLen; }
 
