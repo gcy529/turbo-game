@@ -223,6 +223,18 @@ export function createCoins(scene, track) {
   }
   function reset() { reshuffle(); }
 
-  return { items, update, collect, reset, reshuffle };
+  /** 换赛道时整组扔掉：金币闭包持有旧 track，不释放会一直引用旧曲线 */
+  function dispose() {
+    for (const it of items) {
+      for (const o of [it.mesh, it.halo]) {
+        if (!o) continue;
+        if (o.parent) o.parent.remove(o);
+        if (o.geometry) o.geometry.dispose();
+      }
+    }
+    items.length = 0;
+  }
+
+  return { items, update, collect, reset, reshuffle, dispose };
 }
 

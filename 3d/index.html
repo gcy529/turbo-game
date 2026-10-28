@@ -55,7 +55,13 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 #keyHints b{color:#fff;font-weight:800}
 /* 车库：3D 入口免费，车漆用金币解锁（与 2D 共用存档） */
 #garage3d{margin:0 0 14px;width:100%;max-width:300px}
-#garage3d .gHead{font-size:10px;letter-spacing:1.5px;color:#7f9ab6;margin-bottom:8px;font-family:'Courier New',monospace}
+#trackRow3d,#envRow3d{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:0 0 10px}
+#envRow3d .trackChip{font-size:10.5px;padding:5px 9px}
+#envRow3d .trackChip.on{background:rgba(140,200,255,.2);border-color:rgba(140,200,255,.6);color:#bcdcff}
+.trackChip{padding:7px 11px;border-radius:10px;border:1.5px solid rgba(140,200,255,.25);background:rgba(255,255,255,.05);color:#9dbdd8;font-size:11.5px;font-weight:800;font-family:inherit;cursor:pointer;transition:all .15s}
+.trackChip.on{background:rgba(255,180,60,.18);border-color:rgba(255,190,80,.6);color:#ffc078}
+body.light3d .trackChip{background:rgba(40,80,140,.06);border-color:rgba(40,80,140,.25);color:#2a4562}
+body.light3d .trackChip.on{background:rgba(200,120,20,.16);border-color:rgba(190,140,20,.6);color:#7a4a00}#garage3d .gHead{font-size:10px;letter-spacing:1.5px;color:#7f9ab6;margin-bottom:8px;font-family:'Courier New',monospace}
 #garage3d .gHead b{color:#ffd166;font-weight:900}
 #garage3d .gHead b#g3id{color:#8ef7c8;letter-spacing:2px}
 #liveryRow3d{display:flex;gap:8px;justify-content:center}
@@ -142,7 +148,7 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
 <body>
 <canvas id="game"></canvas>
 <div id="hud"><span id="spd">0</span><span class="u">KM/H</span>
-  <span id="meta">圈 <b id="lap">1</b>/<b id="lapTotal3d">2</b> · <b id="score3d" style="color:#ffd166">0</b>分<br>本圈 <b id="t1">0.00</b> · <b id="who3d" style="color:#8ef7c8"></b></span></div>
+  <span id="meta">圈 <b id="lap">1</b>/<b id="lapTotal3d">2</b> · <b id="rank3d" style="color:#8ef7c8">P-</b> · <b id="score3d" style="color:#ffd166">0</b>分<br>本圈 <b id="t1">0.00</b> · <b id="who3d" style="color:#8ef7c8"></b></span></div>
 <div id="coinHud3d">
   <span class="cico"></span><b id="coinGot3d">+0</b><i>本局</i>
   <span style="width:1px;height:11px;background:rgba(255,201,60,.3)"></span>
@@ -205,6 +211,9 @@ body.light3d #overlay{background:radial-gradient(circle at 50% 40%,rgba(230,240,
     <div id="invExplain" style="display:none;font-size:11.5px;line-height:1.95;color:#a9c6e2;max-width:300px;margin:0 auto 16px;text-align:left">
       <div>↔ 你已经知道了，对吧？</div>
     </div>
+    <div id="trackRow3d"></div>
+    <div id="envRow3d"></div>
+    <div id="bestLap3d" style="font-size:10.5px;color:#7f9ab6;margin:-2px 0 10px;letter-spacing:.5px">本赛道最佳圈 --</div>
     <div id="garage3d">
       <div class="gHead">车库 · <b id="g3coins">0</b> 币 · ID <b id="g3id">------</b></div>
       <div id="liveryRow3d"></div>

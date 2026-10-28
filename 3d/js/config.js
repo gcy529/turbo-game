@@ -88,6 +88,9 @@ export const THEME = {
     hemi: { sky: 0x8c86c8, ground: 0x2b3a2c, intensity: 0.55 },
     ground: 0x28402f,
     envIntensity: 0.6,
+    grip: 1,
+    exposure: 0.96,
+    label: '黄昏',
   },
   light: {
     sky: [0x4f97e0, 0xdcecf8],
@@ -96,6 +99,36 @@ export const THEME = {
     hemi: { sky: 0xffffff, ground: 0x8fa878, intensity: 1.0 },
     ground: 0x6f9a5c,
     envIntensity: 0.95,
+    grip: 1,
+    exposure: 1.08,
+    label: '白天',
+  },
+  // 夜赛：月光 + 星空 + 车灯，路看不清但对手尾灯很显眼
+  night: {
+    sky: [0x04060e, 0x101a33],
+    fog: [0x070c18, 130, 560],
+    sun: { color: 0x9fb6ff, intensity: 0.35 },
+    hemi: { sky: 0x1e2a4a, ground: 0x05080e, intensity: 0.18 },
+    ground: 0x0b1320,
+    envIntensity: 0.22,
+    night: true,
+    grip: 0.97,
+    exposure: 0.5,
+    stars: 1,
+    label: '夜赛',
+  },
+  // 雨战：灰蓝天、近雾、湿地（抓地略低，转向更容易飘）
+  rain: {
+    sky: [0x6b8296, 0xc2ceda],
+    fog: [0xaab7c2, 90, 470],
+    sun: { color: 0xe8f0f8, intensity: 1.15 },
+    hemi: { sky: 0xc8d6e2, ground: 0x4a5440, intensity: 1.0 },
+    ground: 0x4a5744,
+    envIntensity: 0.7,
+    rain: true,
+    grip: 0.9,
+    exposure: 0.94,
+    label: '雨战',
   },
 };
 

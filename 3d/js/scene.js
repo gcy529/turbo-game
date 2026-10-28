@@ -182,11 +182,68 @@ export function createStage(canvas) {
   const envRT = pmrem.fromScene(new RoomEnvironment(renderer), 0.04);
   scene.environment = envRT.texture;
 
-  const theme = { name: 'dark', sun, hemi, ambient, sky, skyUniforms, ground, envIntensity: 0.55 };
+  // ── 雨幕（雨战才显示）：700 条短线段，比圆点更像雨 ──
+  const RAIN_N = 700;
+  const rainGeo = new THREE.BufferGeometry();
+  const rainPos = new Float32Array(RAIN_N * 6);
+  const rainSpeed = new Float32Array(RAIN_N);
+  for (let i = 0; i < RAIN_N; i++) {
+    const x = (Math.random() - 0.5) * 80, y = Math.random() * 46, z = (Math.random() - 0.5) * 80;
+    const len = 0.7 + Math.random() * 0.7;
+    rainPos[i * 6] = x; rainPos[i * 6 + 1] = y + len; rainPos[i * 6 + 2] = z;
+    rainPos[i * 6 + 3] = x; rainPos[i * 6 + 4] = y; rainPos[i * 6 + 5] = z;
+    rainSpeed[i] = 42 + Math.random() * 26;
+  }
+  rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+  const rainMat = new THREE.LineBasicMaterial({
+    color: 0xbfd8f0, transparent: true, opacity: 0.38, depthWrite: false, fog: false,
+  });
+  const rain = new THREE.LineSegments(rainGeo, rainMat);
+  rain.visible = false;
+  rain.frustumCulled = false;
+  scene.add(rain);
+
+  // ── 车灯：只做「光锥 + 地面亮斑」，不用 SpotLight ──
+  //    为什么不用聚光灯：两盏 SpotLight 会让每个材质都多算一遍光照，
+  //    软件渲染下直接掉到 2fps（倒计时都走不完）。光锥在暗场景里够看，且零光照成本。
+  const headlights = new THREE.Group();
+  // 体积光锥：只有 SpotLight 在暗场景里几乎看不出来，加两个 additive 锥体做「光柱」
+  const beamGeo = new THREE.ConeGeometry(2.4, 14, 14, 1, true);
+  beamGeo.rotateX(-Math.PI / 2);
+  beamGeo.translate(0, 0, 8.2);
+  const beamMat = new THREE.MeshBasicMaterial({
+    color: 0xffeec2, transparent: true, opacity: 0.045, blending: THREE.AdditiveBlending,
+    depthWrite: false, side: THREE.DoubleSide, fog: false,
+  });
+  const beamL = new THREE.Mesh(beamGeo, beamMat);
+  const beamR = new THREE.Mesh(beamGeo, beamMat);
+  beamL.position.set(-0.55, 0.55, 0);
+  beamR.position.set(0.55, 0.55, 0);
+  beamL.rotation.x = 0.055;      // 稍微压低，让光柱落到路面而不是飘在空中
+  beamR.rotation.x = 0.055;
+  // 光锥做短做窄：全屏 additive 在弱 GPU 上 overdraw 很贵，14 米、半径 2.4 基本只看车头前一段
+  headlights.add(beamL, beamR);
+  // 车头前方的地面亮斑：让「照着路」有落点，而不是只有两条飘在空中的光柱
+  const glowGeo = new THREE.CircleGeometry(5.2, 24);
+  glowGeo.rotateX(-Math.PI / 2);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: 0xffeec2, transparent: true, opacity: 0.13, blending: THREE.AdditiveBlending,
+    depthWrite: false, fog: false,
+  });
+  const groundGlow = new THREE.Mesh(glowGeo, glowMat);
+  groundGlow.position.set(0, -0.55, 10);
+  headlights.add(groundGlow);
+  headlights.visible = false;
+  scene.add(headlights);
+
+  const theme = { name: 'dark', sun, hemi, ambient, sky, skyUniforms, ground, envIntensity: 0.55, grip: 1 };
 
   function applyTheme(name) {
     const t = THEME[name] || THEME.dark;
     theme.name = name;
+    theme.grip = t.grip || 1;
+    // 夜赛/雨战整体压暗：路面和树是固定贴图，只能靠曝光调
+    renderer.toneMappingExposure = t.exposure === undefined ? 0.96 : t.exposure;
     skyUniforms.topColor.value.setHex(t.sky[0]);
     skyUniforms.horizonColor.value.setHex(t.sky[1]);
     scene.fog = new THREE.Fog(t.fog[0], t.fog[1], t.fog[2]);
@@ -197,27 +254,89 @@ export function createStage(canvas) {
     hemi.intensity = t.hemi.intensity;
     ground.material.color.setHex(t.ground);
     ambient.color.setHex(name === 'light' ? 0x9fb4cc : 0x404060);
+    ambient.intensity = name === 'night' ? 0.22 : 0.5;
     envIntensity = t.envIntensity;
-    // 背景层跟随主题
+
+    // 背景层跟随环境
     const isLight = name === 'light';
-    sunDiscMat.color.setHex(isLight ? 0xfff8e8 : 0xffd2a2);
-    sunHaloMat.color.setHex(isLight ? 0xffe9c0 : 0xff9a5c);
-    sunHaloMat.opacity = isLight ? 0.16 : 0.30;
-    cloudMat.color.setHex(isLight ? 0xffffff : 0xffc6a4);
-    cloudMat.opacity = isLight ? 0.42 : 0.10;
-    starMat.opacity = isLight ? 0 : 0.85;
-    ridgeFar.material.color.setHex(isLight ? 0xa9c6dc : 0x3a3268);
-    ridgeMid.material.color.setHex(isLight ? 0x86aec5 : 0x2f3f5e);
-    ridgeNear.material.color.setHex(isLight ? 0x6d977f : 0x26423f);
-    document.body.className = name === 'light' ? 'light3d' : '';
+    const isNight = !!t.night;
+    const isRain = !!t.rain;
+    if (isNight) {
+      // 夜色：太阳盘换成月亮，光晕收敛成冷白，云基本看不见
+      sunDiscMat.color.setHex(0xdfe8ff);
+      sunHaloMat.color.setHex(0x8fa8e0);
+      sunHaloMat.opacity = 0.18;
+      cloudMat.color.setHex(0x2a3550);
+      cloudMat.opacity = 0.05;
+      ridgeFar.material.color.setHex(0x0e1428);
+      ridgeMid.material.color.setHex(0x0a1020);
+      ridgeNear.material.color.setHex(0x081410);
+      starMat.opacity = 1;
+    } else if (isRain) {
+      sunDiscMat.color.setHex(0xd8e2ec);
+      sunHaloMat.color.setHex(0x9fb0c0);
+      sunHaloMat.opacity = 0.08;
+      cloudMat.color.setHex(0x8695a2);
+      cloudMat.opacity = 0.5;
+      ridgeFar.material.color.setHex(0x5a6b78);
+      ridgeMid.material.color.setHex(0x4a5a66);
+      ridgeNear.material.color.setHex(0x435246);
+      starMat.opacity = 0;
+    } else {
+      sunDiscMat.color.setHex(isLight ? 0xfff8e8 : 0xffd2a2);
+      sunHaloMat.color.setHex(isLight ? 0xffe9c0 : 0xff9a5c);
+      sunHaloMat.opacity = isLight ? 0.16 : 0.30;
+      cloudMat.color.setHex(isLight ? 0xffffff : 0xffc6a4);
+      cloudMat.opacity = isLight ? 0.42 : 0.10;
+      starMat.opacity = isLight ? 0 : 0.85;
+      ridgeFar.material.color.setHex(isLight ? 0xa9c6dc : 0x3a3268);
+      ridgeMid.material.color.setHex(isLight ? 0x86aec5 : 0x2f3f5e);
+      ridgeNear.material.color.setHex(isLight ? 0x6d977f : 0x26423f);
+    }
+    rain.visible = isRain;
+    headlights.visible = isNight;
+    beamMat.opacity = isNight ? 0.05 : 0;
+    groundGlow.visible = isNight;
+    document.body.className = isLight ? 'light3d' : (isNight ? 'night3d' : (isRain ? 'rain3d' : ''));
   }
+
+  // 车灯跟随车身（夜赛每帧调用）
+  function syncLights(pos, quat) {
+    if (!headlights.visible) return;
+    headlights.position.copy(pos);
+    headlights.position.y += 0.15;
+    headlights.quaternion.copy(quat);
+  }
+
+  // 雨点下落 + 围绕车身循环（雨战每帧调用）
+  function updateRain(dt, center) {
+    if (!rain.visible) return;
+    const arr = rainGeo.attributes.position.array;
+    for (let i = 0; i < RAIN_N; i++) {
+      const o = i * 6;
+      const drop = rainSpeed[i] * dt;
+      arr[o + 1] -= drop;
+      arr[o + 4] -= drop;
+      if (arr[o + 4] < center.y - 2) {
+        const len = 0.7 + (i % 7) * 0.09;
+        const x = center.x + (Math.random() - 0.5) * 76;
+        const z = center.z + (Math.random() - 0.5) * 76;
+        const y = center.y + 22 + Math.random() * 22;
+        arr[o] = x; arr[o + 1] = y + len; arr[o + 2] = z;
+        arr[o + 3] = x; arr[o + 4] = y; arr[o + 5] = z;
+      }
+    }
+    rainGeo.attributes.position.needsUpdate = true;
+  }
+
+  function grip() { return theme.grip; }
 
   let envIntensity = 0.55;
   // r160 没有 Scene.environmentIntensity，改为由各材质设 envMapIntensity，这里只记账
   function setEnvIntensity(v) { envIntensity = v; }
 
   const saved = store(KEYS.theme);
-  applyTheme(saved === 'light' ? 'light' : 'dark');
+  applyTheme(THEME[saved] ? saved : 'dark');
 
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
@@ -237,5 +356,5 @@ export function createStage(canvas) {
   // 赛道地平线遮挡更自然：把地面抬高一点跟随赛道高度
   function setGroundY(y) { /* 大平面固定在最底，不再跟随玩家高度 */ }
 
-  return { renderer, scene, camera, sun, hemi, ambient, theme, applyTheme, setEnvIntensity, getEnvIntensity: () => envIntensity, resize, followShadow, setGroundY, roadWidth: TRACK.roadWidth, dispose: () => { envRT.dispose(); pmrem.dispose(); } };
+  return { renderer, scene, camera, sun, hemi, ambient, theme, applyTheme, setEnvIntensity, getEnvIntensity: () => envIntensity, grip, syncLights, updateRain, resize, followShadow, setGroundY, roadWidth: TRACK.roadWidth, dispose: () => { envRT.dispose(); pmrem.dispose(); } };
 }

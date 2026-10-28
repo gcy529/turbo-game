@@ -9,6 +9,7 @@ export function createHud() {
     lap: document.getElementById('lap'),
     lapTotal: document.getElementById('lapTotal3d'),
     t1: document.getElementById('t1'),
+    rank: document.getElementById('rank3d'),
     score: document.getElementById('score3d'),
     who: document.getElementById('who3d'),
     msg: document.getElementById('msg'),
@@ -71,6 +72,8 @@ export function createHud() {
     if (el.lap) el.lap.textContent = String(Math.min(p.lap, p.totalLaps));
     if (el.lapTotal) el.lapTotal.textContent = String(p.totalLaps);
     if (el.t1) el.t1.textContent = Math.max(0, lapTime).toFixed(2);
+    // 名次：只算同向车（逆行车不计名次），P3/12
+    if (el.rank) el.rank.textContent = p.rank ? ('P' + p.rank + '/' + (p.rankTotal || 12)) : 'P-';
     if (el.score) el.score.textContent = String(calcScore(p));
     if (el.who) el.who.textContent = getName();
     syncCoins(p);
@@ -184,26 +187,47 @@ export function createHud() {
   function countdownPanel(p) {
     const panel = el.panel;
     if (!panel) return;
+    const fmt2 = (v) => (v > 0 ? v.toFixed(2) + 's' : '--');
+    const kmh = Math.round(Math.abs(p.topSpeed || 0) * 3.6 * 1.15);
+    const rank = p.bestRank || p.rank || 1;
+    const cars = (p.rankTotal || 12) - 1;
+    const isWin = rank === 1;
+    const cell = (label, val, color) =>
+      '<div style="background:rgba(140,200,255,.07);border:1px solid rgba(140,200,255,.16);border-radius:10px;padding:6px 4px;text-align:center">' +
+      '<div style="font-size:9px;color:#7f9ab6;letter-spacing:.5px;margin-bottom:2px">' + label + '</div>' +
+      '<div style="font-size:14px;font-weight:900;color:' + (color || '#eaf2ff') + ';line-height:1.3">' + val + '</div></div>';
+    const recordLine = p.isNewRecord
+      ? '<div style="font-size:10.5px;color:#ffd166;font-weight:900;margin-top:7px">🏁 新赛道纪录 ' + fmt2(p.bestLap) + '</div>'
+      : '<div style="font-size:10.5px;color:#8fa8c2;margin-top:7px">赛道最佳 ' + fmt2(p.bestLapEver) + '</div>';
+
     panel.innerHTML =
-      '<div class="tag3d">RACE FINISHED</div>' +
-      '<div class="title" style="font-size:30px">完成！</div>' +
-      '<div class="sub" style="letter-spacing:3px">' + p.finishTime.toFixed(2) + ' 秒 · ' + p.totalLaps + ' 圈</div>' +
-      '<div style="margin:18px 0;padding:14px 18px;border-radius:14px;background:rgba(255,201,60,.12);border:1.5px solid rgba(255,201,60,.5);max-width:300px;text-align:left">' +
-      '<div style="font-size:12px;font-weight:900;color:#ffd166;letter-spacing:1px;margin-bottom:8px">本局金币</div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:11.5px;color:#cfe4f7;line-height:1.95">' +
+      '<div class="tag3d">RACE FINISHED' + (p.trackName ? ' · ' + p.trackName : '') + '</div>' +
+      '<div class="title" style="font-size:' + (isWin ? 34 : 30) + 'px;' + (isWin ? 'color:#ffd166' : '') + '">' + (isWin ? '冠军！' : '完成！') + '</div>' +
+      '<div class="sub" style="letter-spacing:2px">' + p.finishTime.toFixed(2) + ' 秒 · ' + p.totalLaps + ' 圈</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 4px;max-width:300px">' +
+      cell('名次', 'P' + rank + '/' + cars, isWin ? '#ffd166' : '#8ef7c8') +
+      cell('超越', (p.overtakes || 0) + ' 辆') +
+      cell('漂移分', String(Math.round(p.driftScore || 0))) +
+      cell('最快圈', fmt2(p.bestLap), '#8ef7c8') +
+      cell('最高速', kmh + '<span style="font-size:9px"> km/h</span>') +
+      cell('碰撞', (p.smashCount || 0) + ' 次', p.smashCount > 6 ? '#ff9aa8' : '#eaf2ff') +
+      '</div>' +
+      recordLine +
+      '<div style="margin:14px 0;padding:12px 16px;border-radius:14px;background:rgba(255,201,60,.12);border:1.5px solid rgba(255,201,60,.5);max-width:300px;text-align:left">' +
+      '<div style="font-size:12px;font-weight:900;color:#ffd166;letter-spacing:1px;margin-bottom:6px">本局金币 · 总分 ' + calcScore(p) + '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:11px;color:#cfe4f7;line-height:1.85">' +
       '<span>赛道拾取 ' + (p.coinGot || 0) + ' 枚</span><b style="color:#8ef7c8">+' + (p.coinsEarned || 0) + '</b></div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:11.5px;color:#cfe4f7;line-height:1.95">' +
+      '<div style="display:flex;justify-content:space-between;font-size:11px;color:#cfe4f7;line-height:1.85">' +
       '<span>完赛奖励</span><b style="color:#8ef7c8">+' + (p.coinsRaceBonus || 0) + '</b></div>' +
-      '<div style="height:1px;background:rgba(255,201,60,.28);margin:7px 0"></div>' +
+      '<div style="height:1px;background:rgba(255,201,60,.28);margin:6px 0"></div>' +
       '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900">' +
       '<span style="color:#ffd166">合计 +' + (p.coinTotal || 0) + '</span>' +
-      '<span style="color:#eaf2ff">余额 ' + (p.coinBalance || 0) + ' 币</span></div>' +
-      '<div style="margin-top:9px;font-size:10.5px;color:#8fa8c2;line-height:1.7">回车库可以解锁车漆，金币和 2D 版共用。</div></div>' +
+      '<span style="color:#eaf2ff">余额 ' + (p.coinBalance || 0) + ' 币</span></div></div>' +
       '<div class="btnRow" style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">' +
       '<button class="go" id="againBtn">再来一局</button>' +
       '<button class="go" id="menuBtn3d" style="background:rgba(140,200,255,.16);color:#cfe8ff;box-shadow:none;border:1.5px solid rgba(140,200,255,.4)">回到车库</button>' +
       '</div>' +
-      '<div class="tip" style="margin-top:10px"><a href="../index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>' +
+      '<div class="tip" style="margin-top:9px"><a href="../index.html" style="color:#67c6ff;text-decoration:none">← 回到 2D 版</a></div>' +
       '<div><a class="brandLock" href="https://github.com/gcy529/turbo-game" target="_blank" rel="noopener"><span>deepseek v4.1-flash -1017</span><span class="amp">&amp;</span><span class="by">gcy529</span></a></div>';
     const again = document.getElementById('againBtn');
     if (again) again.addEventListener('click', () => {

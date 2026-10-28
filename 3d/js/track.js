@@ -52,19 +52,37 @@ function checkerTexture(cols = 16, rows = 4, cell = 32) {
   return tex;
 }
 
-export function buildTrack(scene) {
+// ── 三条赛道：形状都是「极坐标 + 正弦扰动」，参数不同 → 弯道密度/半径不同 ──
+// 注意：振幅 a1+a2 不能超过 R 太多，否则 CatmullRom 会自交（路面穿帮）。
+export const TRACK_SHAPES = {
+  coast: {
+    id: 'coast', name: '黄昏海岸', desc: '原版环线 · 长弯多，适合练走线',
+    R: 200, n: 12, a1: 55, a2: 38, b1: 14, b2: 9, f1: 1.7, f2: 2.3, g1: 0.9, g2: 1.4,
+  },
+  canyon: {
+    id: 'canyon', name: '峡谷发卡', desc: '半径小、弯密 · 吃转向和氮气',
+    R: 172, n: 14, a1: 62, a2: 44, b1: 26, b2: 16, f1: 2.4, f2: 3.3, g1: 1.3, g2: 1.9,
+  },
+  speedway: {
+    id: 'speedway', name: '极速环道', desc: '大半径、弯缓 · 全程油门到底',
+    R: 268, n: 10, a1: 24, a2: 16, b1: 8, b2: 5, f1: 1.2, f2: 1.6, g1: 0.6, g2: 1.0,
+  },
+};
+
+export function buildTrack(scene, trackId) {
+  const shape = TRACK_SHAPES[trackId] || TRACK_SHAPES.coast;
   const SEG = TRACK.segments;
   const ROAD_W = TRACK.roadWidth;
   const group = new THREE.Group();
   scene.add(group);
 
-  // ── 闭合曲线（形状沿用原版）──
+  // ── 闭合曲线（默认这条沿用原版形状）──
   const pts = [];
-  const R = TRACK.baseRadius, n = 12;
+  const R = shape.R, n = shape.n;
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2;
-    const r = R + Math.sin(i * 1.7) * 55 + Math.cos(i * 2.3) * 38;
-    const y = Math.sin(i * 0.9) * 14 + Math.cos(i * 1.4) * 9;
+    const r = R + Math.sin(i * shape.f1) * shape.a1 + Math.cos(i * shape.f2) * shape.a2;
+    const y = Math.sin(i * shape.g1) * shape.b1 + Math.cos(i * shape.g2) * shape.b2;
     pts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
   }
   const curve = new THREE.CatmullRomCurve3(pts, true, 'catmullrom', 0.5);
@@ -357,6 +375,23 @@ export function buildTrack(scene) {
   poles.instanceMatrix.needsUpdate = true;
   group.add(poles);
 
+  // ── 环境染色：夜赛/雨战整体压暗路面与景物（贴图材质只能靠 color 乘子）──
+  const tintMats = [];
+  group.traverse((o) => {
+    if (!o.isMesh) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of mats) {
+      if (!m || !m.color || m.userData.__baseColor !== undefined) continue;
+      m.userData.__baseColor = m.color.getHex();
+      tintMats.push(m);
+    }
+  });
+  function setTint(v) {
+    for (const m of tintMats) {
+      m.color.setHex(m.userData.__baseColor).multiplyScalar(v);
+    }
+  }
+
   // ── 位置与几何查询 ──
   function posAt(t, lateral) {
     const tt = ((t % 1) + 1) % 1;
@@ -374,5 +409,5 @@ export function buildTrack(scene) {
     return b.x * a.z - b.z * a.x;
   }
 
-  return { curve, trackLen, group, posAt, curvatureAt, roadWidth: ROAD_W, segments: SEG, frames };
+  return { id: shape.id, name: shape.name, curve, trackLen, group, posAt, curvatureAt, setTint, roadWidth: ROAD_W, segments: SEG, frames };
 }

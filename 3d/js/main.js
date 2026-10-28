@@ -2,9 +2,9 @@
 // main.js · 装配与主循环（状态机 / 圈数 / NPC / 碰撞 / 相机 / 测试接口）
 // ─────────────────────────────────────────────────────────────
 import * as THREE from 'three';
-import { CAR, RACE, NPC, CAMERA, FX, NITRO, DRIVE, KEYS, store } from './config.js';
+import { CAR, RACE, NPC, CAMERA, FX, NITRO, DRIVE, KEYS, THEME, store } from './config.js';
 import { createStage } from './scene.js';
-import { buildTrack } from './track.js';
+import { buildTrack, TRACK_SHAPES } from './track.js';
 import { buildCar, poseCar, headingOf, updateWheels, applyEnvIntensity, setBrake } from './car.js';
 import { createInput } from './input.js';
 import { createParticles, createCoins } from './fx.js';
@@ -14,7 +14,8 @@ import { readProfile, buyLivery, selectLivery, addCoins, bumpStats } from './pro
 
 const canvas = document.getElementById('game');
 const stage = createStage(canvas);
-const track = buildTrack(stage.scene);
+// 赛道可切换（三条），所以 track / coins 都是 let，切换时整体重建
+let track = buildTrack(stage.scene, store('turbo3d-track') || 'coast');
 const hud = createHud();
 const audio = createAudio();
 const particles = createParticles(stage.scene);
@@ -31,7 +32,7 @@ let playerCar = buildCar(liveryById(profile.livery).color, 'high');
 stage.scene.add(playerCar);
 
 // 赛道金币（技能系统已下线：不再有技能点/道具，改为直接捡钱）
-const coins = createCoins(stage.scene, track);
+let coins = createCoins(stage.scene, track);
 
 function applyLivery() {
   const l = liveryById(profile.livery);
@@ -68,14 +69,75 @@ function renderGarage() {
     row.appendChild(b);
   });
 }
+
+// ── 环境：黄昏 / 白天 / 夜赛 / 雨战 ──
+const ENV_ORDER = ['dark', 'light', 'night', 'rain'];
+const ENV_ICON = { dark: '🌗', light: '☀️', night: '🌙', rain: '🌧' };
+function renderEnvRow() {
+  const row = document.getElementById('envRow3d');
+  if (!row) return;
+  row.innerHTML = '';
+  ENV_ORDER.forEach((id) => {
+    const t = THEME[id];
+    if (!t) return;
+    const b = document.createElement('button');
+    b.className = 'trackChip' + (id === stage.theme.name ? ' on' : '');
+    b.textContent = (ENV_ICON[id] || '') + ' ' + (t.label || id);
+    b.addEventListener('click', () => setEnv(id));
+    row.appendChild(b);
+  });
+}
+// 夜赛把路面压暗（贴图材质只能靠 color 乘子），雨天略暗
+function applyTrackTint() {
+  const n = stage.theme.name;
+  track.setTint(n === 'night' ? 0.40 : (n === 'rain' ? 0.74 : 1));
+}
+function setEnv(id) {
+  if (!THEME[id]) return false;
+  stage.applyTheme(id);
+  store(KEYS.theme, id);
+  refreshEnvIntensity();
+  applyTrackTint();
+  renderEnvRow();
+  if (window.__syncSettings) window.__syncSettings();
+  const note = id === 'night' ? '车灯开启' : (id === 'rain' ? '湿滑路面 · 抓地 -10%' : '');
+  hud.setMsg((THEME[id].label || id) + (note ? ' · ' + note : ''), 1.6);
+  return true;
+}
+
+// 赛道选择：三条，点一下就换（跑着的时候不让点，免得车穿到新路面外面）
+function renderTrackRow() {
+  const row = document.getElementById('trackRow3d');
+  if (!row) return;
+  row.innerHTML = '';
+  Object.keys(TRACK_SHAPES).forEach((id) => {
+    const s = TRACK_SHAPES[id];
+    const b = document.createElement('button');
+    b.className = 'trackChip' + (id === track.id ? ' on' : '');
+    b.textContent = s.name;
+    b.title = s.desc || '';
+    b.addEventListener('click', () => {
+      if (running) { hud.setMsg('比赛中不能换赛道', 1.2); return; }
+      switchTrack(id);
+    });
+    row.appendChild(b);
+  });
+  const best = loadBestLap();
+  const bl = document.getElementById('bestLap3d');
+  if (bl) bl.textContent = best > 0 ? ('本赛道最佳圈 ' + best.toFixed(2) + 's') : '本赛道最佳圈 --（跑完一圈就有了）';
+}
 renderGarage();
+renderTrackRow();
+renderEnvRow();
+applyTrackTint();
 const npcs = [];
 
 // 起终点线在 t=0（计圈点），车停在它后面 4.5 米 —— 和真赛道一样：
 // 车趴在起跑格上，前方就是那条黑白线和门架。
 // t 为负不影响渲染（posAt/curvatureAt 都做过归一化），只需跳过「起步出线」这一下。
 const START_BACK = 7.5;
-const START_T = -START_BACK / track.trackLen;
+let START_T = -START_BACK / track.trackLen;
+function startT() { return -START_BACK / track.trackLen; }
 
 const player = {
   t: START_T, lateral: 0, speed: 0, lap: 1, totalLaps: RACE.laps, lastT: START_T,
@@ -88,6 +150,14 @@ const player = {
   charge: 0,            // 氮气：0..NITRO.segs 格
   nitroTimer: 0,        // 喷射剩余时间
   nitroFlash: 0,        // 释放闪光
+  // ── 名次 / 本局成绩（结算用）──
+  prog: 0,              // 本局累计里程（米），和 NPC 同尺度比名次
+  topSpeed: 0,          // 本局最高速
+  bestLap: 0,           // 本局最快单圈
+  rank: 0,              // 当前名次（只算同向车）
+  rankTotal: 12,
+  bestRank: 0,          // 本局最好名次
+  overtakes: 0,         // 净超越数
 };
 let running = false, camMode = 0, clock = 0, countdown = 0, raceClock = 0, lapStartClock = 0, shake = 0, roll = 0;
 let paused = false;
@@ -150,12 +220,60 @@ function spawnNpcs() {
       t: 0.06 + Math.random() * 0.88,   // 别生成在起步位置，否则第一帧就有一辆车糊在镜头上
       lateral: (Math.random() - 0.5) * 1.4,
       speed: oncoming ? -(NPC.oncomingMin + Math.random() * NPC.oncomingRange) : NPC.speedMin + Math.random() * NPC.speedRange,
-      oncoming,
+      oncoming, laps: 0, prog: 0,
     };
     stage.scene.add(car);
     npcs.push(npc);
   }
   refreshEnvIntensity();
+}
+/** 换赛道后只需要重抽位置/速度，车模复用（重建 14 台车太浪费） */
+function respawnNpcs() {
+  for (const n of npcs) {
+    n.t = 0.06 + Math.random() * 0.88;
+    n.lateral = (Math.random() - 0.5) * 1.4;
+    n.speed = n.oncoming ? -(NPC.oncomingMin + Math.random() * NPC.oncomingRange) : NPC.speedMin + Math.random() * NPC.speedRange;
+    n.laps = 0;
+    n.prog = n.t * track.trackLen;
+  }
+}
+/** 递归释放几何与材质（换赛道时旧路面不释放会一直涨显存） */
+function disposeTree(root) {
+  root.traverse((o) => {
+    if (o.geometry) o.geometry.dispose();
+    const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+    for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); }
+  });
+}
+
+// ── 赛道纪录：只存数字（不做幽灵车），按赛道分开记 ──
+function loadBestLap() {
+  try { const o = JSON.parse(store('turbo3d-bestlap') || '{}'); return +(o[track.id] || 0); } catch (e) { return 0; }
+}
+function saveBestLap(sec) {
+  try {
+    const o = JSON.parse(store('turbo3d-bestlap') || '{}');
+    if (!o[track.id] || sec < o[track.id]) { o[track.id] = sec; store('turbo3d-bestlap', JSON.stringify(o)); }
+  } catch (e) {}
+}
+
+// ── 换赛道：旧赛道 group 释放 → 重建曲线/路面 → 重建金币 → NPC 重抽 ──
+function switchTrack(id) {
+  if (!TRACK_SHAPES[id] || id === track.id) return false;
+  stage.scene.remove(track.group);
+  disposeTree(track.group);
+  coins.dispose();
+  track = buildTrack(stage.scene, id);
+  coins = createCoins(stage.scene, track);
+  START_T = startT();
+  applyTrackTint();        // 新赛道也要按当前环境压暗
+  respawnNpcs();
+  player.t = START_T; player.lastT = START_T; player.lateral = 0; player.speed = 0;
+  store('turbo3d-track', id);
+  renderTrackRow();
+  hud.setMsg(track.name + ' · ' + (TRACK_SHAPES[id].desc || ''), 2.2);
+  hud.update(player, 0);
+  return true;
 }
 function refreshEnvIntensity() {
   const v = stage.getEnvIntensity();
@@ -239,7 +357,7 @@ function update(dt) {
     player.speed = Math.min(CAR.maxSpeed * NITRO.boost, player.speed + CAR.maxSpeed * 0.8 * dt);
   }
   if (player.nitroFlash > 0) player.nitroFlash = Math.max(0, player.nitroFlash - dt);
-  const speedCap = player.nitroTimer > 0 ? CAR.maxSpeed * NITRO.boost : CAR.maxSpeed;
+  const speedCap = (player.nitroTimer > 0 ? CAR.maxSpeed * NITRO.boost : CAR.maxSpeed) * stage.grip();
   player.speed = Math.min(speedCap, player.speed);
 
   // 智驾时自动打方向；玩家一碰方向键/倾斜手机就临时接管
@@ -257,13 +375,16 @@ function update(dt) {
     if (Math.abs(player.pushLateral) < 0.01) player.pushLateral = 0;
   }
   player.lateral += steer * rate * dt;
-  player.lateral -= track.curvatureAt(player.t) * (player.speed / CAR.maxSpeed) * CAR.driftSpeedGain * dt;
+  player.lateral -= track.curvatureAt(player.t) * (player.speed / CAR.maxSpeed) * CAR.driftSpeedGain * (1 / stage.grip()) * dt;
   if (Math.abs(player.lateral) > CAR.lateralLimit) {
     player.lateral = Math.max(-CAR.lateralHardLimit, Math.min(CAR.lateralHardLimit, player.lateral));
     player.speed *= Math.pow(CAR.wallSlow, dt * 3);
   }
   player.lateral = Math.max(-CAR.lateralHardLimit, Math.min(CAR.lateralHardLimit, player.lateral));
   player.t += (player.speed * dt) / track.trackLen;
+  // 总进度：圈数（从 0 起）+ 圈内位置，和 NPC 用同一套坐标
+  player.prog = ((player.lap - 1) + player.t) * track.trackLen;
+  if (player.speed > player.topSpeed) player.topSpeed = player.speed;
 
   const tp = ((player.t % 1) + 1) % 1;
   if (player.lastT > 0.75 && tp < 0.25) {
@@ -274,6 +395,15 @@ function update(dt) {
       player.lap++;
       const lapTime = raceClock - lapStartClock;
       lapStartClock = raceClock;
+      if (!player.bestLap || lapTime < player.bestLap) player.bestLap = lapTime;
+      // 赛道纪录：跑完一圈就比一次，破了立刻提示（不做幽灵车，只留数字）
+      const prevBest = loadBestLap();
+      if (!prevBest || lapTime < prevBest) {
+        saveBestLap(lapTime);
+        player.isNewRecord = true;
+        hud.setMsg('新纪录！' + lapTime.toFixed(2) + 's', 2.2);
+        audio.beep(true);
+      }
       if (player.lap > player.totalLaps) {
         player.finished = true;
         player.finishTime = raceClock;
@@ -284,7 +414,12 @@ function update(dt) {
         audio.finish();
         audio.engineOff();
         hud.setMsg('完成！' + player.finishTime.toFixed(2) + 's', 4);
-        setTimeout(() => { hud.syncInvert(input.state.invert, true); hud.countdownPanel(player); }, 700);
+        setTimeout(() => {
+          player.trackName = track.name;
+          player.bestLapEver = loadBestLap();
+          hud.syncInvert(input.state.invert, true);
+          hud.countdownPanel(player);
+        }, 700);
       } else {
         coins.reshuffle();        // 新一圈，金币重新铺出来
         audio.beep(true);
@@ -307,8 +442,10 @@ function update(dt) {
   const pPos = pNow.pos, pTan = pNow.tan;
   for (const n of npcs) {
     n.t += (n.speed * dt) / track.trackLen;
-    if (n.t > 1) n.t -= 1;
-    if (n.t < 0) n.t += 1;
+    if (n.t > 1) { n.t -= 1; n.laps = (n.laps || 0) + 1; }
+    if (n.t < 0) { n.t += 1; n.laps = (n.laps || 0) - 1; }
+    // 名次按「总进度」算：圈数 + 圈内位置，和玩家同一把尺子
+    n.prog = ((n.laps || 0) + n.t) * track.trackLen;
 
     const nPos = track.posAt(n.t, n.lateral).pos;
     const dx = nPos.x - pPos.x, dz = nPos.z - pPos.z;
@@ -351,6 +488,22 @@ function update(dt) {
     shake = Math.max(shake, shk);
     audio.hit(Math.min(1, Math.abs(closing) / 85));
     particles.burst(nPos, head ? 0xffd166 : 0xffb066, spark, 2.4);
+  }
+
+  // ── 名次：只和同向车比（逆行车是障碍，不是对手）──
+  if (!player.finished) {
+    let ahead = 0, total = 1;
+    for (const n of npcs) {
+      if (n.oncoming) continue;
+      total++;
+      if (n.prog > player.prog) ahead++;
+    }
+    player.rankTotal = total;
+    player.rank = ahead + 1;
+    if (!player.bestRank || player.rank < player.bestRank) {
+      if (player.bestRank) player.overtakes += player.bestRank - player.rank;
+      player.bestRank = player.rank;
+    }
   }
 
   setBrake(playerCar, input.keys.brake || player.speed < 0);
@@ -450,13 +603,23 @@ function poseAndRender(dt, doRender) {
   updateCamera(dt, pp);
   stage.followShadow(pos);
   stage.setGroundY(pos.y);
+  // 夜赛车灯跟车、雨战雨幕跟车（只在对应环境下有开销）
+  stage.syncLights(playerCar.position, playerCar.quaternion);
+  stage.updateRain(dt, playerCar.position);
   if (doRender) stage.renderer.render(stage.scene, stage.camera);
 }
 
 function startRace() {
   audio.init();          // 必须由用户手势触发，否则移动端 AudioContext 起不来
-  Object.assign(player, { t: START_T, lateral: 0, speed: 0, lap: 1, lastT: START_T, armed: false, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0, coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins });
+  Object.assign(player, { t: START_T, lateral: 0, speed: 0, lap: 1, lastT: START_T, armed: false, finished: false, finishTime: 0, smashCount: 0, hitCooldown: 0, driftScore: 0, pushLateral: 0, recovered: 0,
+    coinGot: 0, coinsEarned: 0, charge: 0, nitroTimer: 0, nitroFlash: 0, coinsRaceBonus: 0, coinTotal: 0, coinBalance: profile.coins,
+    prog: 0, topSpeed: 0, bestLap: 0, rank: 0, bestRank: 0, overtakes: 0, isNewRecord: false });
   player._settled = false;
+  // 名次按「圈数 + 圈内位置」重算，否则重开会继承上一局的进度
+  for (const n of npcs) { n.laps = 0; n.prog = n.t * track.trackLen; }
+  // 倒计时期间 update 会提前 return，名次先按「起步在最后」摆好，跑起来再实时算
+  player.rankTotal = npcs.filter((n) => !n.oncoming).length + 1;
+  player.bestRank = player.rank = player.rankTotal;
   coins.reset();
   particles.reset();
   hud.setRunning(true);
@@ -470,6 +633,7 @@ function startRace() {
   clock = 0;
   hud.hideOverlay();
   hud.showKeyHints();
+  hud.update(player, 0);      // 把名次先摆上，倒计时期间 HUD 也要显示 P12/12
   hud.setMsg('3', 0.9);
 }
 function restart() {
@@ -503,6 +667,8 @@ function quitToMenu() {
   const pp = document.getElementById('pausePanel');
   if (pp) pp.classList.remove('show');
   hud.restorePanel();
+  renderTrackRow();        // 首页面板是 innerHTML 快照恢复的，赛道/环境按钮要重新渲染
+  renderEnvRow();
   bindStartBtn();
   hud.syncInvert(input.state.invert, input.state.unlocked);
   hud.update(player, 0);
@@ -516,9 +682,12 @@ function bindStartBtn() {
 let lastTs = 0, fpsAcc = 0, fpsN = 0, rafId = 0;
 function frame(ts) {
   if (!lastTs) lastTs = ts;
-  const dt = Math.min((ts - lastTs) / 1000, 0.05);
+  // 统计用真实间隔，物理用 clamp 后的 dt —— 原来两处都用 clamp 值，
+  // 任何低于 20fps 的机器都会恒定显示 20 FPS
+  const rawDt = Math.min((ts - lastTs) / 1000, 1);
+  const dt = Math.min(rawDt, 0.05);
   lastTs = ts;
-  fpsAcc += dt;
+  fpsAcc += rawDt;
   fpsN++;
   if (fpsAcc >= 0.5) { hud.setFps(Math.round(fpsN / fpsAcc)); fpsAcc = 0; fpsN = 0; }
   update(dt);
@@ -551,16 +720,15 @@ hud.setOnMenu(() => quitToMenu());   // 结算页「回到车库」
   const cb = document.getElementById('camBtn3d');
   const syncSettings = () => {
     if (sb) { sb.textContent = audio.isOn() ? '🔊 音效' : '🔇 静音'; sb.className = 'setMini ' + (audio.isOn() ? 'on' : 'off'); }
-    if (tb) tb.textContent = stage.theme.name === 'light' ? '☀️ 白天' : '🌗 黄昏';
+    if (tb) { const cur = THEME[stage.theme.name]; tb.textContent = (ENV_ICON[stage.theme.name] || '🌗') + ' ' + ((cur && cur.label) || '黄昏'); }
     if (gb) { gb.textContent = '📱 陀螺仪'; gb.className = 'setMini ' + (input.state.gyro.enabled ? 'on' : 'off'); }
     if (cb) cb.textContent = '🎥 ' + CAMERA.modes[camMode].name;
   };
   if (sb) sb.addEventListener('click', () => { audio.setOn(!audio.isOn()); syncSettings(); audio.click(); });
   if (tb) tb.addEventListener('click', () => {
-    const next = stage.theme.name === 'light' ? 'dark' : 'light';
-    stage.applyTheme(next);
-    store(KEYS.theme, next);
-    refreshEnvIntensity();
+    // 四档循环：黄昏 → 白天 → 夜赛 → 雨战（首页也有同样的按钮行）
+    const i = ENV_ORDER.indexOf(stage.theme.name);
+    setEnv(ENV_ORDER[(i + 1) % ENV_ORDER.length]);
     syncSettings();
   });
   if (gb) gb.addEventListener('click', () => {
@@ -597,7 +765,14 @@ function pauseLoop() {
 window.__THREE_REVISION = THREE.REVISION;
 window.__TURBO = {
   ready: true,
-  stage, track, player, playerCar, npcs, coins, input, hud, particles, profile,
+  stage, player, playerCar, npcs, input, hud, particles, profile,
+  // track / coins 换赛道时会被整体替换，必须用 getter，否则拿到的还是旧对象
+  get track() { return track; },
+  get coins() { return coins; },
+  switchTrack(id) { return switchTrack(id); },
+  setEnv(id) { return setEnv(id); },
+  env() { return stage.theme.name; },
+  bestLap() { return loadBestLap(); },
   addCoins(n) { const v = addCoins(profile, n); hud.setCoinBalance(profile.coins); renderGarage(); return v; },
   nitroFull() { player.charge = NITRO.segs; return player.charge; },
   nitro() { player.charge = NITRO.segs; return tryNitro(); },
