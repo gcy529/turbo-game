@@ -620,6 +620,99 @@
   body[data-theme='light'] .lbList{color:#26405c}
   body[data-theme='light'] .goGold{background:rgba(255,205,100,.32)!important;color:#7a4a00!important;border-color:rgba(190,140,20,.55)!important}
   body[data-theme='light'] .goGhost{background:rgba(40,80,140,.08)!important;color:#26405c!important;border-color:rgba(40,80,140,.28)!important}
+
+  /* ===== 结算页（2D）专用版式：竖屏首屏只留重点，奖励放大可读 ===== */
+  #overlay:has(.panel.fin),#overlay.finMode{padding:10px}
+  .panel.fin{padding:0;max-width:430px;max-height:calc(100dvh - 20px);display:flex;flex-direction:column;overflow:hidden;border-radius:20px}
+  .finBody{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:15px 15px 6px;text-align:center}
+  .finLeft,.finSide{display:contents}
+  .finBadge{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;font-size:19px;font-weight:900;color:#241703;background:conic-gradient(from 200deg,#ffe29a,#ffb43d,#ffd166,#ffe29a);box-shadow:0 0 0 3px rgba(255,209,102,.16),0 8px 24px rgba(255,160,60,.35);margin-bottom:9px;line-height:1}
+  .finTitle{font-size:22px;font-weight:900;letter-spacing:6px;line-height:1.15;background:linear-gradient(180deg,#fff,#9fe0ff 62%,#4aa3e8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .finSub{font-size:9px;letter-spacing:2.4px;color:#5f86ad;font-weight:700;margin-top:4px}
+  .finTime{font-size:44px;font-weight:900;color:#eaf6ff;line-height:1;margin-top:9px;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;text-shadow:0 0 26px rgba(110,200,255,.32)}
+  .finTime i{font-size:16px;font-style:normal;color:#6fa8d8;margin-left:3px;font-weight:800;letter-spacing:0}
+  .finTimeLbl{font-size:9.5px;letter-spacing:3.5px;color:#6f8db0;font-weight:800;margin-top:6px}
+  .finGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+  .finCell{background:rgba(140,200,255,.07);border:1px solid rgba(140,200,255,.16);border-radius:12px;padding:8px 3px}
+  .finCell span{display:block;font-size:9.5px;color:#7f9ab6;letter-spacing:.4px;margin-bottom:3px}
+  .finCell b{display:block;font-size:17px;font-weight:900;color:#eaf2ff;line-height:1.2;font-variant-numeric:tabular-nums}
+  .finCell b.gold{color:#ffd166}.finCell b.mint{color:#8ef7c8}
+  .finCell b i{font-size:10px;font-style:normal;color:#7f9ab6;margin-left:1px;font-weight:700;letter-spacing:0}
+  .finReward{margin-top:11px;padding:11px 13px;border-radius:14px;background:linear-gradient(135deg,rgba(255,201,60,.14),rgba(255,150,60,.06));border:1px solid rgba(255,196,80,.4);text-align:left}
+  .finRewardHead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:7px}
+  .finRewardHead b{font-size:13px;font-weight:900;color:#ffd166;letter-spacing:.5px}
+  .finRewardHead em{font-size:11px;font-style:normal;color:#ffd98a;font-weight:800;white-space:nowrap}
+  .finRGrid{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px}
+  .finRCell{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:12px;color:#cfe4f7;line-height:1.8}
+  .finRCell span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .finRCell b{font-size:13.5px;color:#ffd166;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .finRCell b.zero{color:#62809f;font-weight:700}
+  .finFold{margin-top:9px;border:1px solid rgba(140,200,255,.18);border-radius:13px;overflow:hidden;background:rgba(140,200,255,.05);text-align:left}
+  .finFoldHead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px;font-size:12.5px;font-weight:850;color:#cfe4f7;cursor:pointer;user-select:none;-webkit-user-select:none}
+  .finFoldHead .fl{display:flex;align-items:center;gap:6px;min-width:0}
+  .finFoldHead .fl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .finFoldHead i{font-style:normal;font-size:10px;color:#6f8db0;flex:0 0 auto;transition:transform .22s}
+  .finFold.on .finFoldHead i{transform:rotate(180deg)}
+  .finFoldBody{display:none;padding:0 12px 12px}
+  .finFold.on .finFoldBody{display:block}
+  .finLink{flex:0 0 auto;font-family:inherit;font-size:11px;font-weight:850;color:#8ef7c8;background:rgba(142,247,200,.1);border:1px solid rgba(142,247,200,.35);border-radius:8px;padding:4px 9px;cursor:pointer}
+  .finFold .achBox{margin:0;max-width:none}
+  .achBoxFlat{text-align:left}
+  .achBoxFlat .achLine{font-size:12.5px;line-height:1.95;color:#ffe9c4}
+  .achBoxFlat .achQuote{padding-left:20px;margin-bottom:2px}
+  body[data-theme='light'] .achBoxFlat .achLine{color:#2a2013}
+  .finFold .nameBox,.finFold .lbBox{margin:0 0 8px;max-width:none}
+  .finFold .lbBox{margin-bottom:0}
+  .finBtns{flex:0 0 auto;padding:9px 12px calc(9px + var(--sab));background:rgba(8,14,26,.94);border-top:1px solid rgba(140,200,255,.14);display:flex;flex-direction:column;gap:7px}
+  .finBtns .go{width:100%;padding:13px;font-size:15.5px;letter-spacing:2px;border-radius:12px}
+  .finBtnsSub{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .finBtnsSub .go{padding:10px;font-size:12.5px;letter-spacing:1px;border-radius:11px}
+  /* 浅色主题 */
+  body[data-theme='light'] .finCell{background:rgba(40,80,140,.05);border-color:rgba(40,80,140,.18)}
+  body[data-theme='light'] .finCell span{color:#5c7794}
+  body[data-theme='light'] .finCell b{color:#1e3450}
+  body[data-theme='light'] .finCell b.gold{color:#a2610a}
+  body[data-theme='light'] .finCell b.mint{color:#0b7a63}
+  body[data-theme='light'] .finTitle{background:linear-gradient(180deg,#2b6ea8,#4aa3e8 70%,#1d5f96);-webkit-background-clip:text;background-clip:text}
+  body[data-theme='light'] .finTime{color:#16324e;text-shadow:0 0 22px rgba(90,150,220,.22)}
+  body[data-theme='light'] .finTime i{color:#5c7794}
+  body[data-theme='light'] .finTimeLbl{color:#5c7794}
+  body[data-theme='light'] .finSub{color:#6a86a4}
+  body[data-theme='light'] .finReward{background:linear-gradient(135deg,rgba(255,205,100,.3),rgba(255,160,60,.14));border-color:rgba(190,140,20,.45)}
+  body[data-theme='light'] .finRewardHead b{color:#8a5a10}
+  body[data-theme='light'] .finRewardHead em{color:#a2610a}
+  body[data-theme='light'] .finRCell{color:#26405c}
+  body[data-theme='light'] .finRCell b{color:#8a5a10}
+  body[data-theme='light'] .finRCell b.zero{color:#8ea4bb}
+  body[data-theme='light'] .finFold{background:rgba(40,80,140,.04);border-color:rgba(40,80,140,.2)}
+  body[data-theme='light'] .finFoldHead{color:#26405c}
+  body[data-theme='light'] .finFoldHead i{color:#6a86a4}
+  body[data-theme='light'] .finLink{color:#0b7a63;background:rgba(11,122,99,.08);border-color:rgba(11,122,99,.3)}
+  body[data-theme='light'] .finBtns{background:#fbf9f4;border-top-color:rgba(40,80,140,.16)}
+  /* 横屏手机：左右两栏，一屏装下 */
+  @media (orientation:landscape) and (max-height:560px){
+    #overlay:has(.panel.fin),#overlay.finMode{padding:8px}
+    .panel.fin{max-width:760px;max-height:calc(100dvh - 16px)}
+    .finBody{display:grid;grid-template-columns:1fr 1.02fr;align-content:start;gap:10px 16px;padding:12px 15px 4px;text-align:left}
+    .finLeft,.finSide{display:flex;flex-direction:column;gap:8px}
+    .finHero{text-align:center}
+    .finGrid{margin-top:0}
+    .finReward{margin-top:0}
+    .finFold{margin-top:0}
+    .finTime{font-size:31px;margin-top:5px}
+    .finTitle{font-size:17px;letter-spacing:4px}
+    .finBadge{width:34px;height:34px;font-size:14px;margin-bottom:4px}
+    .finCell b{font-size:15px}
+    .finCell{padding:6px 3px}
+    .finTime{font-size:34px;margin-top:6px}
+    .finTitle{font-size:18px;letter-spacing:4px}
+    .finBadge{width:40px;height:40px;font-size:15px;margin-bottom:5px}
+    .finCell b{font-size:15px}
+    .finBtns{flex-direction:row;align-items:center}
+    .finBtns .go{flex:1 1 42%;width:auto;padding:11px;font-size:14px}
+    .finBtnsSub{display:flex;gap:7px;flex:1 1 58%}
+    .finBtnsSub .go{flex:1;padding:11px}
+  }
 </style>
 </head>
 <body data-theme="dark">
@@ -5838,7 +5931,8 @@
     if (elTrackLabel) elTrackLabel.style.display = 'none';
     // 恢复开始面板内容
     var panel = overlay.querySelector('.panel');
-    if (panel) panel.innerHTML = START_PANEL_HTML;
+    if (panel) { panel.className = 'panel'; panel.innerHTML = START_PANEL_HTML; }
+    overlay.classList.remove('finMode');
     rebindStartPanel();
     renderModeList();
     renderMapList();
@@ -6284,8 +6378,7 @@
       var chips0 = rn.slice(0, 3);
       var achHtml = '';
       if (freshAch.length) {
-        achHtml = '<div class="achBox">' +
-          '<div class="achTitle">🎉 解锁成就 ×' + freshAch.length + '</div>' +
+        achHtml = '<div class="achBoxFlat">' +
           freshAch.map(function (aid) {
             var am = achMeta(aid);
             return '<div class="achLine">' + am.icon + ' <b>' + am.name + '</b> <span class="achDesc">' + am.desc + '</span>' +
@@ -6294,36 +6387,64 @@
           '<div class="achCheer">「 ' + ACH_CHEERS[Math.floor(Math.random() * ACH_CHEERS.length)] + ' 」</div>' +
           '</div>';
       }
-      panel.innerHTML = '<div class="title">完成！</div>' +
-        '<div class="sub">R A C E &nbsp; F I N I S H E D</div>' +
-        achHtml +
-        '<div class="res">' +
-        '<div>总时间 <b>' + formatTime(P1.finishTime) + '</b></div>' +
-        '<div class="totalScore">🏅 总积分 ' + calcScore(P1) + '</div>' +
-        '<div class="coinGain">+' + lastRaceCoins + ' 金币 · 余额 ' + (Profile ? Profile.coins : 0) + '</div>' +
-        '<div class="bestLapLine">最快单圈 ' + best + ' 秒</div>' +
-        '</div>' +
-        '<div class="scoreBox">' +
-        scoreBreakdown(P1).map(function (r) { return '<div class="scRow"><span>' + r[0] + '</span><b>+' + r[1] + '</b></div>'; }).join('') +
-        '</div>' +
-        '<div class="nameBox">' +
+      // ── 结算页重排：竖屏首屏 = 时间 / 积分 / 金币，奖励大字可读，成就与榜单折叠 ──
+      panel.className = 'panel fin';
+      overlay.classList.add('finMode');
+      var ftStr = formatTime(P1.finishTime).replace(/s$/, '');
+      var rewHtml = scoreBreakdown(P1).filter(function (r) { return r[1] > 0; }).map(function (r) {
+        return '<div class="finRCell"><span>' + r[0] + '</span><b>+' + r[1] + '</b></div>';
+      }).join('') || '<div class="finRCell"><span>本局无得分项</span><b>—</b></div>';
+      var achFold = freshAch.length
+        ? '<div class="finFold" id="achFold">' +
+            '<div class="finFoldHead" id="achFoldHead"><div class="fl"><span>★ 解锁 ' + freshAch.length + ' 个成就</span></div>' +
+            '<button class="finLink" id="achBtn">成就墙</button></div>' +
+            '<div class="finFoldBody">' + achHtml + '</div>' +
+          '</div>'
+        : '';
+      var nameHtml = '<div class="nameBox">' +
         '<div class="nameLabel">✍ 你的大名（上榜用）</div>' +
         '<input id="nameInput" maxlength="16" placeholder="留空 = 玩家" value="' + escHtml(getLastName()) + '" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1.5px solid rgba(140,200,255,.3);background:rgba(0,0,0,.3);color:#eaf2ff;font-size:14px;font-weight:800;text-align:center;outline:none;font-family:inherit">' +
         '<div class="nameHint">最长 8 个汉字 · 16 个字符</div>' +
         (chips0.length ? '<div class="chipRow" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' + chips0.map(function (n) { return '<button class="chipBtn" data-n="' + escHtml(n) + '">' + escHtml(n) + '</button>'; }).join('') + '</div>' : '') +
-        '</div>' +
-        '<div class="lbBox">' +
+        '</div>';
+      var lbHtml = '<div class="lbBox">' +
         '<div class="lbTitle">' +
-        '<span>' + (DAILY_MODE ? '🎯 今日打卡排行' : '🏆 本图排行榜') + '</span>' +
-        '<span class="sbtnRow" style="display:flex;gap:5px"><button id="sortTime" class="sbtn on">⏱时间</button><button id="sortScore" class="sbtn">🏅积分</button></span>' +
+        '<span>' + (DAILY_MODE ? '今日打卡排行' : '本图排行榜') + '</span>' +
+        '<span class="sbtnRow" style="display:flex;gap:5px"><button id="sortTime" class="sbtn on">时间</button><button id="sortScore" class="sbtn">积分</button></span>' +
         '</div>' +
         '<div id="resultLb" class="lbList"></div>' +
+        '</div>';
+      panel.innerHTML =
+        '<div class="finBody">' +
+          '<div class="finLeft">' +
+          '<div class="finHero">' +
+            '<div class="finBadge">✔</div>' +
+            '<div class="finTitle">完成</div>' +
+            '<div class="finSub">RACE FINISHED</div>' +
+            '<div class="finTime">' + ftStr + '<i>s</i></div>' +
+            '<div class="finTimeLbl">总时间</div>' +
+          '</div>' +
+          '<div class="finGrid">' +
+            '<div class="finCell"><span>总积分</span><b class="gold">' + calcScore(P1) + '</b></div>' +
+            '<div class="finCell"><span>金币</span><b class="mint">+' + lastRaceCoins + '</b></div>' +
+            '<div class="finCell"><span>最快单圈</span><b>' + best + (best !== '--' ? '<i>s</i>' : '') + '</b></div>' +
+          '</div>' +
+          '</div>' +
+          '<div class="finSide">' +
+          '<div class="finReward">' +
+            '<div class="finRewardHead"><b>本局奖励</b><em>余额 ' + (Profile ? Profile.coins : 0) + ' 币</em></div>' +
+            '<div class="finRGrid">' + rewHtml + '</div>' +
+          '</div>' +
+          achFold +
+          '<div class="finFold" id="moreFold">' +
+            '<div class="finFoldHead" id="moreFoldHead"><div class="fl"><span>上榜设置 · 排行榜</span></div><i>▾</i></div>' +
+            '<div class="finFoldBody">' + nameHtml + lbHtml + '</div>' +
+          '</div>' +
+          '</div>' +
         '</div>' +
-        '<div class="btnRow" style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">' +
-        '<button class="go goGold" id="achBtn">🏆 成就</button>' +
-        '<button class="go" id="againBtn">再来一局</button>' +
-        '<button class="go goGhost" id="shareBtn">分享</button>' +
-        '<button class="go goGhost" id="homeBtn">返回首页</button>' +
+        '<div class="finBtns">' +
+          '<button class="go" id="againBtn">再来一局</button>' +
+          '<div class="finBtnsSub"><button class="go goGhost" id="shareBtn">分享</button><button class="go goGhost" id="homeBtn">返回首页</button></div>' +
         '</div>';
       overlay.classList.remove('hide');
       var ab = document.getElementById('againBtn');
@@ -6358,7 +6479,16 @@
       }
       // 成就墙
       var achB = document.getElementById('achBtn');
-      if (achB) achB.onclick = showAchWall;
+      if (achB) achB.onclick = function (ev) { if (ev) ev.stopPropagation(); showAchWall(); };
+      // 折叠区：点标题栏展开/收起（成就与榜单默认收纳，避免一屏塞不下）
+      var foldPairs = [['achFoldHead', 'achFold'], ['moreFoldHead', 'moreFold']];
+      for (var fi2 = 0; fi2 < foldPairs.length; fi2++) {
+        (function (headId, boxId) {
+          var h = document.getElementById(headId), bx = document.getElementById(boxId);
+          if (!h || !bx) return;
+          h.addEventListener('click', function () { bx.classList.toggle('on'); });
+        })(foldPairs[fi2][0], foldPairs[fi2][1]);
+      }
       // 排序切换
       var bt2 = document.getElementById('sortTime'), bs2 = document.getElementById('sortScore');
       if (bt2) bt2.onclick = function () { setLbSort('time'); renderResultLb(); };
@@ -6369,6 +6499,8 @@
     var t1 = P1.finished ? P1.finishTime : Infinity;
     var t2 = P2.finished ? P2.finishTime : Infinity;
     var win = t1 <= t2 ? '玩家 1' : '玩家 2';
+    panel.className = 'panel';
+    overlay.classList.remove('finMode');
     panel.innerHTML = '<div class="title">比赛结束</div>' +
       '<div class="sub">R A C E &nbsp; O V E R</div>' +
       '<div class="res">' +

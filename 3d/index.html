@@ -182,6 +182,88 @@ body.light3d .setMini.off{color:#7f96ad;background:rgba(40,80,140,.05);border-co
 #boot .bBar i{display:block;width:40%;height:100%;border-radius:2px;background:linear-gradient(90deg,transparent,#67c6ff,transparent);animation:bSweep 1.05s ease-in-out infinite}
 @keyframes bSweep{0%{transform:translateX(-120%)}100%{transform:translateX(340%)}}
 #boot .bTxt{font-size:10.5px;letter-spacing:2.5px;color:#4e6b88}
+
+/* ===== 结算页（3D）版式：竖屏首屏只看重点，奖励区放大可读 ===== */
+#overlay:has(.panel.fin3d),#overlay.fin3dMode{padding:10px}
+.panel.fin3d{padding:0;width:100%;max-width:430px;max-height:calc(100dvh - 20px);display:flex;flex-direction:column;overflow:hidden;border-radius:20px}
+.f3body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:15px 15px 4px;text-align:center}
+.f3left,.f3right{display:contents}
+.f3rank{display:flex;width:fit-content;margin-left:auto;margin-right:auto;align-items:center;justify-content:center;min-width:56px;height:56px;padding:0 12px;border-radius:50%;font-size:19px;font-weight:900;color:#241703;background:conic-gradient(from 200deg,#ffe29a,#ffb43d,#ffd166,#ffe29a);box-shadow:0 0 0 3px rgba(255,209,102,.16),0 8px 24px rgba(255,160,60,.35);margin-bottom:8px;letter-spacing:0;box-sizing:border-box}
+.f3rank.mid{background:conic-gradient(from 200deg,#dcecff,#8ec6ff,#cfe4ff,#dcecff);color:#0d2540;box-shadow:0 0 0 3px rgba(142,198,255,.16),0 8px 24px rgba(80,150,230,.3)}
+.f3rank.low{background:conic-gradient(from 200deg,#e3ecf6,#a8bdd2,#eaf2fa,#e3ecf6);color:#22364a;box-shadow:0 0 0 3px rgba(160,185,210,.14),0 8px 24px rgba(90,120,150,.24)}
+.f3title{font-size:23px;font-weight:900;letter-spacing:4px;line-height:1.15;background:linear-gradient(180deg,#fff,#9fe0ff 62%,#4aa3e8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.f3title.win{background:linear-gradient(180deg,#fff8e2,#ffd166 62%,#f0a52c);-webkit-background-clip:text;background-clip:text}
+.f3sub{font-size:10px;letter-spacing:1.4px;color:#6f8db0;font-weight:800;margin-top:5px}
+.f3grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}
+.f3cell{background:rgba(140,200,255,.08);border:1px solid rgba(140,200,255,.18);border-radius:12px;padding:8px 3px}
+.f3cell span{display:block;font-size:10.5px;color:#8aa6c2;letter-spacing:.2px;margin-bottom:3px}
+.f3cell b{display:block;font-size:17px;font-weight:900;color:#eaf2ff;line-height:1.2;font-variant-numeric:tabular-nums}
+.f3cell b i{font-size:10px;font-style:normal;color:#7f9ab6;font-weight:700;margin-left:1px}
+.f3cell b.gold{color:#ffd166}.f3cell b.mint{color:#8ef7c8}.f3cell b.red{color:#ff9aa8}
+.f3rec{margin-top:9px;font-size:11.5px;font-weight:900;color:#ffd166;letter-spacing:.4px}
+.f3rec.dim{color:#8fa8c2;font-weight:700}
+.f3coin{margin-top:10px;padding:11px 13px;border-radius:14px;background:linear-gradient(135deg,rgba(255,201,60,.14),rgba(255,150,60,.06));border:1px solid rgba(255,196,80,.4);text-align:left}
+.f3coinHead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px}
+.f3coinHead b{font-size:13.5px;font-weight:900;color:#ffd166;letter-spacing:.4px}
+.f3coinHead em{font-size:11px;font-style:normal;color:#ffd98a;font-weight:800;white-space:nowrap}
+.f3row{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;color:#dbeaf8;line-height:1.8}
+.f3row b{font-size:14.5px;color:#8ef7c8;font-weight:900;font-variant-numeric:tabular-nums}
+.f3total{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:6px;padding-top:7px;border-top:1px solid rgba(255,201,60,.28)}
+.f3total b{font-size:17px;color:#ffd166;font-weight:900;font-variant-numeric:tabular-nums}
+.f3total span{font-size:12.5px;color:#cfe4f7;font-weight:700;white-space:nowrap}
+.f3btns{flex:0 0 auto;display:flex;gap:8px;padding:9px 12px calc(9px + var(--sab));background:rgba(8,14,26,.94);border-top:1px solid rgba(140,200,255,.14)}
+.f3btns .go{flex:1;padding:12px;font-size:14.5px;letter-spacing:1.5px;border-radius:12px;width:auto}
+.f3btns .go.ghost{background:rgba(140,200,255,.16);color:#cfe8ff;box-shadow:none;border:1.5px solid rgba(140,200,255,.4)}
+.f3foot{flex:0 0 auto;padding:0 0 calc(7px + var(--sab));text-align:center;font-size:10px;color:#4e6b88;background:rgba(8,14,26,.94)}
+.f3foot a{color:#67c6ff;text-decoration:none}
+.f3foot .brandLock{margin-top:3px;font-size:8.5px;opacity:.7}
+/* 浅色主题 */
+body.light3d .f3cell{background:rgba(40,80,140,.06);border-color:rgba(40,80,140,.18)}
+body.light3d .f3cell span{color:#5c7794}
+body.light3d .f3cell b{color:#1e3450}
+body.light3d .f3cell b.gold{color:#a2610a}
+body.light3d .f3cell b.mint{color:#0b7a63}
+body.light3d .f3cell b.red{color:#b02a3e}
+body.light3d .f3cell b i{color:#6a86a4}
+body.light3d .f3title{background:linear-gradient(180deg,#2b6ea8,#4aa3e8 70%,#1d5f96);-webkit-background-clip:text;background-clip:text}
+body.light3d .f3title.win{background:linear-gradient(180deg,#b8790a,#e0a020 70%,#a2610a);-webkit-background-clip:text;background-clip:text}
+body.light3d .f3sub{color:#4a6d92}
+body.light3d .f3rec{color:#a2610a}
+body.light3d .f3rec.dim{color:#5a7695}
+body.light3d .f3coin{background:linear-gradient(135deg,rgba(255,205,100,.3),rgba(255,160,60,.14));border-color:rgba(190,140,20,.45)}
+body.light3d .f3coinHead b{color:#8a5a10}
+body.light3d .f3coinHead em{color:#a2610a}
+body.light3d .f3row{color:#26405c}
+body.light3d .f3row b{color:#0b7a63}
+body.light3d .f3total{border-top-color:rgba(190,140,20,.4)}
+body.light3d .f3total b{color:#8a5a10}
+body.light3d .f3total span{color:#26405c}
+body.light3d .f3btns{background:#fbf9f4;border-top-color:rgba(40,80,140,.16)}
+body.light3d .f3btns .go.ghost{background:rgba(40,80,140,.08);color:#26405c;border-color:rgba(40,80,140,.28)}
+body.light3d .f3foot{background:#fbf9f4;color:#6a86a4}
+/* 横屏手机：左右两栏，一屏装下 */
+@media (orientation:landscape) and (max-height:560px){
+  #overlay:has(.panel.fin3d),#overlay.fin3dMode{padding:8px}
+  .panel.fin3d{max-width:720px;max-height:calc(100dvh - 16px)}
+  .f3body{display:grid;grid-template-columns:1fr 1.02fr;align-content:start;gap:0 16px;padding:12px 15px 2px;text-align:left}
+  .f3left{display:flex;flex-direction:column;align-items:center}
+  .f3grid{width:100%}
+  .f3rec{text-align:center}
+  .f3right{display:flex;flex-direction:column;gap:7px;justify-content:center}
+  .f3left .tag3d{align-self:flex-start;margin-bottom:8px}
+  .f3left .f3rank,.f3left .f3title,.f3left .f3sub{text-align:center}
+  .f3rank{width:40px;min-width:40px;height:40px;font-size:14px;padding:0;margin-bottom:5px}
+  .f3title{font-size:18px;letter-spacing:3px}
+  .f3sub{font-size:9px;margin-top:3px}
+  .f3grid{margin-top:8px;gap:6px}
+  .f3cell{padding:6px 2px}
+  .f3cell b{font-size:14.5px}
+  .f3cell span{font-size:9.5px}
+  .f3coin{margin-top:0}
+  .f3btns{padding:8px 12px calc(8px + var(--sab))}
+  .f3btns .go{padding:10px;font-size:13px}
+  .f3foot{padding-bottom:calc(5px + var(--sab));font-size:9px}
+}
 </style>
 </head>
 <body>
